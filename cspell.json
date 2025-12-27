@@ -1,0 +1,92 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "moodtune",
+    "pubspec",
+    "xcconfig",
+    "xcscheme",
+    "xcodeproj",
+    "xcworkspace",
+    "appiconset",
+    "xib",
+    "plist",
+    "gradlew",
+    "localizations",
+    "cubit",
+    "mocktail",
+    "bloc"
+  ],
+  "ignoreWords": [],
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/build/**",
+    "**/.dart_tool/**",
+    "**/ios/Pods/**",
+    "**/android/.gradle/**",
+    "**/coverage/**",
+    "**/*.g.dart",
+    "**/*.freezed.dart",
+    "**/gen/**",
+    "**/GeneratedPluginRegistrant.*",
+    "**/pubspec.lock",
+    "**/*.pbxproj",
+    "**/*.xcworkspace",
+    "**/*.xcodeproj",
+    "**/*.gradle",
+    "**/*.gradle.kts",
+    "**/gradle-wrapper.properties"
+  ],
+  "includeRegExpList": [
+    "/\\*[\\s\\S]*?\\*/|//.*"
+  ],
+  "flagWords": [],
+  "dictionaries": [
+    "typescript",
+    "node",
+    "npm",
+    "html",
+    "css",
+    "bash",
+    "fonts",
+    "filetypes",
+    "softwareTerms"
+  ],
+  "dictionaryDefinitions": [
+    {
+      "name": "dart",
+      "path": "./node_modules/@cspell/dict-dart/cspell-ext.json",
+      "description": "Dart dictionary"
+    }
+  ],
+  "overrides": [
+    {
+      "filename": "**/*.dart",
+      "languageSettings": [
+        {
+          "languageId": "dart",
+          "locale": "en"
+        }
+      ]
+    },
+    {
+      "filename": "**/*.yaml",
+      "languageSettings": [
+        {
+          "languageId": "yaml",
+          "locale": "en"
+        }
+      ]
+    },
+    {
+      "filename": "**/*.md",
+      "languageSettings": [
+        {
+          "languageId": "markdown",
+          "locale": "en"
+        }
+      ]
+    }
+  ]
+}
+
