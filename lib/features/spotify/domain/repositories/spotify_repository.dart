@@ -7,8 +7,11 @@ import 'package:moodtune_app/utils/typedef.dart';
 /// This defines the contract for all Spotify-related data operations.
 /// Implementations should handle the conversion from exceptions to failures.
 abstract class SpotifyRepository {
+  /// Returns the Spotify authorization URL to start the OAuth flow.
+  ResultFuture<String> getAuthorizeUrl();
+
   /// Connects to Spotify using an authorization code
-  /// 
+  ///
   /// Returns [SpotifyConnection] on success or [Failure] on error
   ResultFuture<SpotifyConnection> connectSpotify(String authCode);
 
