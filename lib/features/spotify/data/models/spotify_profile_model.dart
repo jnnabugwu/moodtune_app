@@ -13,16 +13,22 @@ class SpotifyProfileModel extends SpotifyProfile {
     super.email,
   });
 
-  /// Creates a [SpotifyProfileModel] from JSON
+  /// Creates a [SpotifyProfileModel] from backend JSON.
+  /// The backend returns `profile` with keys:
+  /// - id, display_name, email, image_url, followers, product
   factory SpotifyProfileModel.fromJson(Map<String, dynamic> json) {
+    final imageUrl = json['image_url'] as String?;
+    final followers = json['followers'] is Map
+        ? (json['followers'] as Map)['total'] as int?
+        : json['followers'] as int?;
     return SpotifyProfileModel(
       id: json['id'] as String,
       displayName: json['display_name'] as String? ?? '',
       username: json['username'] as String? ?? json['id'] as String,
-      followersCount: json['followers_count'] as int? ?? 0,
+      followersCount: followers ?? json['followers_count'] as int? ?? 0,
       followingCount: json['following_count'] as int? ?? 0,
       playlistsCount: json['playlists_count'] as int? ?? 0,
-      avatarUrl: json['avatar_url'] as String?,
+      avatarUrl: imageUrl ?? json['avatar_url'] as String?,
       email: json['email'] as String?,
     );
   }

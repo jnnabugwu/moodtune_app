@@ -33,6 +33,29 @@ $ flutter run --flavor production --target lib/main_production.dart
 
 _\*Moodtune App works on iOS, Android, Web, and Windows._
 
+## Environment & Supabase setup
+
+1. Copy the sample env and fill in values:
+   ```bash
+   cp env.example .env
+   ```
+   - `SUPABASE_URL`: your Supabase project URL
+   - `SUPABASE_ANON_KEY`: your Supabase anon key
+   - `API_BASE_URL`: backend base URL (e.g., `http://10.30.0.190:8000/api/v1`)
+
+2. Run with dart-defines (env vars loaded by Flutter):
+   ```bash
+   flutter run --flavor development \
+     --target lib/main_development.dart \
+     --dart-define SUPABASE_URL=$SUPABASE_URL \
+     --dart-define SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
+     --dart-define API_BASE_URL=$API_BASE_URL
+   ```
+
+Notes:
+- `main_*` initializes Supabase with the provided defines.
+- The Spotify repository auto-includes the Supabase access token from the current session when calling the backend.
+
 ---
 
 ## Running Tests 🧪

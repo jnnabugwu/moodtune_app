@@ -5,10 +5,16 @@ import 'package:moodtune_app/features/spotify/domain/usecases/usecases.dart';
 
 final GetIt getIt = GetIt.instance;
 
-Future<void> configureDependencies() async {
+Future<void> configureDependencies({
+  String apiBaseUrl = SpotifyRepositoryImpl.defaultBaseUrl,
+  TokenProvider? tokenProvider,
+}) async {
   // Repositories
   getIt..registerLazySingleton<SpotifyRepository>(
-    SpotifyRepositoryImpl.new,
+    () => SpotifyRepositoryImpl(
+      baseUrl: apiBaseUrl,
+      tokenProvider: tokenProvider,
+    ),
   )
 
   // Use cases

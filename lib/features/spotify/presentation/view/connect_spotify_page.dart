@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:app_links/app_links.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moodtune_app/features/spotify/presentation/bloc/spotify_bloc.dart';
@@ -13,17 +16,38 @@ class ConnectSpotifyPage extends StatefulWidget {
 class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
   final TextEditingController _codeController = TextEditingController();
   String? _lastLaunchedUrl;
+  StreamSubscription<Uri?>? _linkSub;
+  late final AppLinks _appLinks;
 
   @override
   void initState() {
     super.initState();
+    _appLinks = AppLinks();
     context.read<SpotifyBloc>().add(const SpotifyStarted());
+    _initDeepLinks();
   }
 
   @override
   void dispose() {
     _codeController.dispose();
+    _linkSub?.cancel();
     super.dispose();
+  }
+
+  Future<void> _initDeepLinks() async {
+    // Listen for incoming deep links (initial and subsequent).
+    _linkSub = _appLinks.uriLinkStream.listen(
+      (uri) async => _handleIncomingUri(uri),
+      onError: (_) {},
+    );
+  }
+
+  Future<void> _handleIncomingUri(Uri? uri) async {
+    if (uri == null) return;
+    final code = uri.queryParameters['code'];
+    if (code != null && code.isNotEmpty && mounted) {
+      context.read<SpotifyBloc>().add(SpotifyAuthCodeReceived(code));
+    }
   }
 
   @override
@@ -145,10 +169,12 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: CupertinoColors.systemRed.withOpacity(0.12),
+                        color:
+                         CupertinoColors.systemRed.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: CupertinoColors.systemRed.withOpacity(0.4),
+                          color: CupertinoColors.systemRed.
+                          withValues(alpha: 0.4),
                         ),
                       ),
                       child: Row(
