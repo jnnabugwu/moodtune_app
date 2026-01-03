@@ -24,9 +24,9 @@ class SpotifyProfilePage extends StatelessWidget {
             trailing: CupertinoButton(
               padding: EdgeInsets.zero,
               minimumSize: const Size(32, 32),
-              onPressed: () => context
-                  .read<SpotifyBloc>()
-                  .add(const SpotifyDisconnectRequested()),
+              onPressed: () => context.read<SpotifyBloc>().add(
+                const SpotifyDisconnectRequested(),
+              ),
               child: const Icon(CupertinoIcons.square_arrow_left),
             ),
           ),
@@ -42,10 +42,9 @@ class SpotifyProfilePage extends StatelessWidget {
                   const SizedBox(height: 32),
                   Text(
                     'No recent activity.',
-                    style: CupertinoTheme.of(context)
-                        .textTheme
-                        .textStyle
-                        .copyWith(fontWeight: FontWeight.w600),
+                    style: CupertinoTheme.of(
+                      context,
+                    ).textTheme.textStyle.copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -93,8 +92,9 @@ class _StatCard extends StatelessWidget {
       children: [
         Text(
           '$value',
-          style: theme.textTheme.navTitleTextStyle
-              .copyWith(fontWeight: FontWeight.bold),
+          style: theme.textTheme.navTitleTextStyle.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
         ),
         const SizedBox(height: 4),
         Text(

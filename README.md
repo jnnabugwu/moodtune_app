@@ -41,19 +41,17 @@ _\*Moodtune App works on iOS, Android, Web, and Windows._
    ```
    - `SUPABASE_URL`: your Supabase project URL
    - `SUPABASE_ANON_KEY`: your Supabase anon key
-   - `API_BASE_URL`: backend base URL (e.g., `http://10.30.0.190:8000/api/v1`)
+   - `API_BASE_URL`: backend base URL (e.g., `https://moodtune-backend-production-e4fe.up.railway.app/api/v1`)
 
-2. Run with dart-defines (env vars loaded by Flutter):
+2. Run with dart-defines from the `.env` file:
    ```bash
    flutter run --flavor development \
      --target lib/main_development.dart \
-     --dart-define SUPABASE_URL=$SUPABASE_URL \
-     --dart-define SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
-     --dart-define API_BASE_URL=$API_BASE_URL
+     --dart-define-from-file=.env
    ```
 
 Notes:
-- `main_*` initializes Supabase with the provided defines.
+- `main_*` initializes Supabase with the provided defines from `.env`.
 - The Spotify repository auto-includes the Supabase access token from the current session when calling the backend.
 
 ---

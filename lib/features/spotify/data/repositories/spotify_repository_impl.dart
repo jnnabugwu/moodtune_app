@@ -14,15 +14,16 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
     Dio? dio,
     String baseUrl = defaultBaseUrl,
     TokenProvider? tokenProvider,
-  })  : _tokenProvider = tokenProvider ?? _noToken,
-        _dio = dio ??
-            Dio(
-              BaseOptions(
-                baseUrl: baseUrl,
-                connectTimeout: const Duration(seconds: 10),
-                receiveTimeout: const Duration(seconds: 10),
-              ),
-            );
+  }) : _tokenProvider = tokenProvider ?? _noToken,
+       _dio =
+           dio ??
+           Dio(
+             BaseOptions(
+               baseUrl: baseUrl,
+               connectTimeout: const Duration(seconds: 10),
+               receiveTimeout: const Duration(seconds: 10),
+             ),
+           );
 
   static const defaultBaseUrl = 'http://127.0.0.1:8000/api/v1';
   final Dio _dio;
@@ -144,8 +145,8 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
   Failure _mapDioError(DioException e) {
     final message = e.response?.data is Map
         ? (e.response?.data['detail'] as String?) ??
-            (e.response?.data['message'] as String?) ??
-            e.message
+              (e.response?.data['message'] as String?) ??
+              e.message
         : e.message;
     if (e.type == DioExceptionType.connectionError ||
         e.type == DioExceptionType.connectionTimeout ||
@@ -155,4 +156,3 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
     return ServerFailure(message ?? 'Server error');
   }
 }
-

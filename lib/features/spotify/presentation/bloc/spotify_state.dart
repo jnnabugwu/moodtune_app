@@ -44,11 +44,10 @@ class SpotifyState extends Equatable {
 
   @override
   List<Object?> get props => [
-        status,
-        profile,
-        authorizeUrl,
-        error,
-        isConnected,
-      ];
+    status,
+    profile,
+    authorizeUrl,
+    error,
+    isConnected,
+  ];
 }
-

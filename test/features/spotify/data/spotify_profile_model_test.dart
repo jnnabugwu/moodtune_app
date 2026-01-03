@@ -23,4 +23,3 @@ void main() {
     expect(model.email, 'user@test.com');
   });
 }
-

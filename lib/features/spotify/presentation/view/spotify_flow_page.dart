@@ -11,13 +11,6 @@ class SpotifyFlowPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<SpotifyBloc, SpotifyState>(
       builder: (context, state) {
-        if (state.status == SpotifyStatus.loading ||
-            state.status == SpotifyStatus.connecting) {
-          return const CupertinoPageScaffold(
-            child: Center(child: CupertinoActivityIndicator()),
-          );
-        }
-
         if (state.status == SpotifyStatus.connected && state.profile != null) {
           return const SpotifyProfilePage();
         }

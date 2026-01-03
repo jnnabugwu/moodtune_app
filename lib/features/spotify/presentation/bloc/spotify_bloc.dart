@@ -16,12 +16,12 @@ class SpotifyBloc extends Bloc<SpotifyEvent, SpotifyState> {
     required CheckSpotifyConnection checkSpotifyConnection,
     required GetSpotifyProfile getSpotifyProfile,
     required DisconnectSpotify disconnectSpotify,
-  })  : _getAuthorizeUrl = getAuthorizeUrl,
-        _connectSpotify = connectSpotify,
-        _checkSpotifyConnection = checkSpotifyConnection,
-        _getSpotifyProfile = getSpotifyProfile,
-        _disconnectSpotify = disconnectSpotify,
-        super(const SpotifyState()) {
+  }) : _getAuthorizeUrl = getAuthorizeUrl,
+       _connectSpotify = connectSpotify,
+       _checkSpotifyConnection = checkSpotifyConnection,
+       _getSpotifyProfile = getSpotifyProfile,
+       _disconnectSpotify = disconnectSpotify,
+       super(const SpotifyState()) {
     on<SpotifyStarted>(_onStarted);
     on<SpotifyAuthorizeRequested>(_onAuthorizeRequested);
     on<SpotifyAuthCodeReceived>(_onAuthCodeReceived);
@@ -40,6 +40,17 @@ class SpotifyBloc extends Bloc<SpotifyEvent, SpotifyState> {
     SpotifyStarted event,
     Emitter<SpotifyState> emit,
   ) async {
+    // #region agent log
+    // ignore: avoid_print
+    print('AGENTLOG ${{
+      'sessionId': 'debug-session',
+      'runId': 'prefix-connect',
+      'hypothesisId': 'H-start',
+      'location': 'spotify_bloc.dart:_onStarted',
+      'message': 'SpotifyStarted received',
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+    }}');
+    // #endregion
     emit(state.copyWith(status: SpotifyStatus.loading, error: null));
     final result = await _checkSpotifyConnection();
     await result.fold(

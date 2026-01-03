@@ -45,8 +45,9 @@ class SpotifyProfileHeader extends StatelessWidget {
           children: [
             Text(
               profile.displayName,
-              style: theme.textTheme.navTitleTextStyle
-                  .copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.navTitleTextStyle.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 4),
             Text(

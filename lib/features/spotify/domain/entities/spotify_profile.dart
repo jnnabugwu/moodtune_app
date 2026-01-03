@@ -24,13 +24,13 @@ class SpotifyProfile extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        displayName,
-        username,
-        followersCount,
-        followingCount,
-        playlistsCount,
-        avatarUrl,
-        email,
-      ];
+    id,
+    displayName,
+    username,
+    followersCount,
+    followingCount,
+    playlistsCount,
+    avatarUrl,
+    email,
+  ];
 }
