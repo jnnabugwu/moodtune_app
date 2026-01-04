@@ -28,6 +28,7 @@ class App extends StatelessWidget {
               connectSpotify: getIt<ConnectSpotify>(),
               checkSpotifyConnection: getIt<CheckSpotifyConnection>(),
               getSpotifyProfile: getIt<GetSpotifyProfile>(),
+              getPlaylists: getIt<GetPlaylists>(),
               disconnectSpotify: getIt<DisconnectSpotify>(),
             ),
           ),

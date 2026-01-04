@@ -23,8 +23,11 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
   static const _runId = 'prefix-connect';
   static const _localLogPath = 'debug_connect.log';
 
-  Future<void> _log(String hypothesisId, String message,
-      [Map<String, Object?> data = const {}]) async {
+  Future<void> _log(
+    String hypothesisId,
+    String message, [
+    Map<String, Object?> data = const {},
+  ]) async {
     try {
       // #region agent log
       final payload = {
@@ -38,8 +41,11 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
         'timestamp': DateTime.now().millisecondsSinceEpoch,
       };
       final file = File(_localLogPath);
-      await file.writeAsString('${jsonEncode(payload)}\n',
-          mode: FileMode.append, flush: true);
+      await file.writeAsString(
+        '${jsonEncode(payload)}\n',
+        mode: FileMode.append,
+        flush: true,
+      );
       // Also emit to console so we can capture from flutter run output.
       // #endregion
       // #region agent log
@@ -147,138 +153,139 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                  const SizedBox(height: 24),
-                  Icon(
-                    CupertinoIcons.music_note_2,
-                    size: 96,
-                    color: cupertinoTheme.primaryColor,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Connect your Spotify account',
-                    style: cupertinoTheme.textTheme.navTitleTextStyle.copyWith(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Sync your favorite artists and discover recommendations.',
-                    style: cupertinoTheme.textTheme.textStyle.copyWith(
+                    const SizedBox(height: 24),
+                    Icon(
+                      CupertinoIcons.music_note_2,
+                      size: 96,
                       color: cupertinoTheme.primaryColor,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-                  CupertinoButton.filled(
-                    onPressed: isBusy
-                        ? null
-                        : () {
-                            _log('H1', 'tap connect button', {
-                              'status': state.status.toString(),
-                            });
-                            context.read<SpotifyBloc>().add(
-                              const SpotifyAuthorizeRequested(),
-                            );
-                          },
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    child: isBusy
-                        ? const CupertinoActivityIndicator(
-                            color: CupertinoColors.white,
-                          )
-                        : const Text('Connect to Spotify'),
-                  ),
-                  const SizedBox(height: 12),
-                  CupertinoButton(
-                    onPressed: isBusy
-                        ? null
-                        : () => Navigator.of(context).maybePop(),
-                    child: const Text('Cancel'),
-                  ),
-                  const SizedBox(height: 24),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Paste callback code (for testing)',
+                    const SizedBox(height: 16),
+                    Text(
+                      'Connect your Spotify account',
+                      style: cupertinoTheme.textTheme.navTitleTextStyle
+                          .copyWith(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Sync your favorite artists and discover recommendations.',
                       style: cupertinoTheme.textTheme.textStyle.copyWith(
-                        fontWeight: FontWeight.w600,
+                        color: cupertinoTheme.primaryColor,
                       ),
+                      textAlign: TextAlign.center,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  CupertinoTextField(
-                    controller: _codeController,
-                    placeholder: 'Enter authorization code',
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  CupertinoButton(
-                    onPressed: isBusy
-                        ? null
-                        : () {
-                            final code = _codeController.text.trim();
-                            if (code.isNotEmpty) {
+                    const SizedBox(height: 32),
+                    CupertinoButton.filled(
+                      onPressed: isBusy
+                          ? null
+                          : () {
+                              _log('H1', 'tap connect button', {
+                                'status': state.status.toString(),
+                              });
                               context.read<SpotifyBloc>().add(
-                                SpotifyAuthCodeReceived(code),
+                                const SpotifyAuthorizeRequested(),
                               );
-                            }
-                          },
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: const Text('Submit code'),
-                  ),
-                  if (state.error != null) ...[
+                            },
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      child: isBusy
+                          ? const CupertinoActivityIndicator(
+                              color: CupertinoColors.white,
+                            )
+                          : const Text('Connect to Spotify'),
+                    ),
                     const SizedBox(height: 12),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: CupertinoColors.systemRed.withValues(
-                          alpha: 0.12,
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: CupertinoColors.systemRed.withValues(
-                            alpha: 0.4,
-                          ),
+                    CupertinoButton(
+                      onPressed: isBusy
+                          ? null
+                          : () => Navigator.of(context).maybePop(),
+                      child: const Text('Cancel'),
+                    ),
+                    const SizedBox(height: 24),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Paste callback code (for testing)',
+                        style: cupertinoTheme.textTheme.textStyle.copyWith(
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(
-                            CupertinoIcons.exclamationmark_circle,
-                            color: CupertinoColors.systemRed,
+                    ),
+                    const SizedBox(height: 8),
+                    CupertinoTextField(
+                      controller: _codeController,
+                      placeholder: 'Enter authorization code',
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    CupertinoButton(
+                      onPressed: isBusy
+                          ? null
+                          : () {
+                              final code = _codeController.text.trim();
+                              if (code.isNotEmpty) {
+                                context.read<SpotifyBloc>().add(
+                                  SpotifyAuthCodeReceived(code),
+                                );
+                              }
+                            },
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: const Text('Submit code'),
+                    ),
+                    if (state.error != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: CupertinoColors.systemRed.withValues(
+                            alpha: 0.12,
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              state.error ?? 'Something went wrong',
-                              style: cupertinoTheme.textTheme.textStyle
-                                  .copyWith(
-                                    color: CupertinoColors.systemRed,
-                                  ),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: CupertinoColors.systemRed.withValues(
+                              alpha: 0.4,
                             ),
                           ),
-                          CupertinoButton(
-                            padding: EdgeInsets.zero,
-                            minimumSize: const Size(24, 24),
-                            onPressed: () => context.read<SpotifyBloc>().add(
-                              const SpotifyClearErrorRequested(),
-                            ),
-                            child: const Icon(
-                              CupertinoIcons.clear_circled_solid,
-                              size: 18,
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              CupertinoIcons.exclamationmark_circle,
                               color: CupertinoColors.systemRed,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                state.error ?? 'Something went wrong',
+                                style: cupertinoTheme.textTheme.textStyle
+                                    .copyWith(
+                                      color: CupertinoColors.systemRed,
+                                    ),
+                              ),
+                            ),
+                            CupertinoButton(
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(24, 24),
+                              onPressed: () => context.read<SpotifyBloc>().add(
+                                const SpotifyClearErrorRequested(),
+                              ),
+                              child: const Icon(
+                                CupertinoIcons.clear_circled_solid,
+                                size: 18,
+                                color: CupertinoColors.systemRed,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
                   ],
                 ),
               ),

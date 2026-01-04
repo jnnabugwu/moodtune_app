@@ -142,6 +142,35 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
     }
   }
 
+  @override
+  ResultFuture<List<SpotifyPlaylist>> getPlaylists({
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/spotify/playlists',
+        queryParameters: {
+          'limit': limit,
+          'offset': offset,
+        },
+        options: await _options(),
+      );
+      final data = response.data ?? <String, dynamic>{};
+      final items = (data['playlists'] as List<dynamic>? ?? [])
+          .cast<Map<String, dynamic>>();
+      final playlists = items
+          .map(SpotifyPlaylistModel.fromJson)
+          .map((m) => m.toDomain())
+          .toList();
+      return Right(playlists);
+    } on DioException catch (e) {
+      return Left(_mapDioError(e));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
   Failure _mapDioError(DioException e) {
     final message = e.response?.data is Map
         ? (e.response?.data['detail'] as String?) ??
