@@ -39,7 +39,8 @@ class _AuthPageState extends State<AuthPage> {
     final theme = CupertinoTheme.of(context);
 
     return BlocListener<AuthBloc, AuthState>(
-      listenWhen: (prev, curr) => prev.status != curr.status || prev.error != curr.error,
+      listenWhen: (prev, curr) => prev.status 
+      != curr.status || prev.error != curr.error,
       listener: (context, state) {
         if (state.error != null) {
           showCupertinoDialog<void>(
