@@ -3,6 +3,9 @@ import 'dart:developer';
 
 import 'package:bloc/bloc.dart';
 import 'package:flutter/widgets.dart';
+import 'package:moodtune_app/di/injector.dart';
+import 'package:moodtune_app/features/spotify/data/repositories/spotify_repository_impl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AppBlocObserver extends BlocObserver {
   const AppBlocObserver();
@@ -27,7 +30,16 @@ Future<void> bootstrap(FutureOr<Widget> Function() builder) async {
 
   Bloc.observer = const AppBlocObserver();
 
-  // Add cross-flavor configuration here
+  const apiBaseEnv = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: SpotifyRepositoryImpl.defaultBaseUrl,
+  );
+
+  await configureDependencies(
+    apiBaseUrl: apiBaseEnv,
+    tokenProvider: () async =>
+        Supabase.instance.client.auth.currentSession?.accessToken,
+  );
 
   runApp(await builder());
 }
