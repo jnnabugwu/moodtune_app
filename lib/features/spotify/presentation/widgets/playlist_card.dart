@@ -3,7 +3,8 @@ import 'package:moodtune_app/features/spotify/domain/entities/spotify_playlist.d
 
 class PlaylistCard extends StatelessWidget {
   const PlaylistCard({
-    required this.playlist, super.key,
+    required this.playlist,
+    super.key,
   });
 
   final SpotifyPlaylist playlist;
@@ -32,8 +33,9 @@ class PlaylistCard extends StatelessWidget {
                 Text(
                   playlist.ownerDisplayName!,
                   style: theme.textTheme.textStyle.copyWith(
-                    color: theme.textTheme.
-                    textStyle.color?.withValues(alpha: 0.7),
+                    color: theme.textTheme.textStyle.color?.withValues(
+                      alpha: 0.7,
+                    ),
                     fontSize: 13,
                   ),
                   maxLines: 1,
