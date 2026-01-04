@@ -4,6 +4,7 @@ import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/features/auth/presentation/view/auth_gate_page.dart';
 import 'package:moodtune_app/features/auth/presentation/view/auth_page.dart';
 import 'package:moodtune_app/features/auth/presentation/view/signup_page.dart';
+import 'package:moodtune_app/features/spotify/presentation/view/playlists_page.dart';
 
 class AppRouter {
   AppRouter._();
@@ -26,6 +27,10 @@ class AppRouter {
       GoRoute(
         path: RouteNames.callback,
         builder: (context, state) => const AuthGatePage(),
+      ),
+      GoRoute(
+        path: RouteNames.playlists,
+        builder: (context, state) => const SpotifyPlaylistsPage(),
       ),
       GoRoute(
         path: RouteNames.notFound,

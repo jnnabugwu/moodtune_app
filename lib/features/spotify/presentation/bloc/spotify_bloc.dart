@@ -16,11 +16,13 @@ class SpotifyBloc extends Bloc<SpotifyEvent, SpotifyState> {
     required CheckSpotifyConnection checkSpotifyConnection,
     required GetSpotifyProfile getSpotifyProfile,
     required DisconnectSpotify disconnectSpotify,
+    required GetPlaylists getPlaylists,
   }) : _getAuthorizeUrl = getAuthorizeUrl,
        _connectSpotify = connectSpotify,
        _checkSpotifyConnection = checkSpotifyConnection,
        _getSpotifyProfile = getSpotifyProfile,
        _disconnectSpotify = disconnectSpotify,
+       _getPlaylists = getPlaylists,
        super(const SpotifyState()) {
     on<SpotifyStarted>(_onStarted);
     on<SpotifyAuthorizeRequested>(_onAuthorizeRequested);
@@ -28,6 +30,7 @@ class SpotifyBloc extends Bloc<SpotifyEvent, SpotifyState> {
     on<SpotifyProfileRequested>(_onProfileRequested);
     on<SpotifyDisconnectRequested>(_onDisconnectRequested);
     on<SpotifyClearErrorRequested>(_onClearErrorRequested);
+    on<SpotifyPlaylistsRequested>(_onPlaylistsRequested);
   }
 
   final GetAuthorizeUrl _getAuthorizeUrl;
@@ -35,6 +38,7 @@ class SpotifyBloc extends Bloc<SpotifyEvent, SpotifyState> {
   final CheckSpotifyConnection _checkSpotifyConnection;
   final GetSpotifyProfile _getSpotifyProfile;
   final DisconnectSpotify _disconnectSpotify;
+  final GetPlaylists _getPlaylists;
 
   Future<void> _onStarted(
     SpotifyStarted event,
@@ -42,14 +46,16 @@ class SpotifyBloc extends Bloc<SpotifyEvent, SpotifyState> {
   ) async {
     // #region agent log
     // ignore: avoid_print
-    print('AGENTLOG ${{
-      'sessionId': 'debug-session',
-      'runId': 'prefix-connect',
-      'hypothesisId': 'H-start',
-      'location': 'spotify_bloc.dart:_onStarted',
-      'message': 'SpotifyStarted received',
-      'timestamp': DateTime.now().millisecondsSinceEpoch,
-    }}');
+    print(
+      'AGENTLOG ${{
+        'sessionId': 'debug-session',
+        'runId': 'prefix-connect',
+        'hypothesisId': 'H-start',
+        'location': 'spotify_bloc.dart:_onStarted',
+        'message': 'SpotifyStarted received',
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      }}',
+    );
     // #endregion
     emit(state.copyWith(status: SpotifyStatus.loading, error: null));
     final result = await _checkSpotifyConnection();
@@ -183,11 +189,35 @@ class SpotifyBloc extends Bloc<SpotifyEvent, SpotifyState> {
           isConnected: false,
         ),
       ),
-      (profile) => emit(
-        state.copyWith(
+      (profile) {
+        final updated = state.copyWith(
           status: SpotifyStatus.connected,
           isConnected: true,
           profile: profile,
+        );
+        emit(updated);
+        add(const SpotifyPlaylistsRequested(limit: 3, offset: 0));
+      },
+    );
+  }
+
+  Future<void> _onPlaylistsRequested(
+    SpotifyPlaylistsRequested event,
+    Emitter<SpotifyState> emit,
+  ) async {
+    final result = await _getPlaylists(
+      limit: event.limit,
+      offset: event.offset,
+    );
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          error: failure.message,
+        ),
+      ),
+      (playlists) => emit(
+        state.copyWith(
+          playlists: playlists,
         ),
       ),
     );

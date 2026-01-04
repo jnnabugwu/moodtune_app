@@ -25,6 +25,14 @@ abstract class SpotifyRepository {
   /// Returns [SpotifyProfile] on success or [Failure] on error
   ResultFuture<SpotifyProfile> getProfile();
 
+  /// Gets the user's Spotify playlists
+  ///
+  /// Returns a list of playlists on success or [Failure] on error
+  ResultFuture<List<SpotifyPlaylist>> getPlaylists({
+    int limit = 50,
+    int offset = 0,
+  });
+
   /// Disconnects the user's Spotify account
   ///
   /// Returns void on success or [Failure] on error

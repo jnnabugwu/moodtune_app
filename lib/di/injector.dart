@@ -27,5 +27,6 @@ Future<void> configureDependencies({
     ..registerLazySingleton(() => ConnectSpotify(getIt()))
     ..registerLazySingleton(() => CheckSpotifyConnection(getIt()))
     ..registerLazySingleton(() => GetSpotifyProfile(getIt()))
+    ..registerLazySingleton(() => GetPlaylists(getIt()))
     ..registerLazySingleton(() => DisconnectSpotify(getIt()));
 }

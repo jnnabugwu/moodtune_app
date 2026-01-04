@@ -27,12 +27,19 @@ void main() {
 
   setUp(() {
     repository = _MockSpotifyRepository();
+    when(
+      () => repository.getPlaylists(
+        limit: any(named: 'limit'),
+        offset: any(named: 'offset'),
+      ),
+    ).thenAnswer((_) async => const Right(<SpotifyPlaylist>[]));
 
     bloc = SpotifyBloc(
       getAuthorizeUrl: GetAuthorizeUrl(repository),
       connectSpotify: ConnectSpotify(repository),
       checkSpotifyConnection: CheckSpotifyConnection(repository),
       getSpotifyProfile: GetSpotifyProfile(repository),
+      getPlaylists: GetPlaylists(repository),
       disconnectSpotify: DisconnectSpotify(repository),
     );
   });
@@ -63,6 +70,12 @@ void main() {
         status: SpotifyStatus.connected,
         isConnected: true,
         profile: tProfile,
+      ),
+      const SpotifyState(
+        status: SpotifyStatus.connected,
+        isConnected: true,
+        profile: tProfile,
+        playlists: [],
       ),
     ],
     verify: (_) {
@@ -133,6 +146,12 @@ void main() {
         status: SpotifyStatus.connected,
         isConnected: true,
         profile: tProfile,
+      ),
+      const SpotifyState(
+        status: SpotifyStatus.connected,
+        isConnected: true,
+        profile: tProfile,
+        playlists: [],
       ),
     ],
     verify: (_) {

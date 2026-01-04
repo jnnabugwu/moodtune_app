@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/features/spotify/domain/entities/entities.dart';
 import 'package:moodtune_app/features/spotify/presentation/bloc/spotify_bloc.dart';
 import 'package:moodtune_app/features/spotify/presentation/widgets/widgets.dart';
@@ -12,6 +14,7 @@ class SpotifyProfilePage extends StatelessWidget {
     return BlocBuilder<SpotifyBloc, SpotifyState>(
       builder: (context, state) {
         final profile = state.profile;
+        final playlists = state.playlists ?? [];
         if (profile == null) {
           return const CupertinoPageScaffold(
             child: Center(child: CupertinoActivityIndicator()),
@@ -40,17 +43,34 @@ class SpotifyProfilePage extends StatelessWidget {
                   const SizedBox(height: 24),
                   _CountsRow(profile: profile),
                   const SizedBox(height: 32),
-                  Text(
-                    'No recent activity.',
-                    style: CupertinoTheme.of(
-                      context,
-                    ).textTheme.textStyle.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Check out some new music now.',
-                    style: CupertinoTheme.of(context).textTheme.textStyle,
-                  ),
+                  if (playlists.isNotEmpty) ...[
+                    Text(
+                      'Playlists',
+                      style: CupertinoTheme.of(context).textTheme.textStyle
+                          .copyWith(fontWeight: FontWeight.w700, fontSize: 18),
+                    ),
+                    const SizedBox(height: 12),
+                    Column(
+                      children: playlists
+                          .take(3)
+                          .map(
+                            (p) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: PlaylistCard(playlist: p),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        onPressed: () => context.go(RouteNames.playlists),
+                        child: const Text('See all playlists'),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                 ],
               ),
             ),
