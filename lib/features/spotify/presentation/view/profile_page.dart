@@ -27,7 +27,7 @@ class SpotifyProfilePage extends StatelessWidget {
               onPressed: () => context.read<SpotifyBloc>().add(
                 const SpotifyDisconnectRequested(),
               ),
-              child: const Icon(CupertinoIcons.square_arrow_left),
+              child: const Icon(CupertinoIcons.power),
             ),
           ),
           child: SafeArea(

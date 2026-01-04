@@ -24,6 +24,10 @@ class AppRouter {
         builder: (context, state) => const AuthGatePage(),
       ),
       GoRoute(
+        path: RouteNames.callback,
+        builder: (context, state) => const AuthGatePage(),
+      ),
+      GoRoute(
         path: RouteNames.notFound,
         builder: (context, state) => const NotFoundPage(),
       ),
