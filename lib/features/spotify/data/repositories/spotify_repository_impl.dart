@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:moodtune_app/core/error/error.dart';
+import 'package:moodtune_app/core/network/auth_interceptor.dart';
 import 'package:moodtune_app/features/spotify/data/models/models.dart';
 import 'package:moodtune_app/features/spotify/domain/entities/entities.dart';
 import 'package:moodtune_app/features/spotify/domain/repositories/spotify_repository.dart';
@@ -23,7 +24,7 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
                connectTimeout: const Duration(seconds: 10),
                receiveTimeout: const Duration(seconds: 10),
              ),
-           );
+           )..interceptors.add(AuthInterceptor());
 
   static const defaultBaseUrl = 'http://127.0.0.1:8000/api/v1';
   final Dio _dio;
