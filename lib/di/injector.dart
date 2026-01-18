@@ -1,4 +1,6 @@
 import 'package:get_it/get_it.dart';
+import 'package:moodtune_app/features/analysis/data/data.dart';
+import 'package:moodtune_app/features/analysis/domain/repositories/analysis_repository.dart';
 import 'package:moodtune_app/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:moodtune_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:moodtune_app/features/spotify/data/data.dart';
@@ -20,6 +22,14 @@ Future<void> configureDependencies({
       () => SpotifyRepositoryImpl(
         baseUrl: apiBaseUrl,
         tokenProvider: tokenProvider,
+      ),
+    )
+    ..registerLazySingleton<AnalysisRepository>(
+      () => AnalysisRepositoryImpl(
+        remoteDataSource: AnalysisRemoteDataSource(
+          baseUrl: apiBaseUrl,
+          tokenProvider: tokenProvider,
+        ),
       ),
     )
     // Use cases

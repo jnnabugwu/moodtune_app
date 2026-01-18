@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moodtune_app/core/routing/app_router.dart';
 import 'package:moodtune_app/di/injector.dart';
+import 'package:moodtune_app/features/analysis/domain/repositories/analysis_repository.dart';
+import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:moodtune_app/features/spotify/domain/repositories/spotify_repository.dart';
 import 'package:moodtune_app/features/spotify/domain/usecases/usecases.dart';
@@ -15,8 +17,15 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider.value(
-      value: getIt<SpotifyRepository>(),
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<SpotifyRepository>.value(
+          value: getIt<SpotifyRepository>(),
+        ),
+        RepositoryProvider<AnalysisRepository>.value(
+          value: getIt<AnalysisRepository>(),
+        ),
+      ],
       child: MultiBlocProvider(
         providers: [
           BlocProvider(
@@ -30,6 +39,11 @@ class App extends StatelessWidget {
               getSpotifyProfile: getIt<GetSpotifyProfile>(),
               getPlaylists: getIt<GetPlaylists>(),
               disconnectSpotify: getIt<DisconnectSpotify>(),
+            ),
+          ),
+          BlocProvider(
+            create: (context) => AnalysisBloc(
+              repository: context.read<AnalysisRepository>(),
             ),
           ),
         ],

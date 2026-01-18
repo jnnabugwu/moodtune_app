@@ -2,15 +2,32 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
+import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
+import 'package:moodtune_app/features/analysis/presentation/widgets/analysis_card.dart';
+import 'package:moodtune_app/features/analysis/presentation/widgets/analysis_disclaimer_sheet.dart';
 import 'package:moodtune_app/features/spotify/domain/entities/entities.dart';
 import 'package:moodtune_app/features/spotify/presentation/bloc/spotify_bloc.dart';
 import 'package:moodtune_app/features/spotify/presentation/widgets/widgets.dart';
 
-class SpotifyProfilePage extends StatelessWidget {
+class SpotifyProfilePage extends StatefulWidget {
   const SpotifyProfilePage({super.key});
 
   @override
+  State<SpotifyProfilePage> createState() => _SpotifyProfilePageState();
+}
+
+class _SpotifyProfilePageState extends State<SpotifyProfilePage> {
+  bool _requestedHistory = false;
+
+  @override
   Widget build(BuildContext context) {
+    if (!_requestedHistory) {
+      _requestedHistory = true;
+      context.read<AnalysisBloc>().add(
+        const AnalysisHistoryRequested(limit: 3, offset: 0),
+      );
+    }
+
     return BlocBuilder<SpotifyBloc, SpotifyState>(
       builder: (context, state) {
         final profile = state.profile;
@@ -43,6 +60,8 @@ class SpotifyProfilePage extends StatelessWidget {
                   const SizedBox(height: 24),
                   _CountsRow(profile: profile),
                   const SizedBox(height: 32),
+                  _RecentAnalyses(),
+                  const SizedBox(height: 16),
                   if (playlists.isNotEmpty) ...[
                     Text(
                       'Playlists',
@@ -56,7 +75,21 @@ class SpotifyProfilePage extends StatelessWidget {
                           .map(
                             (p) => Padding(
                               padding: const EdgeInsets.only(bottom: 12),
-                              child: PlaylistCard(playlist: p),
+                              child: PlaylistCard(
+                                playlist: p,
+                                onTap: () async {
+                                  final confirmed =
+                                      await showAnalysisDisclaimerSheet(
+                                        context,
+                                      );
+                                  if (confirmed == true) {
+                                    context.push(
+                                      RouteNames.analyzingFor(p.id),
+                                      extra: p,
+                                    );
+                                  }
+                                },
+                              ),
                             ),
                           )
                           .toList(),
@@ -124,6 +157,49 @@ class _StatCard extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _RecentAnalyses extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
+    return BlocBuilder<AnalysisBloc, AnalysisState>(
+      builder: (context, state) {
+        if (state.historyLoading) {
+          return const Center(child: CupertinoActivityIndicator());
+        }
+        if (state.history.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Recent Analyses',
+              style: theme.textTheme.textStyle.copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...state.history.map(
+              (analysis) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: AnalysisCard(
+                  analysis: analysis,
+                  onTap: () => context.go(
+                    RouteNames.analysisResultFor(analysis.id),
+                    extra: analysis,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

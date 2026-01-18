@@ -18,13 +18,14 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
   }) : _tokenProvider = tokenProvider ?? _noToken,
        _dio =
            dio ??
-           Dio(
-             BaseOptions(
-               baseUrl: baseUrl,
-               connectTimeout: const Duration(seconds: 10),
-               receiveTimeout: const Duration(seconds: 10),
-             ),
-           )..interceptors.add(AuthInterceptor());
+                 Dio(
+                   BaseOptions(
+                     baseUrl: baseUrl,
+                     connectTimeout: const Duration(seconds: 10),
+                     receiveTimeout: const Duration(seconds: 10),
+                   ),
+                 )
+             ..interceptors.add(AuthInterceptor());
 
   static const defaultBaseUrl = 'http://127.0.0.1:8000/api/v1';
   final Dio _dio;
@@ -173,11 +174,14 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
   }
 
   Failure _mapDioError(DioException e) {
-    final message = e.response?.data is Map
-        ? (e.response?.data['detail'] as String?) ??
-              (e.response?.data['message'] as String?) ??
-              e.message
-        : e.message;
+    String? message;
+    final data = e.response?.data;
+    if (data is Map) {
+      final detail = data['detail'];
+      final msg = data['message'];
+      message = (detail ?? msg)?.toString();
+    }
+    message ??= e.message;
     if (e.type == DioExceptionType.connectionError ||
         e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout) {
