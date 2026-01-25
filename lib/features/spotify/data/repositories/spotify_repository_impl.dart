@@ -1,11 +1,14 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:moodtune_app/core/error/error.dart';
+import 'package:moodtune_app/core/logging/talker.dart';
 import 'package:moodtune_app/core/network/auth_interceptor.dart';
 import 'package:moodtune_app/features/spotify/data/models/models.dart';
 import 'package:moodtune_app/features/spotify/domain/entities/entities.dart';
 import 'package:moodtune_app/features/spotify/domain/repositories/spotify_repository.dart';
 import 'package:moodtune_app/utils/typedef.dart';
+import 'package:sentry_dio/sentry_dio.dart';
+import 'package:talker_dio_logger/talker_dio_logger.dart';
 
 typedef TokenProvider = Future<String?> Function();
 
@@ -18,14 +21,16 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
   }) : _tokenProvider = tokenProvider ?? _noToken,
        _dio =
            dio ??
-                 Dio(
-                   BaseOptions(
-                     baseUrl: baseUrl,
-                     connectTimeout: const Duration(seconds: 10),
-                     receiveTimeout: const Duration(seconds: 10),
-                   ),
+           Dio(
+             BaseOptions(
+               baseUrl: baseUrl,
+               connectTimeout: const Duration(seconds: 10),
+               receiveTimeout: const Duration(seconds: 10),
+             ),
                  )
-             ..interceptors.add(AuthInterceptor());
+            ..interceptors.add(AuthInterceptor())
+            ..interceptors.add(TalkerDioLogger(talker: talker))
+            ..addSentry();
 
   static const defaultBaseUrl = 'http://127.0.0.1:8000/api/v1';
   final Dio _dio;
@@ -173,6 +178,34 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
     }
   }
 
+  @override
+  ResultFuture<List<SpotifyTrack>> getPlaylistTracks({
+    required String playlistId,
+    int limit = 50,
+  }) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/song/playlist/$playlistId/tracks',
+        queryParameters: {
+          'limit': limit,
+        },
+        options: await _options(),
+      );
+      final data = response.data ?? <String, dynamic>{};
+      final items = (data['tracks'] as List<dynamic>? ?? [])
+          .cast<Map<String, dynamic>>();
+      final tracks = items
+          .map(SpotifyTrackModel.fromJson)
+          .map((m) => m.toDomain())
+          .toList();
+      return Right(tracks);
+    } on DioException catch (e) {
+      return Left(_mapDioError(e));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
   Failure _mapDioError(DioException e) {
     String? message;
     final data = e.response?.data;
@@ -181,7 +214,14 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
       final msg = data['message'];
       message = (detail ?? msg)?.toString();
     }
-    message ??= e.message;
+    // If no detail in response, use status code message
+    if (message == null || message.isEmpty) {
+      if (e.response != null) {
+        message = '${e.response!.statusCode} ${e.response!.statusMessage}';
+      } else {
+        message = e.message;
+      }
+    }
     if (e.type == DioExceptionType.connectionError ||
         e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout) {

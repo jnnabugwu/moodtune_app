@@ -39,6 +39,7 @@ class App extends StatelessWidget {
               getSpotifyProfile: getIt<GetSpotifyProfile>(),
               getPlaylists: getIt<GetPlaylists>(),
               disconnectSpotify: getIt<DisconnectSpotify>(),
+              repository: getIt<SpotifyRepository>(),
             ),
           ),
           BlocProvider(

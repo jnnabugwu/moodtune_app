@@ -28,7 +28,6 @@ class AudioFeaturesSummaryModel {
   final double acousticness;
   final double instrumentalness;
 
-
   AudioFeaturesSummary toDomain() {
     return AudioFeaturesSummary(
       valence: valence,

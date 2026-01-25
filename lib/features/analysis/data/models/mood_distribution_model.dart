@@ -9,7 +9,6 @@ class MoodDistributionModel {
     required this.danceable,
   });
 
-
   factory MoodDistributionModel.fromJson(Map<String, dynamic> json) {
     return MoodDistributionModel(
       happy: (json['happy'] as num?)?.toDouble() ?? 0,
@@ -19,7 +18,7 @@ class MoodDistributionModel {
       danceable: (json['danceable'] as num?)?.toDouble() ?? 0,
     );
   }
-  
+
   final double happy;
   final double sad;
   final double energetic;

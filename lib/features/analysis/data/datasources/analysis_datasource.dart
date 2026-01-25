@@ -1,5 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:moodtune_app/core/logging/talker.dart';
 import 'package:moodtune_app/core/network/auth_interceptor.dart';
+import 'package:sentry_dio/sentry_dio.dart';
+import 'package:talker_dio_logger/talker_dio_logger.dart';
 
 typedef AnalysisTokenProvider = Future<String?> Function();
 
@@ -18,7 +21,9 @@ class AnalysisRemoteDataSource {
                      receiveTimeout: const Duration(seconds: 10),
                    ),
                  )
-             ..interceptors.add(AuthInterceptor());
+            ..interceptors.add(AuthInterceptor())
+            ..interceptors.add(TalkerDioLogger(talker: talker))
+            ..addSentry();
 
   static const defaultBaseUrl = 'http://127.0.0.1:8000/api/v1';
   final Dio _dio;
@@ -71,6 +76,14 @@ class AnalysisRemoteDataSource {
   Future<Map<String, dynamic>> getAnalysisById(String analysisId) async {
     final response = await _dio.get<Map<String, dynamic>>(
       '/analysis/$analysisId',
+      options: await _options(),
+    );
+    return response.data ?? <String, dynamic>{};
+  }
+
+  Future<Map<String, dynamic>> analyzeSong(String trackId) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/song/analyze/$trackId',
       options: await _options(),
     );
     return response.data ?? <String, dynamic>{};

@@ -13,6 +13,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
     on<AnalyzePlaylistRequested>(_onAnalyzeRequested);
     on<AnalysisHistoryRequested>(_onHistoryRequested);
     on<AnalysisByIdRequested>(_onAnalysisByIdRequested);
+    on<AnalyzeSongRequested>(_onAnalyzeSongRequested);
     on<AnalysisClearErrorRequested>(_onClearError);
   }
 
@@ -106,6 +107,35 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
         state.copyWith(
           status: AnalysisStatus.success,
           currentAnalysis: analysis,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _onAnalyzeSongRequested(
+    AnalyzeSongRequested event,
+    Emitter<AnalysisState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        status: AnalysisStatus.analyzing,
+        error: null,
+      ),
+    );
+
+    final result = await _repository.analyzeSong(event.trackId);
+
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          status: AnalysisStatus.error,
+          error: failure.message,
+        ),
+      ),
+      (analysis) => emit(
+        state.copyWith(
+          status: AnalysisStatus.success,
+          currentSongAnalysis: analysis,
         ),
       ),
     );

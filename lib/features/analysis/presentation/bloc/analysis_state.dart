@@ -7,6 +7,7 @@ class AnalysisState extends Equatable {
     this.status = AnalysisStatus.initial,
     this.history = const [],
     this.currentAnalysis,
+    this.currentSongAnalysis,
     this.error,
     this.historyLoading = false,
     this.historyError,
@@ -15,6 +16,7 @@ class AnalysisState extends Equatable {
   final AnalysisStatus status;
   final List<PlaylistAnalysis> history;
   final PlaylistAnalysis? currentAnalysis;
+  final SongAnalysisResult? currentSongAnalysis;
   final String? error;
   final bool historyLoading;
   final String? historyError;
@@ -23,6 +25,7 @@ class AnalysisState extends Equatable {
     AnalysisStatus? status,
     List<PlaylistAnalysis>? history,
     PlaylistAnalysis? currentAnalysis,
+    SongAnalysisResult? currentSongAnalysis,
     String? error,
     bool? historyLoading,
     String? historyError,
@@ -31,6 +34,7 @@ class AnalysisState extends Equatable {
       status: status ?? this.status,
       history: history ?? this.history,
       currentAnalysis: currentAnalysis ?? this.currentAnalysis,
+      currentSongAnalysis: currentSongAnalysis ?? this.currentSongAnalysis,
       error: error,
       historyLoading: historyLoading ?? this.historyLoading,
       historyError: historyError,
@@ -42,6 +46,7 @@ class AnalysisState extends Equatable {
     status,
     history,
     currentAnalysis,
+    currentSongAnalysis,
     error,
     historyLoading,
     historyError,

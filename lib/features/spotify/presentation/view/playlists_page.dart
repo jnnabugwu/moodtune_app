@@ -65,16 +65,11 @@ class _SpotifyPlaylistsPageState extends State<SpotifyPlaylistsPage> {
                 final playlist = playlists[index];
                 return PlaylistCard(
                   playlist: playlist,
-                  onTap: () async {
-                    final confirmed = await showAnalysisDisclaimerSheet(
-                      context,
+                  onTap: () {
+                    context.push(
+                      RouteNames.playlistTracksFor(playlist.id),
+                      extra: playlist,
                     );
-                    if (confirmed == true) {
-                      context.push(
-                        RouteNames.analyzingFor(playlist.id),
-                        extra: playlist,
-                      );
-                    }
                   },
                 );
               },

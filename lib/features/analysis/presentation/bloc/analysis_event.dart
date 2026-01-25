@@ -45,3 +45,12 @@ class AnalysisByIdRequested extends AnalysisEvent {
 class AnalysisClearErrorRequested extends AnalysisEvent {
   const AnalysisClearErrorRequested();
 }
+
+class AnalyzeSongRequested extends AnalysisEvent {
+  const AnalyzeSongRequested(this.trackId);
+
+  final String trackId;
+
+  @override
+  List<Object?> get props => [trackId];
+}

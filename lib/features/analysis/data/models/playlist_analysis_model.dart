@@ -32,7 +32,7 @@ class PlaylistAnalysisModel {
   final MoodResultModel moodResult;
   final DateTime createdAt;
   final String? userId;
-  
+
   PlaylistAnalysis toDomain() {
     return PlaylistAnalysis(
       id: id,

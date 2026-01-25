@@ -6,7 +6,8 @@ import 'package:moodtune_app/features/analysis/presentation/view/view.dart';
 import 'package:moodtune_app/features/auth/presentation/view/auth_gate_page.dart';
 import 'package:moodtune_app/features/auth/presentation/view/auth_page.dart';
 import 'package:moodtune_app/features/auth/presentation/view/signup_page.dart';
-import 'package:moodtune_app/features/spotify/domain/entities/spotify_playlist.dart';
+import 'package:moodtune_app/features/spotify/domain/entities/entities.dart';
+import 'package:moodtune_app/features/spotify/presentation/view/playlist_tracks_page.dart';
 import 'package:moodtune_app/features/spotify/presentation/view/playlists_page.dart';
 
 class AppRouter {
@@ -36,6 +37,16 @@ class AppRouter {
         builder: (context, state) => const SpotifyPlaylistsPage(),
       ),
       GoRoute(
+        path: RouteNames.playlistTracks,
+        builder: (context, state) {
+          final playlist = state.extra as SpotifyPlaylist?;
+          if (playlist == null) {
+            return const NotFoundPage();
+          }
+          return PlaylistTracksPage(playlist: playlist);
+        },
+      ),
+      GoRoute(
         path: RouteNames.analyzing,
         builder: (context, state) {
           final playlistId = state.pathParameters['playlistId']!;
@@ -56,6 +67,27 @@ class AppRouter {
             analysisId: analysisId,
             initialAnalysis: initialAnalysis,
           );
+        },
+      ),
+      GoRoute(
+        path: RouteNames.songAnalyzing,
+        builder: (context, state) {
+          final trackId = state.pathParameters['trackId']!;
+          final track = state.extra as SpotifyTrack?;
+          return SongAnalyzingPage(
+            trackId: trackId,
+            track: track,
+          );
+        },
+      ),
+      GoRoute(
+        path: RouteNames.songResult,
+        builder: (context, state) {
+          final analysis = state.extra as SongAnalysisResult?;
+          if (analysis == null) {
+            return const NotFoundPage();
+          }
+          return SongResultPage(analysis: analysis);
         },
       ),
       GoRoute(

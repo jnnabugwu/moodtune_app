@@ -48,8 +48,6 @@ class MoodResultModel {
   final List<TrackAnalysisModel> topTracks;
   final int trackCount;
 
-
-
   MoodResult toDomain() {
     return MoodResult(
       primaryMood: primaryMood,

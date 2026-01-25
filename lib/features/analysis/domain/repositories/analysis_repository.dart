@@ -13,4 +13,6 @@ abstract class AnalysisRepository {
   });
 
   ResultFuture<PlaylistAnalysis> getAnalysisById(String analysisId);
+
+  ResultFuture<SongAnalysisResult> analyzeSong(String trackId);
 }

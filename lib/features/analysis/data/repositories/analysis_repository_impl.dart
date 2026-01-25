@@ -1,6 +1,5 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:moodtune_app/core/error/error.dart';
 import 'package:moodtune_app/features/analysis/data/datasources/analysis_datasource.dart';
 import 'package:moodtune_app/features/analysis/data/models/models.dart';
@@ -27,7 +26,6 @@ class AnalysisRepositoryImpl implements AnalysisRepository {
     } on DioException catch (e) {
       return Left(_mapDioError(e));
     } catch (e) {
-     
       return const Left(ServerFailure('Unexpected error occurred'));
     }
   }
@@ -56,6 +54,19 @@ class AnalysisRepositoryImpl implements AnalysisRepository {
     try {
       final json = await _remote.getAnalysisById(analysisId);
       final model = PlaylistAnalysisModel.fromJson(json);
+      return Right(model.toDomain());
+    } on DioException catch (e) {
+      return Left(_mapDioError(e));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  ResultFuture<SongAnalysisResult> analyzeSong(String trackId) async {
+    try {
+      final json = await _remote.analyzeSong(trackId);
+      final model = SongAnalysisResultModel.fromJson(json);
       return Right(model.toDomain());
     } on DioException catch (e) {
       return Left(_mapDioError(e));

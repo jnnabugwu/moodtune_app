@@ -37,4 +37,12 @@ abstract class SpotifyRepository {
   ///
   /// Returns void on success or [Failure] on error
   ResultFuture<void> disconnect();
+
+  /// Gets tracks from a specific playlist
+  ///
+  /// Returns a list of tracks on success or [Failure] on error
+  ResultFuture<List<SpotifyTrack>> getPlaylistTracks({
+    required String playlistId,
+    int limit = 50,
+  });
 }

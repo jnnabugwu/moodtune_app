@@ -35,6 +35,7 @@ void main() {
     ).thenAnswer((_) async => const Right(<SpotifyPlaylist>[]));
 
     bloc = SpotifyBloc(
+      repository: repository,
       getAuthorizeUrl: GetAuthorizeUrl(repository),
       connectSpotify: ConnectSpotify(repository),
       checkSpotifyConnection: CheckSpotifyConnection(repository),
