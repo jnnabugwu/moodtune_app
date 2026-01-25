@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
+import 'package:moodtune_app/features/analysis/presentation/widgets/analysis_disclaimer_sheet.dart';
 import 'package:moodtune_app/features/spotify/presentation/bloc/spotify_bloc.dart';
 import 'package:moodtune_app/features/spotify/presentation/widgets/widgets.dart';
 
@@ -62,7 +63,15 @@ class _SpotifyPlaylistsPageState extends State<SpotifyPlaylistsPage> {
               padding: const EdgeInsets.all(16),
               itemBuilder: (context, index) {
                 final playlist = playlists[index];
-                return PlaylistCard(playlist: playlist);
+                return PlaylistCard(
+                  playlist: playlist,
+                  onTap: () {
+                    context.push(
+                      RouteNames.playlistTracksFor(playlist.id),
+                      extra: playlist,
+                    );
+                  },
+                );
               },
               separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemCount: playlists.length,

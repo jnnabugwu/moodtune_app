@@ -4,6 +4,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moodtune_app/features/spotify/domain/entities/entities.dart';
+import 'package:moodtune_app/features/spotify/domain/repositories/spotify_repository.dart';
 import 'package:moodtune_app/features/spotify/domain/usecases/usecases.dart';
 
 part 'spotify_event.dart';
@@ -17,12 +18,14 @@ class SpotifyBloc extends Bloc<SpotifyEvent, SpotifyState> {
     required GetSpotifyProfile getSpotifyProfile,
     required DisconnectSpotify disconnectSpotify,
     required GetPlaylists getPlaylists,
+    required SpotifyRepository repository,
   }) : _getAuthorizeUrl = getAuthorizeUrl,
        _connectSpotify = connectSpotify,
        _checkSpotifyConnection = checkSpotifyConnection,
        _getSpotifyProfile = getSpotifyProfile,
        _disconnectSpotify = disconnectSpotify,
        _getPlaylists = getPlaylists,
+       _repository = repository,
        super(const SpotifyState()) {
     on<SpotifyStarted>(_onStarted);
     on<SpotifyAuthorizeRequested>(_onAuthorizeRequested);
@@ -31,6 +34,7 @@ class SpotifyBloc extends Bloc<SpotifyEvent, SpotifyState> {
     on<SpotifyDisconnectRequested>(_onDisconnectRequested);
     on<SpotifyClearErrorRequested>(_onClearErrorRequested);
     on<SpotifyPlaylistsRequested>(_onPlaylistsRequested);
+    on<SpotifyPlaylistTracksRequested>(_onPlaylistTracksRequested);
   }
 
   final GetAuthorizeUrl _getAuthorizeUrl;
@@ -39,6 +43,7 @@ class SpotifyBloc extends Bloc<SpotifyEvent, SpotifyState> {
   final GetSpotifyProfile _getSpotifyProfile;
   final DisconnectSpotify _disconnectSpotify;
   final GetPlaylists _getPlaylists;
+  final SpotifyRepository _repository;
 
   Future<void> _onStarted(
     SpotifyStarted event,
@@ -218,6 +223,38 @@ class SpotifyBloc extends Bloc<SpotifyEvent, SpotifyState> {
       (playlists) => emit(
         state.copyWith(
           playlists: playlists,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _onPlaylistTracksRequested(
+    SpotifyPlaylistTracksRequested event,
+    Emitter<SpotifyState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        playlistTracksLoading: true,
+        playlistTracksError: null,
+      ),
+    );
+
+    final result = await _repository.getPlaylistTracks(
+      playlistId: event.playlistId,
+      limit: event.limit,
+    );
+
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          playlistTracksLoading: false,
+          playlistTracksError: failure.message,
+        ),
+      ),
+      (tracks) => emit(
+        state.copyWith(
+          playlistTracksLoading: false,
+          playlistTracks: tracks,
         ),
       ),
     );

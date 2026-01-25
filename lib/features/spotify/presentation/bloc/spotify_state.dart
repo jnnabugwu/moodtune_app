@@ -19,6 +19,9 @@ class SpotifyState extends Equatable {
     this.error,
     this.isConnected = false,
     this.playlists,
+    this.playlistTracks,
+    this.playlistTracksLoading = false,
+    this.playlistTracksError,
   });
 
   final SpotifyStatus status;
@@ -27,6 +30,9 @@ class SpotifyState extends Equatable {
   final String? error;
   final bool isConnected;
   final List<SpotifyPlaylist>? playlists;
+  final List<SpotifyTrack>? playlistTracks;
+  final bool playlistTracksLoading;
+  final String? playlistTracksError;
 
   SpotifyState copyWith({
     SpotifyStatus? status,
@@ -35,6 +41,9 @@ class SpotifyState extends Equatable {
     String? error,
     bool? isConnected,
     List<SpotifyPlaylist>? playlists,
+    List<SpotifyTrack>? playlistTracks,
+    bool? playlistTracksLoading,
+    String? playlistTracksError,
   }) {
     return SpotifyState(
       status: status ?? this.status,
@@ -43,6 +52,10 @@ class SpotifyState extends Equatable {
       error: error,
       isConnected: isConnected ?? this.isConnected,
       playlists: playlists ?? this.playlists,
+      playlistTracks: playlistTracks ?? this.playlistTracks,
+      playlistTracksLoading: 
+      playlistTracksLoading ?? this.playlistTracksLoading,
+      playlistTracksError: playlistTracksError,
     );
   }
 
@@ -54,5 +67,8 @@ class SpotifyState extends Equatable {
     error,
     isConnected,
     playlists,
+    playlistTracks,
+    playlistTracksLoading,
+    playlistTracksError,
   ];
 }

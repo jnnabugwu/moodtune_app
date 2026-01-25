@@ -7,6 +7,10 @@ environment:
   sdk: ^3.8.0
 
 dependencies:
+  sentry_dio: ^9.10.0
+  sentry_flutter: ^9.10.0
+  talker_flutter: ^4.1.0
+  talker_dio_logger: ^4.1.0
   app_links: ^6.2.0
   bloc: ^9.0.0
   cupertino_icons: ^1.0.8  
@@ -26,6 +30,7 @@ dependencies:
   url_launcher: ^6.2.2
 
 dev_dependencies:
+  sentry_dart_plugin: ^3.2.1
   bloc_test: ^10.0.0
   flutter_test:
     sdk: flutter
@@ -35,3 +40,9 @@ dev_dependencies:
 flutter:
   generate: true
   uses-material-design: true
+
+sentry:
+  upload_debug_symbols: true
+  upload_source_maps: true
+  project: moodtune-app
+  org: jordan-nnabugwu

@@ -4,47 +4,63 @@ import 'package:moodtune_app/features/spotify/domain/entities/spotify_playlist.d
 class PlaylistCard extends StatelessWidget {
   const PlaylistCard({
     required this.playlist,
+    this.onTap,
     super.key,
   });
 
   final SpotifyPlaylist playlist;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = CupertinoTheme.of(context);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        _Artwork(imageUrl: playlist.imageUrl),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                playlist.name,
-                style: theme.textTheme.textStyle.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (playlist.ownerDisplayName != null)
+    final subtitleParts = <String>[];
+    if (playlist.ownerDisplayName != null) {
+      subtitleParts.add(playlist.ownerDisplayName!);
+    }
+    if (playlist.tracksCount != null) {
+      subtitleParts.add('${playlist.tracksCount} songs');
+    }
+    final subtitleText = subtitleParts.isNotEmpty
+        ? subtitleParts.join(' · ')
+        : null;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          _Artwork(imageUrl: playlist.imageUrl),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  playlist.ownerDisplayName!,
+                  playlist.name,
                   style: theme.textTheme.textStyle.copyWith(
-                    color: theme.textTheme.textStyle.color?.withValues(
-                      alpha: 0.7,
-                    ),
-                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-            ],
+                if (subtitleText != null)
+                  Text(
+                    subtitleText,
+                    style: theme.textTheme.textStyle.copyWith(
+                      color: theme.textTheme.textStyle.color?.withValues(
+                        alpha: 0.7,
+                      ),
+                      fontSize: 13,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

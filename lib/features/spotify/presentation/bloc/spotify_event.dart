@@ -45,3 +45,16 @@ class SpotifyDisconnectRequested extends SpotifyEvent {
 class SpotifyClearErrorRequested extends SpotifyEvent {
   const SpotifyClearErrorRequested();
 }
+
+class SpotifyPlaylistTracksRequested extends SpotifyEvent {
+  const SpotifyPlaylistTracksRequested({
+    required this.playlistId,
+    this.limit = 50,
+  });
+
+  final String playlistId;
+  final int limit;
+
+  @override
+  List<Object?> get props => [playlistId, limit];
+}

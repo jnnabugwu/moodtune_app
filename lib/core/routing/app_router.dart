@@ -1,9 +1,13 @@
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
+import 'package:moodtune_app/features/analysis/domain/entities/entities.dart';
+import 'package:moodtune_app/features/analysis/presentation/view/view.dart';
 import 'package:moodtune_app/features/auth/presentation/view/auth_gate_page.dart';
 import 'package:moodtune_app/features/auth/presentation/view/auth_page.dart';
 import 'package:moodtune_app/features/auth/presentation/view/signup_page.dart';
+import 'package:moodtune_app/features/spotify/domain/entities/entities.dart';
+import 'package:moodtune_app/features/spotify/presentation/view/playlist_tracks_page.dart';
 import 'package:moodtune_app/features/spotify/presentation/view/playlists_page.dart';
 
 class AppRouter {
@@ -31,6 +35,60 @@ class AppRouter {
       GoRoute(
         path: RouteNames.playlists,
         builder: (context, state) => const SpotifyPlaylistsPage(),
+      ),
+      GoRoute(
+        path: RouteNames.playlistTracks,
+        builder: (context, state) {
+          final playlist = state.extra as SpotifyPlaylist?;
+          if (playlist == null) {
+            return const NotFoundPage();
+          }
+          return PlaylistTracksPage(playlist: playlist);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.analyzing,
+        builder: (context, state) {
+          final playlistId = state.pathParameters['playlistId']!;
+          final playlist = state.extra as SpotifyPlaylist?;
+          return AnalyzingPage(
+            playlistId: playlistId,
+            playlistName: playlist?.name,
+            trackCount: playlist?.tracksCount,
+          );
+        },
+      ),
+      GoRoute(
+        path: RouteNames.analysisResult,
+        builder: (context, state) {
+          final analysisId = state.pathParameters['id']!;
+          final initialAnalysis = state.extra as PlaylistAnalysis?;
+          return AnalysisResultPage(
+            analysisId: analysisId,
+            initialAnalysis: initialAnalysis,
+          );
+        },
+      ),
+      GoRoute(
+        path: RouteNames.songAnalyzing,
+        builder: (context, state) {
+          final trackId = state.pathParameters['trackId']!;
+          final track = state.extra as SpotifyTrack?;
+          return SongAnalyzingPage(
+            trackId: trackId,
+            track: track,
+          );
+        },
+      ),
+      GoRoute(
+        path: RouteNames.songResult,
+        builder: (context, state) {
+          final analysis = state.extra as SongAnalysisResult?;
+          if (analysis == null) {
+            return const NotFoundPage();
+          }
+          return SongResultPage(analysis: analysis);
+        },
       ),
       GoRoute(
         path: RouteNames.notFound,
