@@ -12,7 +12,7 @@ dependencies:
   talker_flutter: ^4.1.0
   talker_dio_logger: ^4.1.0
   app_links: ^6.2.0
-  bloc: ^9.0.0
+  bloc: ^9.2.0
   cupertino_icons: ^1.0.8  
   dartz: ^0.10.1
   dio: ^5.3.2
