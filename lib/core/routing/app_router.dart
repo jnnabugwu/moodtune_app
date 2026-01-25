@@ -25,12 +25,20 @@ class AppRouter {
         builder: (context, state) => const SignupPage(),
       ),
       GoRoute(
+        path: RouteNames.guest,
+        builder: (context, state) => const GuestPage(),
+      ),
+      GoRoute(
         path: RouteNames.spotify,
         builder: (context, state) => const AuthGatePage(),
       ),
       GoRoute(
         path: RouteNames.callback,
         builder: (context, state) => const AuthGatePage(),
+      ),
+      GoRoute(
+        path: RouteNames.uploadMusic,
+        builder: (context, state) => const UploadMusicPage(),
       ),
       GoRoute(
         path: RouteNames.playlists,

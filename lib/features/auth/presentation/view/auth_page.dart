@@ -58,7 +58,7 @@ class _AuthPageState extends State<AuthPage> {
           );
         }
         if (state.status == AuthStatus.authenticated) {
-          context.go(RouteNames.spotify);
+          context.go(RouteNames.guest);
         }
       },
       child: BlocBuilder<AuthBloc, AuthState>(
@@ -119,6 +119,12 @@ class _AuthPageState extends State<AuthPage> {
                               color: CupertinoColors.white,
                             )
                           : const Text('Sign up'),
+                    ),
+                    const SizedBox(height: 12),
+                    CupertinoButton(
+                      onPressed:
+                          isLoading ? null : () => context.go(RouteNames.guest),
+                      child: const Text('Continue as guest'),
                     ),
                   ],
                 ),
