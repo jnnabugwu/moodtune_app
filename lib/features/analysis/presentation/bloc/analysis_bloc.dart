@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moodtune_app/features/analysis/domain/domain.dart';
@@ -15,6 +16,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
     on<AnalysisByIdRequested>(_onAnalysisByIdRequested);
     on<AnalyzeSongRequested>(_onAnalyzeSongRequested);
     on<AnalysisClearErrorRequested>(_onClearError);
+    on<AudioUploadRequested>(_onAudioUploadRequested);
   }
 
   final AnalysisRepository _repository;
@@ -141,10 +143,48 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
     );
   }
 
+  Future<void> _onAudioUploadRequested(
+    AudioUploadRequested event,
+    Emitter<AnalysisState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        uploadStatus: UploadStatus.uploading,
+        uploadError: null,
+        currentUploadAnalysis: null,
+      ),
+    );
+
+    final result = await _repository.analyzeUploadedAudio(
+      bytes: Uint8List.fromList(event.bytes),
+      filename: event.filename,
+      title: event.title,
+      artist: event.artist,
+      album: event.album,
+    );
+
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          uploadStatus: UploadStatus.error,
+          uploadError: failure.message,
+          currentUploadAnalysis: null,
+        ),
+      ),
+      (analysis) => emit(
+        state.copyWith(
+          uploadStatus: UploadStatus.success,
+          currentUploadAnalysis: analysis,
+          uploadError: null,
+        ),
+      ),
+    );
+  }
+
   void _onClearError(
     AnalysisClearErrorRequested event,
     Emitter<AnalysisState> emit,
   ) {
-    emit(state.copyWith(error: null, historyError: null));
+    emit(state.copyWith(error: null, historyError: null, uploadError: null));
   }
 }
