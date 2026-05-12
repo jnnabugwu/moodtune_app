@@ -1,0 +1,929 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>MoodTune — Wireframes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="styles.css" />
+<style>
+  /* Print-ready overrides — paginate flow rows */
+  html, body { overflow: visible; height: auto; background: #fff; }
+  #header, #legend, #controls, #arrows { display: none !important; }
+  #viewport { position: static; inset: auto; overflow: visible; background: #fff; cursor: default; }
+  #canvas {
+    position: static;
+    width: auto;
+    height: auto;
+    transform: none !important;
+    padding: 24px 24px 0;
+  }
+  .flow-divider { display: none; }
+
+  /* Treat each flow-row label as a page header */
+  .flow-row {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    display: block;
+    margin: 0 0 18px;
+    break-before: page;
+    break-after: avoid;
+    page-break-before: always;
+    page-break-after: avoid;
+  }
+  .flow-row:first-of-type { break-before: auto; page-break-before: auto; }
+  .flow-row .row-label {
+    background: #fff !important;
+    border: none !important;
+    padding: 0 !important;
+    font-size: 18px;
+    color: #2d2a26;
+    letter-spacing: 0.18em;
+  }
+
+  /* Inject a flex row container per page using ::after on row labels would be
+     fragile — instead we restyle .screen to flow inline-block, and use sibling
+     wrapper logic in JS to group rows. As a fallback, lay out all screens as a
+     responsive grid; the page-break attaches to each row label. */
+  .screen {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    display: inline-block;
+    vertical-align: top;
+    margin: 0 18px 24px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    width: 300px;
+  }
+  .screen .screen-sub { min-height: 28px; }
+  .phone { box-shadow: none; }
+  .callouts { max-width: 280px; }
+
+  @page {
+    size: A3 landscape;
+    margin: 12mm 12mm 14mm;
+  }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .screen { margin-right: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>MoodTune · Wireframes v1</h1>
+  <p>Low-fi greybox flow for the design-system pass. Guest path on top, authenticated path on the bottom.</p>
+  <div class="hint">Drag to pan · scroll to zoom · <kbd>F</kbd> fit · <kbd>0</kbd> reset</div>
+</div>
+
+<div id="legend">
+  <div class="legend-title">Legend</div>
+  <div class="legend-row"><span class="swatch sw-text"></span> text / copy bar</div>
+  <div class="legend-row"><span class="swatch sw-input"></span> input field</div>
+  <div class="legend-row"><span class="swatch sw-btn"></span> primary button</div>
+  <div class="legend-row"><span class="swatch sw-ghost"></span> secondary / ghost</div>
+  <div class="legend-row"><span class="swatch sw-card"></span> tappable card / drop zone</div>
+  <div class="legend-row"><span class="swatch sw-mood"></span> mood hero (hatch = palette)</div>
+  <div class="legend-row"><span class="swatch sw-error"></span> error state</div>
+</div>
+
+<div id="viewport">
+  <div id="canvas">
+    <svg id="arrows" viewBox="0 0 4400 5200" preserveAspectRatio="none">
+      <defs>
+        <marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#2d2a26"></path>
+        </marker>
+        <marker id="arrowhead-muted" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#8a8275"></path>
+        </marker>
+      </defs>
+      <!-- arrows injected at bottom of file via JS lines below -->
+    </svg>
+
+    <!-- ===== ROW LABELS ===== -->
+    <div class="flow-row" style="left:60px; top:80px;"><span class="row-label">A · Guest entry</span></div>
+    <div class="flow-row" style="left:60px; top:1010px;"><span class="row-label">B · Upload flow</span></div>
+    <div class="flow-row" style="left:60px; top:1940px;"><span class="row-label">C · Consent · Loading · Errors</span></div>
+    <div class="flow-row" style="left:60px; top:2870px;"><span class="row-label">D · Results — Guest (per mood)</span></div>
+    <div class="flow-row" style="left:60px; top:3800px;"><span class="row-label">E · Authenticated flow</span></div>
+
+    <div class="flow-divider" style="left:60px; top:920px; width:4280px;"></div>
+    <div class="flow-divider" style="left:60px; top:1850px; width:4280px;"></div>
+    <div class="flow-divider" style="left:60px; top:2780px; width:4280px;"></div>
+    <div class="flow-divider" style="left:60px; top:3710px; width:4280px;"></div>
+
+    <!-- ============================================================== -->
+    <!-- ROW A · GUEST ENTRY                                            -->
+    <!-- ============================================================== -->
+
+    <!-- 01 Landing (Guest) -->
+    <div class="screen" id="s-landing" style="left:120px; top:140px;">
+      <div class="screen-title"><span class="num">01</span> Landing <span class="tag">Guest</span></div>
+      <p class="screen-sub">First impression. One clear action.</p>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="status-bar"><span>9:41</span><span class="right"><span class="dot"></span><span class="dot"></span></span></div>
+        <div class="screen-content" style="justify-content:center;">
+          <div style="height:8px;"></div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:18px;">
+            <div class="bar h1" style="width:60%; height:18px;"></div>
+            <div class="card flat" style="width:160px; height:120px; padding:0; display:flex; align-items:center; justify-content:center;">
+              <div class="muted" style="font-size:10px;">hero graphic</div>
+            </div>
+            <div class="text-block" style="align-items:center; text-align:center;">
+              <div class="bar" style="height:12px; width:200px; background:#2d2a26;"></div>
+              <div class="bar" style="height:12px; width:170px; background:#2d2a26;"></div>
+            </div>
+            <div class="text-block" style="align-items:center; gap:3px;">
+              <div class="bar body" style="width:200px;"></div>
+              <div class="bar body" style="width:180px;"></div>
+              <div class="bar body" style="width:140px;"></div>
+            </div>
+          </div>
+          <div style="flex:1;"></div>
+          <div class="btn primary full">Try it — upload now</div>
+          <div style="text-align:center;"><div class="muted" style="font-size:10px; color:#3d362d; font-weight:600;">Sign in</div></div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+      <div class="callouts">
+        <span class="co-num">1</span><span class="co-text"><b>Wordmark</b> — display type, no logo lockup.</span>
+        <span class="co-num">2</span><span class="co-text"><b>Hero graphic</b> — abstract waveform / mood quadrants. Sets tone, reused on Results.</span>
+        <span class="co-num">3</span><span class="co-text"><b>Headline</b> "Drop a song. Find its mood." (2 lines).</span>
+        <span class="co-num">4</span><span class="co-text"><b>Primary CTA</b> — full-width, only exciting button on the screen.</span>
+        <span class="co-num">5</span><span class="co-text"><b>Sign in</b> — secondary text link. Doesn't compete.</span>
+      </div>
+    </div>
+
+    <!-- 02 Sign in / Sign up -->
+    <div class="screen" id="s-signin" style="left:560px; top:140px;">
+      <div class="screen-title"><span class="num">02</span> Sign in / Sign up <span class="tag">Guest + Auth</span></div>
+      <p class="screen-sub">One screen, toggled. Confirm-password row only in sign-up mode.</p>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="status-bar"><span>9:41</span><span class="right"><span class="dot"></span><span class="dot"></span></span></div>
+        <div class="screen-content">
+          <div class="nav-bar"><span class="back">‹  Back</span><span class="title"></span><span class="spacer"></span></div>
+          <div style="text-align:center; padding: 8px 0 4px;">
+            <div class="bar" style="height:14px; width:120px; background:#2d2a26; margin:0 auto;"></div>
+          </div>
+          <div class="toggle-tabs">
+            <div class="toggle active">Sign in</div>
+            <div class="toggle">Sign up</div>
+          </div>
+          <div class="text-block" style="gap:8px;">
+            <div class="muted">Email</div>
+            <div class="input">name@example.com</div>
+            <div class="muted">Password</div>
+            <div class="input">••••••••</div>
+          </div>
+          <div class="btn primary full">Sign in</div>
+          <div class="row" style="gap:8px; align-items:center;">
+            <div style="flex:1; height:1px; background:#e0d9c8;"></div>
+            <div class="muted" style="font-size:9px;">or</div>
+            <div style="flex:1; height:1px; background:#e0d9c8;"></div>
+          </div>
+          <div class="btn ghost full"><div class="icon-box sm" style="margin-right:6px;">G</div>Continue with Google</div>
+          <div class="btn ghost full" style="background:#2d2a26; color:#f5f1e7; border-color:#2d2a26;"><div class="icon-box sm" style="margin-right:6px; background:#2d2a26; color:#f5f1e7; border-color:#f5f1e7;"></div>Continue with Apple</div>
+          <div style="text-align:center; margin-top:4px;"><div class="muted" style="font-size:10px;">Forgot password?</div></div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+      <div class="callouts">
+        <span class="co-num">1</span><span class="co-text"><b>Toggle tabs</b> — instant mode swap, no nav.</span>
+        <span class="co-num">2</span><span class="co-text"><b>Confirm password</b> field animates in for Sign up.</span>
+        <span class="co-num">3</span><span class="co-text"><b>OAuth</b> — Google first, then Apple, per HIG.</span>
+        <span class="co-num">4</span><span class="co-text"><b>Forgot password</b> — Sign in mode only. <i>[VERIFY]</i></span>
+        <span class="co-num">5</span><span class="co-text">Success → Home (Auth). No interstitial.</span>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- ROW B · UPLOAD FLOW                                            -->
+    <!-- ============================================================== -->
+
+    <!-- 03 Upload — empty, metadata shown -->
+    <div class="screen" id="s-upload-a" style="left:120px; top:1070px;">
+      <div class="screen-title"><span class="num">03a</span> Upload — empty <span class="tag">variant: metadata shown</span></div>
+      <p class="screen-sub">Default. Optional metadata always visible.</p>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="status-bar"><span>9:41</span><span class="right"><span class="dot"></span><span class="dot"></span></span></div>
+        <div class="screen-content">
+          <div class="nav-bar"><span class="back">‹  Back</span><span class="title">Upload Music</span><span class="spacer"></span></div>
+          <div class="text-block">
+            <div class="bar h2" style="width:60%;"></div>
+            <div class="muted">MP3 · M4A · FLAC · WAV · OGG &nbsp; · &nbsp; Max 15 MB</div>
+          </div>
+          <div class="card" style="height:140px; border-style:dashed;">
+            <div class="icon-box lg dashed">♪</div>
+            <div class="bar body" style="width:60%; background:#6b6256;"></div>
+            <div class="muted">Tap to choose a file</div>
+          </div>
+          <div class="row" style="align-items:center; gap:8px;">
+            <div style="flex:1; height:1px; background:#e0d9c8;"></div>
+            <div class="section-label">Optional details</div>
+            <div style="flex:1; height:1px; background:#e0d9c8;"></div>
+          </div>
+          <div class="text-block" style="gap:6px;">
+            <div class="row"><div class="muted" style="width:50px;">Title</div><div class="input" style="flex:1;">optional</div></div>
+            <div class="row"><div class="muted" style="width:50px;">Artist</div><div class="input" style="flex:1;">optional</div></div>
+            <div class="row"><div class="muted" style="width:50px;">Album</div><div class="input" style="flex:1;">optional</div></div>
+          </div>
+          <div style="flex:1;"></div>
+          <div class="btn disabled full">Analyze song</div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+      <div class="callouts">
+        <span class="co-num">1</span><span class="co-text"><b>Drop zone</b> — dashed, ~30% of viewport. Tap → OS picker.</span>
+        <span class="co-num">2</span><span class="co-text"><b>Format hint</b> — dot-separated, muted single line.</span>
+        <span class="co-num">3</span><span class="co-text"><b>Metadata</b> — always visible (variant A).</span>
+        <span class="co-num">4</span><span class="co-text"><b>Analyze</b> disabled until file selected.</span>
+      </div>
+    </div>
+
+    <!-- 03b Upload — empty, metadata collapsed -->
+    <div class="screen" id="s-upload-b" style="left:560px; top:1070px;">
+      <div class="screen-title"><span class="num">03b</span> Upload — empty <span class="tag">variant: metadata collapsed</span></div>
+      <p class="screen-sub">Lighter visual weight. Tap to expand.</p>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="status-bar"><span>9:41</span><span class="right"><span class="dot"></span><span class="dot"></span></span></div>
+        <div class="screen-content">
+          <div class="nav-bar"><span class="back">‹  Back</span><span class="title">Upload Music</span><span class="spacer"></span></div>
+          <div class="text-block">
+            <div class="bar h2" style="width:60%;"></div>
+            <div class="muted">MP3 · M4A · FLAC · WAV · OGG &nbsp; · &nbsp; Max 15 MB</div>
+          </div>
+          <div class="card" style="height:170px; border-style:dashed;">
+            <div class="icon-box lg dashed">♪</div>
+            <div class="bar body" style="width:60%; background:#6b6256;"></div>
+            <div class="muted">Tap to choose a file</div>
+          </div>
+          <div class="row between" style="border:1px solid #e0d9c8; border-radius:8px; padding:10px 12px;">
+            <div class="row" style="gap:8px;"><div class="muted">＋</div><div class="muted" style="color:#3d362d; font-weight:600;">Add song details</div></div>
+            <div class="muted">▾</div>
+          </div>
+          <div class="muted" style="font-size:9px; color:#8a8275;">Optional — Title, Artist, Album</div>
+          <div style="flex:1;"></div>
+          <div class="btn disabled full">Analyze song</div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+      <div class="callouts">
+        <span class="co-num">1</span><span class="co-text"><b>Collapsed metadata</b> — tap row expands inline.</span>
+        <span class="co-num">2</span><span class="co-text">Trade: lighter screen vs. one extra tap.</span>
+        <span class="co-num">3</span><span class="co-text">Drop zone gets more vertical real estate.</span>
+      </div>
+    </div>
+
+    <!-- 04 Upload — file selected -->
+    <div class="screen" id="s-upload-selected" style="left:1000px; top:1070px;">
+      <div class="screen-title"><span class="num">04</span> Upload — file selected</div>
+      <p class="screen-sub">Card swaps to selected state; Analyze enables.</p>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="status-bar"><span>9:41</span><span class="right"><span class="dot"></span><span class="dot"></span></span></div>
+        <div class="screen-content">
+          <div class="nav-bar"><span class="back">‹  Back</span><span class="title">Upload Music</span><span class="spacer"></span></div>
+          <div class="bar h2" style="width:60%;"></div>
+          <div class="card selected" style="height:140px;">
+            <div class="row" style="align-items:center; gap:8px;">
+              <div class="icon-box success">✓</div>
+              <div class="icon-box dashed">♪</div>
+            </div>
+            <div class="bar" style="width:70%; height:10px; background:#2d2a26;"></div>
+            <div class="muted">8.4 MB</div>
+            <div class="muted" style="color:#4a7a4a; font-weight:600;">Change file</div>
+          </div>
+          <div class="row" style="align-items:center; gap:8px;">
+            <div style="flex:1; height:1px; background:#e0d9c8;"></div>
+            <div class="section-label">Optional details</div>
+            <div style="flex:1; height:1px; background:#e0d9c8;"></div>
+          </div>
+          <div class="text-block" style="gap:6px;">
+            <div class="row"><div class="muted" style="width:50px;">Title</div><div class="input" style="flex:1;">optional</div></div>
+            <div class="row"><div class="muted" style="width:50px;">Artist</div><div class="input" style="flex:1;">optional</div></div>
+            <div class="row"><div class="muted" style="width:50px;">Album</div><div class="input" style="flex:1;">optional</div></div>
+          </div>
+          <div style="flex:1;"></div>
+          <div class="btn primary full">Analyze song</div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+      <div class="callouts">
+        <span class="co-num">1</span><span class="co-text"><b>Card transition</b> — cross-fade, ~200ms. Checkmark pops in.</span>
+        <span class="co-num">2</span><span class="co-text"><b>Filename</b> truncated; size below.</span>
+        <span class="co-num">3</span><span class="co-text"><b>Change file</b> — small link, bottom-right.</span>
+        <span class="co-num">4</span><span class="co-text"><b>Analyze</b> enabled, slight scale pulse on enable.</span>
+      </div>
+    </div>
+
+    <!-- 05a Upload — error: too large -->
+    <div class="screen" id="s-upload-oversize" style="left:1440px; top:1070px;">
+      <div class="screen-title"><span class="num">05a</span> Upload — error <span class="tag">file too large</span></div>
+      <p class="screen-sub">Client-side, inline. No modal.</p>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="status-bar"><span>9:41</span><span class="right"><span class="dot"></span><span class="dot"></span></span></div>
+        <div class="screen-content">
+          <div class="nav-bar"><span class="back">‹  Back</span><span class="title">Upload Music</span><span class="spacer"></span></div>
+          <div class="bar h2" style="width:60%;"></div>
+          <div class="card error" style="height:140px;">
+            <div class="icon-box error">!</div>
+            <div class="bar" style="width:60%; height:10px; background:#7a2e2e;"></div>
+            <div class="muted" style="color:#7a2e2e;">18.2 MB</div>
+          </div>
+          <div class="banner error">
+            <div class="dot"></div>
+            <div>This file is too large. Max size is 15 MB.</div>
+          </div>
+          <div class="muted" style="color:#7a2e2e; font-weight:600;">Choose a different file</div>
+          <div class="row" style="align-items:center; gap:8px;">
+            <div style="flex:1; height:1px; background:#e0d9c8;"></div>
+            <div class="section-label">Optional details</div>
+            <div style="flex:1; height:1px; background:#e0d9c8;"></div>
+          </div>
+          <div class="text-block" style="gap:6px;">
+            <div class="input">Title</div>
+            <div class="input">Artist</div>
+          </div>
+          <div style="flex:1;"></div>
+          <div class="btn disabled full">Analyze song</div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+      <div class="callouts">
+        <span class="co-num">1</span><span class="co-text"><b>Card border</b> turns error-red.</span>
+        <span class="co-num">2</span><span class="co-text"><b>Inline banner</b> — no modal dialog.</span>
+        <span class="co-num">3</span><span class="co-text"><b>Link</b> relabeled to "Choose a different file."</span>
+        <span class="co-num">4</span><span class="co-text">Analyze stays disabled.</span>
+      </div>
+    </div>
+
+    <!-- 05b Upload — error: wrong format -->
+    <div class="screen" id="s-upload-format" style="left:1880px; top:1070px;">
+      <div class="screen-title"><span class="num">05b</span> Upload — error <span class="tag">wrong format</span></div>
+      <p class="screen-sub">Same template, different copy.</p>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="status-bar"><span>9:41</span><span class="right"><span class="dot"></span><span class="dot"></span></span></div>
+        <div class="screen-content">
+          <div class="nav-bar"><span class="back">‹  Back</span><span class="title">Upload Music</span><span class="spacer"></span></div>
+          <div class="bar h2" style="width:60%;"></div>
+          <div class="card error" style="height:140px;">
+            <div class="icon-box error">!</div>
+            <div class="bar" style="width:60%; height:10px; background:#7a2e2e;"></div>
+            <div class="muted" style="color:#7a2e2e;">.aiff</div>
+          </div>
+          <div class="banner error">
+            <div class="dot"></div>
+            <div>We can't read this file type. Supported: MP3, M4A, FLAC, WAV, OGG.</div>
+          </div>
+          <div class="muted" style="color:#7a2e2e; font-weight:600;">Choose a different file</div>
+          <div class="row" style="align-items:center; gap:8px;">
+            <div style="flex:1; height:1px; background:#e0d9c8;"></div>
+            <div class="section-label">Optional details</div>
+            <div style="flex:1; height:1px; background:#e0d9c8;"></div>
+          </div>
+          <div class="text-block" style="gap:6px;">
+            <div class="input">Title</div>
+            <div class="input">Artist</div>
+          </div>
+          <div style="flex:1;"></div>
+          <div class="btn disabled full">Analyze song</div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+      <div class="callouts">
+        <span class="co-num">1</span><span class="co-text">Visually identical to 05a — error-template pattern.</span>
+        <span class="co-num">2</span><span class="co-text">Copy lists supported formats explicitly.</span>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- ROW C · CONSENT + LOADING + ERRORS                             -->
+    <!-- ============================================================== -->
+
+    <!-- 06 Consent modal -->
+    <div class="screen" id="s-consent" style="left:120px; top:2000px;">
+      <div class="screen-title"><span class="num">06</span> Consent modal <span class="tag">bottom sheet</span></div>
+      <p class="screen-sub">Friendly acknowledgement; Upload visible behind.</p>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="status-bar"><span>9:41</span><span class="right"><span class="dot"></span><span class="dot"></span></span></div>
+        <div class="screen-content" style="opacity:0.4;">
+          <div class="nav-bar"><span class="back">‹  Back</span><span class="title">Upload Music</span><span class="spacer"></span></div>
+          <div class="bar h2" style="width:60%;"></div>
+          <div class="card selected" style="height:140px;">
+            <div class="icon-box success">✓</div>
+            <div class="bar" style="width:70%; height:10px; background:#2d2a26;"></div>
+            <div class="muted">8.4 MB</div>
+          </div>
+          <div class="input">Title</div>
+        </div>
+        <div class="sheet-overlay"></div>
+        <div class="sheet">
+          <div class="drag-handle"></div>
+          <div class="bar h2" style="width:50%; background:#2d2a26;"></div>
+          <div class="text-block">
+            <div class="bar body"></div>
+            <div class="bar body"></div>
+            <div class="bar body short"></div>
+            <div class="bar body shorter"></div>
+          </div>
+          <div class="btn primary full">Yes, let's hear it</div>
+          <div style="text-align:center;"><div class="muted" style="font-size:10px; color:#3d362d; font-weight:600;">Cancel</div></div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+      <div class="callouts">
+        <span class="co-num">1</span><span class="co-text"><b>Bottom sheet</b>, 40–45% screen height, drag-handle.</span>
+        <span class="co-num">2</span><span class="co-text"><b>Title</b> "One quick thing" — not "Terms".</span>
+        <span class="co-num">3</span><span class="co-text"><b>Body</b> 3–4 lines, conversational.</span>
+        <span class="co-num">4</span><span class="co-text"><b>Cancel</b> / drag-down / backdrop tap → preserves file selection.</span>
+      </div>
+    </div>
+
+    <!-- 07 Loading state -->
+    <div class="screen" id="s-loading" style="left:560px; top:2000px;">
+      <div class="screen-title"><span class="num">07</span> Loading <span class="tag">5–10s typical</span></div>
+      <p class="screen-sub">Animated equalizer + cycling messages.</p>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="status-bar"><span>9:41</span><span class="right"><span class="dot"></span><span class="dot"></span></span></div>
+        <div class="screen-content">
+          <div class="row between"><span></span><div class="muted" style="font-size:10px; font-weight:600;">Cancel</div></div>
+          <div style="flex:1;"></div>
+          <div class="eq">
+            <div class="bar-eq" style="height:30px;"></div>
+            <div class="bar-eq" style="height:60px;"></div>
+            <div class="bar-eq" style="height:45px;"></div>
+            <div class="bar-eq" style="height:72px;"></div>
+            <div class="bar-eq" style="height:40px;"></div>
+            <div class="bar-eq" style="height:55px;"></div>
+            <div class="bar-eq" style="height:34px;"></div>
+          </div>
+          <div style="text-align:center; margin-top:14px;">
+            <div class="bar" style="height:11px; width:170px; background:#2d2a26; margin:0 auto;"></div>
+            <div class="muted" style="margin-top:6px;">"Listening to the rhythm…"</div>
+          </div>
+          <div style="display:flex; gap:6px; justify-content:center; margin-top:14px;">
+            <div style="width:6px;height:6px;border-radius:50%;background:#2d2a26;"></div>
+            <div style="width:6px;height:6px;border-radius:50%;background:#2d2a26;"></div>
+            <div style="width:6px;height:6px;border-radius:50%;background:#d4cec1;"></div>
+            <div style="width:6px;height:6px;border-radius:50%;background:#d4cec1;"></div>
+            <div style="width:6px;height:6px;border-radius:50%;background:#d4cec1;"></div>
+          </div>
+          <div style="flex:2;"></div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+      <div class="callouts">
+        <span class="co-num">1</span><span class="co-text"><b>Cancel</b> top-right — only way back during analysis.</span>
+        <span class="co-num">2</span><span class="co-text"><b>Equalizer</b> — default; pulsing-ring + vinyl are alts.</span>
+        <span class="co-num">3</span><span class="co-text"><b>Cycling messages</b>, ~2–3s each.</span>
+        <span class="co-num">4</span><span class="co-text"><b>Dot trail</b> shows progress through message sequence.</span>
+      </div>
+    </div>
+
+    <!-- 08a Loading — timeout -->
+    <div class="screen" id="s-timeout" style="left:1000px; top:2000px;">
+      <div class="screen-title"><span class="num">08a</span> Loading — timeout <span class="tag">&gt;15s</span></div>
+      <p class="screen-sub">Stops animation, soft error template.</p>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="status-bar"><span>9:41</span><span class="right"><span class="dot"></span><span class="dot"></span></span></div>
+        <div class="screen-content">
+          <div class="row between"><span></span><div class="muted" style="font-size:10px; font-weight:600;">Cancel</div></div>
+          <div style="flex:1;"></div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:14px;">
+            <div class="icon-box lg" style="border-color:#b9885a; color:#b9885a; border-radius:50%;">⚠</div>
+            <div class="text-block" style="align-items:center; gap:4px;">
+              <div class="bar" style="width:160px; height:12px; background:#2d2a26;"></div>
+              <div class="bar body" style="width:200px;"></div>
+              <div class="bar body" style="width:170px;"></div>
+            </div>
+            <div class="muted" style="text-align:center;">"This one's taking a while.<br>Try again — it usually only takes a few seconds."</div>
+          </div>
+          <div style="flex:2;"></div>
+          <div class="row" style="gap:8px;">
+            <div class="btn ghost" style="flex:1;">Cancel</div>
+            <div class="btn primary" style="flex:1;">Try again</div>
+          </div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+      <div class="callouts">
+        <span class="co-num">1</span><span class="co-text"><b>Soft warning</b> icon — not alarming red.</span>
+        <span class="co-num">2</span><span class="co-text"><b>Try again</b> re-submits same file — no re-pick, no re-consent.</span>
+      </div>
+    </div>
+
+    <!-- 08b Loading — offline -->
+    <div class="screen" id="s-offline" style="left:1440px; top:2000px;">
+      <div class="screen-title"><span class="num">08b</span> Loading — offline</div>
+      <p class="screen-sub">Connection lost mid-analysis.</p>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="status-bar"><span>9:41</span><span class="right"><span class="dot"></span><span class="dot"></span></span></div>
+        <div class="screen-content">
+          <div class="row between"><span></span><div class="muted" style="font-size:10px; font-weight:600;">Cancel</div></div>
+          <div style="flex:1;"></div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:14px;">
+            <div class="icon-box lg" style="border-color:#b04848; color:#b04848; border-radius:50%;">⚡</div>
+            <div class="muted" style="text-align:center;">"Looks like you went offline.<br>Check your connection and try again."</div>
+          </div>
+          <div style="flex:2;"></div>
+          <div class="row" style="gap:8px;">
+            <div class="btn ghost" style="flex:1;">Cancel</div>
+            <div class="btn primary" style="flex:1;">Try again</div>
+          </div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+      <div class="callouts">
+        <span class="co-num">1</span><span class="co-text">Same template as timeout; different copy + icon.</span>
+        <span class="co-num">2</span><span class="co-text">Also surfaces as inline banner on Landing.</span>
+      </div>
+    </div>
+
+    <!-- 08c Rate limit -->
+    <div class="screen" id="s-ratelimit" style="left:1880px; top:2000px;">
+      <div class="screen-title"><span class="num">08c</span> Rate limit <span class="tag">10/hour</span></div>
+      <p class="screen-sub">No retry — only OK.</p>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="status-bar"><span>9:41</span><span class="right"><span class="dot"></span><span class="dot"></span></span></div>
+        <div class="screen-content">
+          <div class="row between"><span></span><div class="muted" style="font-size:10px; font-weight:600;">Cancel</div></div>
+          <div style="flex:1;"></div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:14px;">
+            <div class="icon-box lg" style="border-color:#b9885a; color:#b9885a; border-radius:50%;">⏱</div>
+            <div class="text-block" style="align-items:center; gap:4px;">
+              <div class="bar" style="width:200px; height:12px; background:#2d2a26;"></div>
+            </div>
+            <div class="muted" style="text-align:center;">"You've done a lot of listening today.<br>You can analyze more in 23 minutes."</div>
+          </div>
+          <div style="flex:2;"></div>
+          <div class="btn primary full">OK</div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+      <div class="callouts">
+        <span class="co-num">1</span><span class="co-text">No "Try again" — user genuinely can't.</span>
+        <span class="co-num">2</span><span class="co-text">Countdown depends on API reset-time. <i>[VERIFY]</i></span>
+      </div>
+    </div>
+
+    <!-- 08d Generic failure -->
+    <div class="screen" id="s-failure" style="left:2320px; top:2000px;">
+      <div class="screen-title"><span class="num">08d</span> Analysis failed <span class="tag">5xx / network</span></div>
+      <p class="screen-sub">Reassures user the file isn't the problem.</p>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="status-bar"><span>9:41</span><span class="right"><span class="dot"></span><span class="dot"></span></span></div>
+        <div class="screen-content">
+          <div class="row between"><span></span><div class="muted" style="font-size:10px; font-weight:600;">Cancel</div></div>
+          <div style="flex:1;"></div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:14px;">
+            <div class="icon-box lg" style="border-color:#b9885a; color:#b9885a; border-radius:50%;">×</div>
+            <div class="muted" style="text-align:center;">"Something went wrong.<br>It's not your file — try again and it should work."</div>
+          </div>
+          <div style="flex:2;"></div>
+          <div class="row" style="gap:8px;">
+            <div class="btn ghost" style="flex:1;">Cancel</div>
+            <div class="btn primary" style="flex:1;">Try again</div>
+          </div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+      <div class="callouts">
+        <span class="co-num">1</span><span class="co-text">Generic 5xx / network failure. Distinct from timeout to keep copy honest.</span>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- ROW D · RESULTS (GUEST) — PER MOOD                             -->
+    <!-- ============================================================== -->
+
+    <!-- 09a Results — Upbeat -->
+    <div class="screen" id="s-result-upbeat" style="left:120px; top:2930px;">
+      <div class="screen-title"><span class="num">09a</span> Results — Guest <span class="tag">Upbeat · happy + energetic</span></div>
+      <p class="screen-sub">Sign-up strip pinned. Background shifts per mood.</p>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="status-bar"><span>9:41</span><span class="right"><span class="dot"></span><span class="dot"></span></span></div>
+        <div class="screen-content" style="padding-bottom:80px; gap:8px;">
+          <div class="nav-bar"><span class="back">‹  Back</span><span class="title">Song Analysis</span><span class="spacer"></span></div>
+          <div class="mood-hero upbeat">
+            <div class="mood-icon">☀</div>
+            <div class="mood-name">UPBEAT</div>
+            <div class="quadrant">Happy &amp; Energetic</div>
+            <div class="ring">87%</div>
+            <div class="muted" style="font-size:8px;">Strong match</div>
+          </div>
+          <div class="row wrap" style="gap:4px;">
+            <span class="pill mood">upbeat</span>
+            <span class="pill mood">danceable</span>
+            <span class="pill mood">bright</span>
+          </div>
+          <div class="text-block" style="gap:3px;">
+            <div class="bar body"></div>
+            <div class="bar body short"></div>
+          </div>
+          <div class="row between" style="border:1px solid #e0d9c8; border-radius:8px; padding:8px 10px;">
+            <div class="muted" style="color:#3d362d; font-weight:600;">Audio details</div>
+            <div class="muted">▾</div>
+          </div>
+          <div class="btn ghost full small">Analyze another song</div>
+        </div>
+        <div class="cta-strip">
+          <div class="text-block" style="gap:2px;">
+            <div class="bar body" style="width:120px; background:#2d2a26; height:8px;"></div>
+            <div class="bar body" style="width:90px; height:6px;"></div>
+          </div>
+          <div class="btn primary pill small">Sign up</div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+      <div class="callouts">
+        <span class="co-num">1</span><span class="co-text"><b>Mood hero</b> — icon + label + quadrant + confidence ring.</span>
+        <span class="co-num">2</span><span class="co-text"><b>Descriptor pills</b> — 2–4, low-opacity mood color.</span>
+        <span class="co-num">3</span><span class="co-text"><b>Audio details</b> — collapsible (see 10).</span>
+        <span class="co-num">4</span><span class="co-text"><b>Sign-up strip</b> — sticky, mood-accented. Appears once.</span>
+        <span class="co-num">5</span><span class="co-text"><b>Reveal animation</b> — staggered ~800ms total (see spec 5.3).</span>
+      </div>
+    </div>
+
+    <!-- 09b Results — Serene -->
+    <div class="screen" id="s-result-serene" style="left:560px; top:2930px;">
+      <div class="screen-title"><span class="num">09b</span> Results — Guest <span class="tag">Serene · happy + calm</span></div>
+      <p class="screen-sub">Same structure, palette shifts.</p>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="status-bar"><span>9:41</span><span class="right"><span class="dot"></span><span class="dot"></span></span></div>
+        <div class="screen-content" style="padding-bottom:80px; gap:8px;">
+          <div class="nav-bar"><span class="back">‹  Back</span><span class="title">Song Analysis</span><span class="spacer"></span></div>
+          <div class="mood-hero serene">
+            <div class="mood-icon">∿</div>
+            <div class="mood-name">SERENE</div>
+            <div class="quadrant">Happy &amp; Calm</div>
+            <div class="ring" style="border-right-color:#2d2a26; border-top-color:#d4cec1;">72%</div>
+            <div class="muted" style="font-size:8px;">Good match</div>
+          </div>
+          <div class="row wrap" style="gap:4px;">
+            <span class="pill mood">peaceful</span>
+            <span class="pill mood">warm</span>
+            <span class="pill mood">flowing</span>
+          </div>
+          <div class="text-block" style="gap:3px;">
+            <div class="bar body"></div>
+            <div class="bar body short"></div>
+          </div>
+          <div class="row between" style="border:1px solid #e0d9c8; border-radius:8px; padding:8px 10px;">
+            <div class="muted" style="color:#3d362d; font-weight:600;">Audio details</div>
+            <div class="muted">▾</div>
+          </div>
+          <div class="btn ghost full small">Analyze another song</div>
+        </div>
+        <div class="cta-strip">
+          <div class="text-block" style="gap:2px;">
+            <div class="bar body" style="width:120px; background:#2d2a26; height:8px;"></div>
+            <div class="bar body" style="width:90px; height:6px;"></div>
+          </div>
+          <div class="btn primary pill small">Sign up</div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+      <div class="callouts">
+        <span class="co-num">1</span><span class="co-text">Confidence: <b>"Good match"</b> band (50–74%).</span>
+        <span class="co-num">2</span><span class="co-text">Palette direction: soft teals + warm white.</span>
+      </div>
+    </div>
+
+    <!-- 09c Results — Charged -->
+    <div class="screen" id="s-result-charged" style="left:1000px; top:2930px;">
+      <div class="screen-title"><span class="num">09c</span> Results — Guest <span class="tag">Charged · intense + dark</span></div>
+      <p class="screen-sub">High-contrast feel; deep palette.</p>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="status-bar"><span>9:41</span><span class="right"><span class="dot"></span><span class="dot"></span></span></div>
+        <div class="screen-content" style="padding-bottom:80px; gap:8px;">
+          <div class="nav-bar"><span class="back">‹  Back</span><span class="title">Song Analysis</span><span class="spacer"></span></div>
+          <div class="mood-hero charged">
+            <div class="mood-icon">⚡</div>
+            <div class="mood-name">CHARGED</div>
+            <div class="quadrant">Intense &amp; Dark</div>
+            <div class="ring">91%</div>
+            <div class="muted" style="font-size:8px;">Strong match</div>
+          </div>
+          <div class="row wrap" style="gap:4px;">
+            <span class="pill mood">intense</span>
+            <span class="pill mood">driving</span>
+            <span class="pill mood">tense</span>
+          </div>
+          <div class="text-block" style="gap:3px;">
+            <div class="bar body"></div>
+            <div class="bar body short"></div>
+          </div>
+          <div class="row between" style="border:1px solid #e0d9c8; border-radius:8px; padding:8px 10px;">
+            <div class="muted" style="color:#3d362d; font-weight:600;">Audio details</div>
+            <div class="muted">▾</div>
+          </div>
+          <div class="btn ghost full small">Analyze another song</div>
+        </div>
+        <div class="cta-strip">
+          <div class="text-block" style="gap:2px;">
+            <div class="bar body" style="width:120px; background:#2d2a26; height:8px;"></div>
+            <div class="bar body" style="width:90px; height:6px;"></div>
+          </div>
+          <div class="btn primary pill small">Sign up</div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+      <div class="callouts">
+        <span class="co-num">1</span><span class="co-text">Palette: deep purples + electric red. WCAG AA must still pass.</span>
+        <span class="co-num">2</span><span class="co-text">Icon character: storm cloud / sharp lines.</span>
+      </div>
+    </div>
+
+    <!-- 09d Results — Reflective + audio details expanded -->
+    <div class="screen" id="s-result-reflective" style="left:1440px; top:2930px;">
+      <div class="screen-title"><span class="num">09d / 10</span> Results — Guest <span class="tag">Reflective · audio details expanded</span></div>
+      <p class="screen-sub">Shows the collapsible expanded — same component.</p>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="status-bar"><span>9:41</span><span class="right"><span class="dot"></span><span class="dot"></span></span></div>
+        <div class="screen-content" style="padding-bottom:80px; gap:8px;">
+          <div class="nav-bar"><span class="back">‹  Back</span><span class="title">Song Analysis</span><span class="spacer"></span></div>
+          <div class="mood-hero reflective" style="padding:14px 12px;">
+            <div class="mood-icon" style="width:44px;height:44px;font-size:18px;">☾</div>
+            <div class="mood-name">REFLECTIVE</div>
+            <div class="quadrant">Calm &amp; Melancholic</div>
+            <div class="ring">61%</div>
+            <div class="muted" style="font-size:8px;">Good match</div>
+          </div>
+          <div class="row wrap" style="gap:4px;">
+            <span class="pill mood">melancholic</span>
+            <span class="pill mood">quiet</span>
+            <span class="pill mood">introspective</span>
+          </div>
+          <div style="border:1px solid #e0d9c8; border-radius:8px; padding:8px 10px;">
+            <div class="row between" style="margin-bottom:6px;">
+              <div class="muted" style="color:#3d362d; font-weight:600;">Audio details</div>
+              <div class="muted">▴</div>
+            </div>
+            <div class="text-block" style="gap:4px;">
+              <div class="row between"><div class="muted">Tempo</div><div class="muted" style="color:#2d2a26; font-weight:600;">72 BPM</div></div>
+              <div class="row between"><div class="muted">Energy</div><div class="muted" style="color:#2d2a26; font-weight:600;">Low (0.24)</div></div>
+              <div class="row between"><div class="muted">Brightness</div><div class="muted" style="color:#2d2a26; font-weight:600;">Soft</div></div>
+              <div class="row between"><div class="muted">Texture</div><div class="muted" style="color:#2d2a26; font-weight:600;">Smooth</div></div>
+            </div>
+          </div>
+          <div class="btn ghost full small">Analyze another song</div>
+        </div>
+        <div class="cta-strip">
+          <div class="text-block" style="gap:2px;">
+            <div class="bar body" style="width:120px; background:#2d2a26; height:8px;"></div>
+            <div class="bar body" style="width:90px; height:6px;"></div>
+          </div>
+          <div class="btn primary pill small">Sign up</div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+      <div class="callouts">
+        <span class="co-num">1</span><span class="co-text"><b>Audio details</b> expanded inline — height grow + chevron rotate.</span>
+        <span class="co-num">2</span><span class="co-text">Human-readable values, raw numbers in parens.</span>
+        <span class="co-num">3</span><span class="co-text">Palette: cool blues + slate grey.</span>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- ROW E · AUTHENTICATED                                          -->
+    <!-- ============================================================== -->
+
+    <!-- 11 Home (Auth) -->
+    <div class="screen" id="s-home-auth" style="left:120px; top:3860px;">
+      <div class="screen-title"><span class="num">11</span> Home <span class="tag">Authenticated</span></div>
+      <p class="screen-sub">Upload card + recent history + tab bar.</p>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="status-bar"><span>9:41</span><span class="right"><span class="dot"></span><span class="dot"></span></span></div>
+        <div class="screen-content" style="padding-bottom:64px;">
+          <div class="row between" style="padding: 2px 0 6px;">
+            <div class="bar" style="height:13px; width:80px; background:#2d2a26;"></div>
+            <div class="icon-box sm" style="border-radius:50%;">A</div>
+          </div>
+          <div class="card flat" style="padding:16px; height:110px;">
+            <div class="icon-box lg">♪</div>
+            <div class="bar" style="height:11px; width:60%; background:#2d2a26;"></div>
+            <div class="muted">Tap to upload a file</div>
+          </div>
+          <div class="section-label" style="margin-top:4px;">Recent analyses</div>
+          <div class="divider"></div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <div class="row" style="border:1px solid #e0d9c8; border-radius:8px; padding:8px 10px; gap:8px;">
+              <span class="pill solid">Upbeat</span>
+              <div style="flex:1;">
+                <div class="bar" style="height:8px; width:90%; background:#2d2a26;"></div>
+                <div class="muted" style="margin-top:3px;">87% · May 9</div>
+              </div>
+            </div>
+            <div class="row" style="border:1px solid #e0d9c8; border-radius:8px; padding:8px 10px; gap:8px;">
+              <span class="pill mood">Reflective</span>
+              <div style="flex:1;">
+                <div class="bar" style="height:8px; width:75%; background:#2d2a26;"></div>
+                <div class="muted" style="margin-top:3px;">61% · May 7</div>
+              </div>
+            </div>
+            <div class="row" style="border:1px solid #e0d9c8; border-radius:8px; padding:8px 10px; gap:8px;">
+              <span class="pill mood">Charged</span>
+              <div style="flex:1;">
+                <div class="bar" style="height:8px; width:60%; background:#2d2a26;"></div>
+                <div class="muted" style="margin-top:3px;">79% · May 4</div>
+              </div>
+            </div>
+          </div>
+          <div style="text-align:center; margin-top:6px;"><div class="muted" style="font-size:10px; color:#3d362d; font-weight:600;">See all history →</div></div>
+        </div>
+        <div class="tab-bar">
+          <div class="tab-item active"><div class="ti-icon"></div>Home</div>
+          <div class="tab-item"><div class="ti-icon"></div>History</div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+      <div class="callouts">
+        <span class="co-num">1</span><span class="co-text"><b>Avatar</b> — taps to profile / sign out.</span>
+        <span class="co-num">2</span><span class="co-text"><b>Upload card</b> — primary action, full-width.</span>
+        <span class="co-num">3</span><span class="co-text"><b>History items</b> — mood chip + filename + confidence + relative date.</span>
+        <span class="co-num">4</span><span class="co-text"><b>See all history</b> appears after 3–4 items.</span>
+        <span class="co-num">5</span><span class="co-text"><b>Tab bar</b> — Home / History.</span>
+      </div>
+    </div>
+
+    <!-- 12 Results (Auth) -->
+    <div class="screen" id="s-result-auth" style="left:560px; top:3860px;">
+      <div class="screen-title"><span class="num">12</span> Results <span class="tag">Authenticated</span></div>
+      <p class="screen-sub">Same as guest, minus sign-up strip; "Saved" toast on land.</p>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="status-bar"><span>9:41</span><span class="right"><span class="dot"></span><span class="dot"></span></span></div>
+        <div class="screen-content" style="gap:8px;">
+          <div class="nav-bar"><span class="back">‹  Back</span><span class="title">Song Analysis</span><span class="spacer"></span></div>
+          <div class="mood-hero upbeat">
+            <div class="mood-icon">☀</div>
+            <div class="mood-name">UPBEAT</div>
+            <div class="quadrant">Happy &amp; Energetic</div>
+            <div class="ring">87%</div>
+            <div class="muted" style="font-size:8px;">Strong match</div>
+          </div>
+          <div class="row wrap" style="gap:4px;">
+            <span class="pill mood">upbeat</span>
+            <span class="pill mood">danceable</span>
+            <span class="pill mood">bright</span>
+          </div>
+          <div class="text-block" style="gap:3px;">
+            <div class="bar body"></div>
+            <div class="bar body short"></div>
+          </div>
+          <div class="row between" style="border:1px solid #e0d9c8; border-radius:8px; padding:8px 10px;">
+            <div class="muted" style="color:#3d362d; font-weight:600;">Audio details</div>
+            <div class="muted">▾</div>
+          </div>
+          <div class="btn ghost full small">Analyze another song</div>
+        </div>
+        <div class="toast">Saved to your history.</div>
+        <div class="home-indicator"></div>
+      </div>
+      <div class="callouts">
+        <span class="co-num">1</span><span class="co-text">No sticky sign-up strip — extra bottom padding instead.</span>
+        <span class="co-num">2</span><span class="co-text"><b>"Saved" toast</b> ~800ms after reveal; auto-dismisses 2s.</span>
+        <span class="co-num">3</span><span class="co-text">Content identical to guest Results otherwise.</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="controls">
+  <button id="zoom-out" title="Zoom out">−</button>
+  <div class="zoom-readout" id="zoom-readout">100%</div>
+  <button id="zoom-in" title="Zoom in">+</button>
+  <button id="fit" title="Fit to view">⤢</button>
+  <button id="reset" title="Reset">↺</button>
+</div>
+
+<script>
+  // Auto-print once fonts + layout settle.
+  window.addEventListener('load', () => {
+    const ready = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+    ready.then(() => setTimeout(() => window.print(), 500));
+  });
+</script>
+</body>
+</html>
