@@ -3,8 +3,10 @@ class RouteNames {
 
   static const String login = '/login';
   static const String signup = '/signup';
+  static const String guest = '/guest';
   static const String spotify = '/spotify';
   static const String callback = '/callback';
+  static const String uploadMusic = '/upload-music';
   static const String playlists = '/spotify/playlists';
   static const String playlistTracks = '/playlist/:playlistId/tracks';
   static const String analyzing = '/analysis/analyzing/:playlistId';

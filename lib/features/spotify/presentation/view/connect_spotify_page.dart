@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/features/spotify/presentation/bloc/spotify_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -195,6 +197,13 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
                               color: CupertinoColors.white,
                             )
                           : const Text('Connect to Spotify'),
+                    ),
+                    const SizedBox(height: 12),
+                    CupertinoButton(
+                      onPressed: isBusy
+                          ? null
+                          : () => context.go(RouteNames.uploadMusic),
+                      child: const Text('Upload a local song'),
                     ),
                     const SizedBox(height: 12),
                     CupertinoButton(

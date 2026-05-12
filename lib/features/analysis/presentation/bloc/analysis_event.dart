@@ -54,3 +54,22 @@ class AnalyzeSongRequested extends AnalysisEvent {
   @override
   List<Object?> get props => [trackId];
 }
+
+class AudioUploadRequested extends AnalysisEvent {
+  const AudioUploadRequested({
+    required this.bytes,
+    required this.filename,
+    this.title,
+    this.artist,
+    this.album,
+  });
+
+  final List<int> bytes;
+  final String filename;
+  final String? title;
+  final String? artist;
+  final String? album;
+
+  @override
+  List<Object?> get props => [bytes, filename, title, artist, album];
+}

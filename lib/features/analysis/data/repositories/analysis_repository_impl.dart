@@ -1,7 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:moodtune_app/core/error/error.dart';
 import 'package:moodtune_app/features/analysis/data/datasources/analysis_datasource.dart';
+import 'package:moodtune_app/features/analysis/data/datasources/audio_upload_datasource.dart';
 import 'package:moodtune_app/features/analysis/data/models/models.dart';
 import 'package:moodtune_app/features/analysis/domain/entities/entities.dart';
 import 'package:moodtune_app/features/analysis/domain/repositories/analysis_repository.dart';
@@ -10,9 +13,13 @@ import 'package:moodtune_app/utils/typedef.dart';
 class AnalysisRepositoryImpl implements AnalysisRepository {
   AnalysisRepositoryImpl({
     AnalysisRemoteDataSource? remoteDataSource,
-  }) : _remote = remoteDataSource ?? AnalysisRemoteDataSource();
+    AudioUploadRemoteDataSource? uploadRemoteDataSource,
+  }) : _remote = remoteDataSource ?? AnalysisRemoteDataSource(),
+       _uploadRemote =
+           uploadRemoteDataSource ?? AudioUploadRemoteDataSource();
 
   final AnalysisRemoteDataSource _remote;
+  final AudioUploadRemoteDataSource _uploadRemote;
 
   @override
   ResultFuture<PlaylistAnalysis> analyzePlaylist(
@@ -90,5 +97,30 @@ class AnalysisRepositoryImpl implements AnalysisRepository {
       return NetworkFailure(message ?? 'Network error');
     }
     return ServerFailure(message ?? 'Server error');
+  }
+
+  @override
+  ResultFuture<AudioUploadAnalysis> analyzeUploadedAudio({
+    required Uint8List bytes,
+    required String filename,
+    String? title,
+    String? artist,
+    String? album,
+  }) async {
+    try {
+      final json = await _uploadRemote.uploadAndAnalyzeAudio(
+        bytes: bytes,
+        filename: filename,
+        title: title,
+        artist: artist,
+        album: album,
+      );
+      final model = AudioUploadAnalysisModel.fromJson(json);
+      return Right(model.toDomain());
+    } on DioException catch (e) {
+      return Left(_mapDioError(e));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
   }
 }
