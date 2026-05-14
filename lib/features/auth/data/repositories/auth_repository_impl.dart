@@ -16,7 +16,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final user = await _datasource.currentUser();
       return Right(user);
-    } catch (e) {
+    } on Exception catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
@@ -29,7 +29,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final user = await _datasource.signIn(email: email, password: password);
       return Right(user);
-    } catch (e) {
+    } on Exception catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
@@ -42,7 +42,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final user = await _datasource.signUp(email: email, password: password);
       return Right(user);
-    } catch (e) {
+    } on Exception catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
@@ -52,7 +52,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await _datasource.signOut();
       return const Right(null);
-    } catch (e) {
+    } on Exception catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }

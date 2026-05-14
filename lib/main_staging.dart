@@ -8,20 +8,23 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   const sentryDsn = String.fromEnvironment('SENTRY_DSN');
-  const environment = String.fromEnvironment('ENVIRONMENT', defaultValue: 'staging');
+  const environment = String.fromEnvironment(
+    'ENVIRONMENT',
+    defaultValue: 'staging',
+  );
 
   await SentryFlutter.init(
     (options) {
       if (sentryDsn.isNotEmpty) {
         options.dsn = sentryDsn;
       }
-      options..environment = environment
-      // Set tracesSampleRate to 1.0 to capture 100% of transactions for tracing.
-      // We recommend adjusting this value in production.
-      ..tracesSampleRate = 1.0
-      // Adds request headers and IP for users, for more info visit:
-      // https://docs.sentry.io/platforms/dart/guides/flutter/data-management/data-collected/
-      ..sendDefaultPii = false;
+      options
+        ..environment = environment
+        // Capture 100% of transactions for tracing.
+        // Adjust this value in production.
+        ..tracesSampleRate = 1.0
+        // Do not send PII by default.
+        ..sendDefaultPii = false;
     },
     appRunner: () async {
       const supabaseUrl = String.fromEnvironment('SUPABASE_URL');

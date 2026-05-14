@@ -29,9 +29,11 @@ class GuestPage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Upload a local file or connect Spotify to pick from playlists.',
+                'Upload a local file or connect Spotify '
+                'to pick from playlists.',
                 style: theme.textTheme.textStyle.copyWith(
-                  color: theme.textTheme.textStyle.color?.withValues(alpha: 0.7),
+                  color: theme.textTheme.textStyle.color
+                      ?.withValues(alpha: 0.7),
                 ),
                 textAlign: TextAlign.center,
               ),

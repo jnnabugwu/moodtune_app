@@ -69,7 +69,7 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
       return Right(url);
     } on DioException catch (e) {
       return Left(_mapDioError(e));
-    } catch (e) {
+    } on Exception catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
@@ -94,7 +94,7 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
       );
     } on DioException catch (e) {
       return Left(_mapDioError(e));
-    } catch (e) {
+    } on Exception catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
@@ -111,7 +111,7 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
       return Right(connected);
     } on DioException catch (e) {
       return Left(_mapDioError(e));
-    } catch (e) {
+    } on Exception catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
@@ -126,7 +126,7 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
       return const Right(null);
     } on DioException catch (e) {
       return Left(_mapDioError(e));
-    } catch (e) {
+    } on Exception catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
@@ -144,7 +144,7 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
       return Right(profileModel.toDomain());
     } on DioException catch (e) {
       return Left(_mapDioError(e));
-    } catch (e) {
+    } on Exception catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
@@ -173,7 +173,7 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
       return Right(playlists);
     } on DioException catch (e) {
       return Left(_mapDioError(e));
-    } catch (e) {
+    } on Exception catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
@@ -201,7 +201,7 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
       return Right(tracks);
     } on DioException catch (e) {
       return Left(_mapDioError(e));
-    } catch (e) {
+    } on Exception catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }

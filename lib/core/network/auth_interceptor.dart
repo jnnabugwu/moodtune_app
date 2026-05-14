@@ -22,7 +22,8 @@ class AuthInterceptor extends Interceptor {
           final options = err.requestOptions;
           options.headers['Authorization'] = 'Bearer $newToken';
 
-          // Retry the original request using a new Dio instance with same config
+          // Retry the original request using a new Dio instance
+          // with the same config.
           final dio = Dio(
             BaseOptions(
               baseUrl: options.baseUrl,
@@ -35,9 +36,9 @@ class AuthInterceptor extends Interceptor {
 
           return handler.resolve(response);
         }
-      } catch (e) {
-        // If refresh fails, continue with the original error
-        // This will likely result in the user needing to re-authenticate
+      } on Exception catch (_) {
+        // If refresh fails, continue with the original error.
+        // This will likely result in the user needing to re-authenticate.
       }
     }
 

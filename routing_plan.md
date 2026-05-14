@@ -30,6 +30,13 @@ The routing system uses **go_router** for declarative, type-safe navigation with
 ┌──────────────▼──────────────────────┐
 │         AppRouter                   │
 │  (Route definitions & redirects)    │
+│  refreshListenable: auth stream     │
+└──────────────┬──────────────────────┘
+               │
+┌──────────────▼──────────────────────┐
+│      StatefulShellRoute             │
+│  (Tab shell — Home + History)       │
+│  Each branch: independent navigator │
 └──────────────┬──────────────────────┘
                │
 ┌──────────────▼──────────────────────┐
@@ -253,6 +260,80 @@ GoRoute(
 - Avoids creating new instances on every navigation
 - Maintains state across navigation
 
+### StatefulShellRoute (Tab Navigation)
+
+Use `StatefulShellRoute.indexedStack` for bottom tab bars. Each branch gets an independent navigator, so tabs preserve their own back stack and scroll position when switching.
+
+**When to use:**
+
+- `StatefulShellRoute` — tabs that need to preserve scroll state and back stack (use this)
+- `ShellRoute` — tabs with shared, stateless content (rare)
+
+**Implementation:**
+
+```dart
+StatefulShellRoute.indexedStack(
+  builder: (context, state, navigationShell) {
+    return ScaffoldWithNavBar(navigationShell: navigationShell);
+  },
+  branches: [
+    StatefulShellBranch(
+      routes: [
+        GoRoute(
+          path: '/home',
+          builder: (context, state) => const HomePage(),
+        ),
+      ],
+    ),
+    StatefulShellBranch(
+      routes: [
+        GoRoute(
+          path: '/history',
+          builder: (context, state) => const HistoryPage(),
+        ),
+      ],
+    ),
+  ],
+)
+```
+
+**ScaffoldWithNavBar shell widget:**
+
+```dart
+class ScaffoldWithNavBar extends StatelessWidget {
+  const ScaffoldWithNavBar({required this.navigationShell, super.key});
+
+  final StatefulNavigationShell navigationShell;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: navigationShell,
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: navigationShell.currentIndex,
+        onTap: (index) => navigationShell.goBranch(
+          index,
+          // Re-tapping active tab resets to initial location
+          initialLocation: index == navigationShell.currentIndex,
+        ),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+        ],
+      ),
+    );
+  }
+}
+```
+
+**Key rules:**
+
+- Tab switches always use `navigationShell.goBranch()` — never `context.push()`
+- `initialLocation: true` on re-tap resets the branch back stack (standard tab UX)
+- Each branch maintains its own independent navigator state
+
+---
+
 ### Nested Routes (Sub-routes)
 
 ```dart
@@ -368,96 +449,141 @@ context.pushReplacement('/new-route');
 
 **Behavior**: Current route replaced, but can go back to route before it.
 
-### 5. Push and Remove Until
+### 5. Clear Stack Navigation
 
-**Use Case**: Navigate to new route and remove all previous routes up to a condition.
+**Use Case**: Navigate to a new route and clear all previous routes (e.g. after login, clear the auth stack).
+
+`pushAndRemoveUntil` is a Navigator 1.0 API — it does not exist in go_router. Use `context.go()` instead, which replaces the entire stack:
 
 ```dart
-context.pushAndRemoveUntil(
-  '/main',
-  (route) => false,  // Remove all previous routes
-);
+// After login — go to home and clear auth stack
+context.go(RouteNames.home);
+
+// After logout — go to onboarding and clear app stack
+context.go(RouteNames.onboarding);
 ```
 
-**Common Pattern**: After login, navigate to main and clear auth stack.
+`context.go()` is the correct go_router equivalent. The router rebuilds from the new location with no prior history.
 
 ---
 
 ## Authentication-Aware Routing
 
+### refreshListenable — Reactive Auth
+
+Rather than imperatively calling `AppRouter.router.go()` inside a stream listener, use `refreshListenable` to wire the auth stream directly to the router. When auth state changes, the router automatically re-runs the redirect callback without any manual imperative navigation calls.
+
+**Step 1 — Create a Listenable wrapper around the Supabase auth stream:**
+
+```dart
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
+  }
+
+  late final StreamSubscription<dynamic> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
+```
+
+**Step 2 — Pass it to GoRouter:**
+
+```dart
+GoRouter(
+  refreshListenable: GoRouterRefreshStream(
+    sl<SupabaseAuthService>().authStateChanges,
+  ),
+  redirect: (context, state) { ... },  // See below — runs automatically on auth change
+)
+```
+
+Do **not** use a stream listener to call `AppRouter.router.go()` manually — that becomes redundant and can cause double-navigation bugs.
+
+---
+
 ### Redirect Logic
 
-**Purpose**: Automatically redirect users based on authentication state.
+**Purpose**: Guard all protected routes. The redirect callback runs on every navigation event and on every `refreshListenable` notification (i.e. every auth state change).
 
 **Implementation**:
 
 ```dart
 GoRouter(
+  refreshListenable: GoRouterRefreshStream(
+    sl<SupabaseAuthService>().authStateChanges,
+  ),
   redirect: (context, state) {
-    // Check if accessing root route
-    if (state.uri.toString() == '/') {
-      final authService = sl<SupabaseAuthService>();
-      final isAuthenticated = authService.isAuthenticated();
-      
-      // Redirect based on auth state
-      return isAuthenticated ? '/main' : '/onboarding';
+    final authService = sl<SupabaseAuthService>();
+    final isAuthenticated = authService.isAuthenticated();
+    final location = state.matchedLocation;
+
+    // Routes accessible without authentication
+    final publicRoutes = [
+      RouteNames.onboarding,
+      RouteNames.login,
+      RouteNames.signup,
+    ];
+    final isPublicRoute = publicRoutes.contains(location);
+
+    // Unauthenticated user trying to access a protected route → send to onboarding
+    if (!isAuthenticated && !isPublicRoute) {
+      return RouteNames.onboarding;
     }
-    
+
+    // Authenticated user on a public/auth route → send to home
+    if (isAuthenticated && isPublicRoute) {
+      return RouteNames.home;
+    }
+
     // No redirect needed
     return null;
   },
 )
 ```
 
-**Redirect Rules**:
+**Redirect rules:**
 
-- Return `String` (route path) to redirect
+- Return a `String` (route path) to redirect
 - Return `null` to allow navigation
-- Check `state.uri` or `state.matchedLocation` for current route
+- Guard **all** protected routes, not just `/` — deep links bypass root
+- Prevent redirect loops by checking both directions (unauthed on protected, authed on public)
 
 ### Protected Routes
 
-**Pattern**: Check authentication before allowing access.
+For routes that require auth, the global redirect above handles the guard. Route-level redirects are for more granular cases (e.g. role-based access):
 
 ```dart
 GoRoute(
-  path: '/profile',
-  builder: (context, state) => const ProfilePage(),
+  path: '/admin',
+  builder: (context, state) => const AdminPage(),
   redirect: (context, state) {
-    final authService = sl<SupabaseAuthService>();
-    if (!authService.isAuthenticated()) {
-      return '/login';
-    }
-    return null;  // Allow access
+    final user = sl<SupabaseAuthService>().currentUser;
+    if (user?.role != 'admin') return RouteNames.home;
+    return null;
   },
-)
-```
-
-**Alternative**: Use a wrapper widget that checks auth state:
-
-```dart
-GoRoute(
-  path: '/profile',
-  builder: (context, state) => const AuthGuard(
-    child: ProfilePage(),
-  ),
 )
 ```
 
 ### Auth State Changes
 
-**Listen to auth state changes and redirect**:
+Auth state changes are now handled automatically via `refreshListenable` — no manual stream listener needed. Remove any imperative calls like:
 
 ```dart
-// In your app initialization or BLoC
+// ❌ Remove this pattern — handled by refreshListenable now
 supabaseAuthService.authStateChanges.listen((authState) {
   if (authState.event == AuthChangeEvent.signedOut) {
     AppRouter.router.go('/login');
-  } else if (authState.event == AuthChangeEvent.signedIn) {
-    AppRouter.router.go('/main');
   }
 });
 ```
+
+The router re-runs `redirect` automatically when the auth stream emits — it will route the user correctly without any manual intervention.
 
 ---
 
@@ -852,10 +978,16 @@ GoRoute(
 
 ✅ **DO**:
 
-- Check auth state in redirect
-- Protect sensitive routes
-- Handle auth state changes
-- Redirect to login on unauthorized access
+- Use `refreshListenable` to wire auth stream to the router — let redirect handle navigation automatically
+- Guard **all** protected routes in the redirect callback, not just `/`
+- Check both directions in redirect: unauthed on protected routes, and authed on public routes
+- Use `context.go()` to clear the stack after login/logout — not `pushAndRemoveUntil`
+
+❌ **DON'T**:
+
+- Manually call `AppRouter.router.go()` inside auth stream listeners — redundant with `refreshListenable`
+- Only guard the root route — deep links bypass it
+- Use `pushAndRemoveUntil` — it's Navigator 1.0 and doesn't exist in go_router
 
 ### 7. Code Organization
 
@@ -933,9 +1065,38 @@ class RouteNames {
 ```dart
 class AppRouter {
   static final GoRouter router = GoRouter(
-    initialLocation: RouteNames.initial,
+    initialLocation: RouteNames.onboarding,
     debugLogDiagnostics: true,
+
+    // Automatically re-runs redirect whenever auth state changes
+    refreshListenable: GoRouterRefreshStream(
+      sl<SupabaseAuthService>().authStateChanges,
+    ),
+
+    redirect: (context, state) {
+      final isAuthenticated = sl<SupabaseAuthService>().isAuthenticated();
+      final location = state.matchedLocation;
+
+      const publicRoutes = [
+        RouteNames.onboarding,
+        RouteNames.login,
+        RouteNames.signup,
+      ];
+      final isPublicRoute = publicRoutes.contains(location);
+
+      // Unauthenticated → block protected routes
+      if (!isAuthenticated && !isPublicRoute) return RouteNames.onboarding;
+
+      // Authenticated → skip auth screens
+      if (isAuthenticated && isPublicRoute) return RouteNames.home;
+
+      return null;
+    },
+
+    errorBuilder: (context, state) => ErrorPage(error: state.error),
+
     routes: [
+      // Auth routes (public)
       GoRoute(
         path: RouteNames.onboarding,
         builder: (context, state) => const OnboardingPage(),
@@ -945,34 +1106,35 @@ class AppRouter {
         builder: (context, state) => const LoginPage(),
       ),
       GoRoute(
-        path: RouteNames.mainNavigation,
-        builder: (context, state) => const MainNavigationPage(),
+        path: RouteNames.signup,
+        builder: (context, state) => const SignupPage(),
       ),
-      GoRoute(
-        path: RouteNames.waitTimes,
-        builder: (context, state) => BlocProvider.value(
-          value: sl<TsaWaitTimesBloc>(),
-          child: const WaitTimesPage(),
-        ),
-      ),
-      GoRoute(
-        path: RouteNames.waitTimeDetails,
-        builder: (context, state) {
-          final id = state.pathParameters['id']!;
-          return WaitTimeDetailsPage(id: id);
+
+      // Authenticated shell — Home + History tabs
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return ScaffoldWithNavBar(navigationShell: navigationShell);
         },
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RouteNames.home,
+                builder: (context, state) => const HomePage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RouteNames.history,
+                builder: (context, state) => const HistoryPage(),
+              ),
+            ],
+          ),
+        ],
       ),
     ],
-    redirect: (context, state) {
-      if (state.uri.toString() == '/') {
-        final authService = sl<SupabaseAuthService>();
-        return authService.isAuthenticated() 
-          ? RouteNames.mainNavigation 
-          : RouteNames.onboarding;
-      }
-      return null;
-    },
-    errorBuilder: (context, state) => ErrorPage(error: state.error),
   );
 }
 ```

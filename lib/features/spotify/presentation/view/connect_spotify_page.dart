@@ -36,8 +36,8 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
         'sessionId': _sessionId,
         'runId': _runId,
         'hypothesisId': hypothesisId,
-        'location':
-            'connect_spotify_page.dart:${StackTrace.current.toString().split('\n').first}',
+        'location': 'connect_spotify_page.dart:'
+            '${StackTrace.current.toString().split('\n').first}',
         'message': message,
         'data': data,
         'timestamp': DateTime.now().millisecondsSinceEpoch,
@@ -54,7 +54,7 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
       // ignore: avoid_print
       print('AGENTLOG ${jsonEncode(payload)}');
       // #endregion
-    } catch (_) {
+    } on Exception catch (_) {
       // ignore logging failures
     }
   }
@@ -83,7 +83,7 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
       if (initialUri != null) {
         unawaited(_handleIncomingUri(initialUri));
       }
-    } catch (_) {}
+    } on Exception catch (_) {}
 
     // Listen for subsequent deep links.
     _linkSub = _appLinks.uriLinkStream.listen(
@@ -98,13 +98,15 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
     final code = uri.queryParameters['code'];
 
     if (status == 'success' && mounted) {
-      _log('H2', 'received success deep link', {});
+      unawaited(_log('H2', 'received success deep link', {}));
       context.read<SpotifyBloc>().add(const SpotifyProfileRequested());
       return;
     }
 
     if (code != null && code.isNotEmpty && mounted) {
-      _log('H2', 'received deep link code', {'codeLen': code.length});
+      unawaited(
+        _log('H2', 'received deep link code', {'codeLen': code.length}),
+      );
       context.read<SpotifyBloc>().add(SpotifyAuthCodeReceived(code));
     }
   }
@@ -122,11 +124,11 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
             state.authorizeUrl != null &&
             state.authorizeUrl != _lastLaunchedUrl) {
           _lastLaunchedUrl = state.authorizeUrl;
-          _log('H2', 'launch authorize url', {
+          unawaited(_log('H2', 'launch authorize url', {
             'status': state.status.toString(),
             'authorizeUrl': state.authorizeUrl,
             'lastLaunched': _lastLaunchedUrl,
-          });
+          }));
           await launchUrl(
             Uri.parse(state.authorizeUrl!),
             mode: LaunchMode.externalApplication,
@@ -173,7 +175,8 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Sync your favorite artists and discover recommendations.',
+                      'Sync your favorite artists and '
+                      'discover recommendations.',
                       style: cupertinoTheme.textTheme.textStyle.copyWith(
                         color: cupertinoTheme.primaryColor,
                       ),

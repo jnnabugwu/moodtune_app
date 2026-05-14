@@ -32,8 +32,8 @@ class AnalysisRepositoryImpl implements AnalysisRepository {
       return Right(model.toDomain());
     } on DioException catch (e) {
       return Left(_mapDioError(e));
-    } catch (e) {
-      return const Left(ServerFailure('Unexpected error occurred'));
+    } on Exception catch (e) {
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -51,7 +51,7 @@ class AnalysisRepositoryImpl implements AnalysisRepository {
       return Right(analyses);
     } on DioException catch (e) {
       return Left(_mapDioError(e));
-    } catch (e) {
+    } on Exception catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
@@ -64,7 +64,7 @@ class AnalysisRepositoryImpl implements AnalysisRepository {
       return Right(model.toDomain());
     } on DioException catch (e) {
       return Left(_mapDioError(e));
-    } catch (e) {
+    } on Exception catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
@@ -77,7 +77,7 @@ class AnalysisRepositoryImpl implements AnalysisRepository {
       return Right(model.toDomain());
     } on DioException catch (e) {
       return Left(_mapDioError(e));
-    } catch (e) {
+    } on Exception catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }
@@ -119,7 +119,7 @@ class AnalysisRepositoryImpl implements AnalysisRepository {
       return Right(model.toDomain());
     } on DioException catch (e) {
       return Left(_mapDioError(e));
-    } catch (e) {
+    } on Exception catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -82,10 +84,13 @@ class _SpotifyProfilePageState extends State<SpotifyProfilePage> {
                                       await showAnalysisDisclaimerSheet(
                                         context,
                                       );
-                                  if (confirmed == true) {
-                                    context.push(
-                                      RouteNames.analyzingFor(p.id),
-                                      extra: p,
+                                  if (!context.mounted) return;
+                                  if (confirmed ?? false) {
+                                    unawaited(
+                                      context.push(
+                                        RouteNames.analyzingFor(p.id),
+                                        extra: p,
+                                      ),
                                     );
                                   }
                                 },
