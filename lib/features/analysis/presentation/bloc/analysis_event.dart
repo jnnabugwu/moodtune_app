@@ -22,7 +22,8 @@ class AnalyzePlaylistRequested extends AnalysisEvent {
 
 class AnalysisHistoryRequested extends AnalysisEvent {
   const AnalysisHistoryRequested({
-    this.limit = 3,
+    // Default 50 so History screen has enough items to filter client-side
+    this.limit = 50,
     this.offset = 0,
   });
 
@@ -31,6 +32,17 @@ class AnalysisHistoryRequested extends AnalysisEvent {
 
   @override
   List<Object?> get props => [limit, offset];
+}
+
+/// Filters the already-loaded history list in memory.
+/// Pass null to clear the filter and show all items.
+class AnalysisHistoryFilterChanged extends AnalysisEvent {
+  const AnalysisHistoryFilterChanged(this.mood);
+
+  final String? mood;
+
+  @override
+  List<Object?> get props => [mood];
 }
 
 class AnalysisByIdRequested extends AnalysisEvent {

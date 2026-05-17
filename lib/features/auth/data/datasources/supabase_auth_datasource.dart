@@ -47,4 +47,15 @@ class SupabaseAuthDatasource {
   Future<void> signOut() async {
     await _client.auth.signOut();
   }
+
+  Future<void> resendVerificationEmail(String email) async {
+    await _client.auth.resend(
+      type: OtpType.signup,
+      email: email,
+    );
+  }
+
+  Future<void> sendPasswordResetEmail(String email) async {
+    await _client.auth.resetPasswordForEmail(email);
+  }
 }

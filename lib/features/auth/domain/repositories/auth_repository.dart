@@ -12,4 +12,10 @@ abstract class AuthRepository {
     required String password,
   });
   ResultFuture<void> signOut();
+
+  /// Re-sends the email confirmation link for [email].
+  ResultFuture<void> resendVerificationEmail(String email);
+
+  /// Sends a password-reset link to [email].
+  ResultFuture<void> sendPasswordResetEmail(String email);
 }

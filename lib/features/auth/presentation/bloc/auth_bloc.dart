@@ -12,6 +12,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthSignInRequested>(_onAuthSignInRequested);
     on<AuthSignUpRequested>(_onAuthSignUpRequested);
     on<AuthSignOutRequested>(_onAuthSignOutRequested);
+    on<ResendVerificationRequested>(_onResendVerification);
+    on<ForgotPasswordRequested>(_onForgotPassword);
   }
 
   final AuthRepository _repository;
@@ -115,6 +117,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           user: user,
           error: null,
           justSignedUp: true,
+          // Keep the email so Email Verify screen can display it
+          pendingVerificationEmail: event.email,
         ),
       ),
     );
@@ -146,6 +150,50 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           user: null,
           error: null,
           justSignedUp: false,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _onResendVerification(
+    ResendVerificationRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(state.copyWith(status: AuthStatus.loading, error: null));
+    final result = await _repository.resendVerificationEmail(event.email);
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          status: AuthStatus.unauthenticated,
+          error: failure.message,
+        ),
+      ),
+      (_) => emit(
+        state.copyWith(
+          status: AuthStatus.unauthenticated,
+          pendingVerificationEmail: event.email,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _onForgotPassword(
+    ForgotPasswordRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(state.copyWith(status: AuthStatus.loading, error: null));
+    final result = await _repository.sendPasswordResetEmail(event.email);
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          status: AuthStatus.unauthenticated,
+          error: failure.message,
+        ),
+      ),
+      (_) => emit(
+        state.copyWith(
+          status: AuthStatus.unauthenticated,
+          passwordResetSent: true,
         ),
       ),
     );

@@ -102,6 +102,50 @@ class AppRouter {
         path: RouteNames.notFound,
         builder: (context, state) => const NotFoundPage(),
       ),
+
+      // ── New redesign routes (stub pages — replaced in Parts 3 & 4) ──
+      GoRoute(
+        path: RouteNames.landing,
+        builder: (context, state) => const _StubPage(title: 'Landing'),
+      ),
+      GoRoute(
+        path: RouteNames.signIn,
+        builder: (context, state) => const _StubPage(title: 'Sign In'),
+      ),
+      GoRoute(
+        path: RouteNames.emailVerify,
+        builder: (context, state) =>
+            const _StubPage(title: 'Email Verify'),
+      ),
+      GoRoute(
+        path: RouteNames.forgotPassword,
+        builder: (context, state) =>
+            const _StubPage(title: 'Forgot Password'),
+      ),
+      GoRoute(
+        path: RouteNames.homeAuth,
+        builder: (context, state) =>
+            const _StubPage(title: 'Home (Auth)'),
+      ),
+      GoRoute(
+        path: RouteNames.history,
+        builder: (context, state) => const _StubPage(title: 'History'),
+      ),
+      GoRoute(
+        path: RouteNames.catalog,
+        builder: (context, state) =>
+            const _StubPage(title: 'Catalog Search'),
+      ),
+      GoRoute(
+        path: RouteNames.analysisLoading,
+        builder: (context, state) =>
+            const _StubPage(title: 'Analyzing…'),
+      ),
+      GoRoute(
+        path: RouteNames.result,
+        builder: (context, state) =>
+            const _StubPage(title: 'Results'),
+      ),
     ],
     errorBuilder: (context, state) => ErrorPage(error: state.error),
   );
@@ -130,6 +174,21 @@ class NotFoundPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Center(
       child: Text('Page not found'),
+    );
+  }
+}
+
+/// Temporary placeholder used for redesign routes before their real
+/// screens are built in Parts 3 & 4.
+class _StubPage extends StatelessWidget {
+  const _StubPage({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text('[$title — coming soon]'),
     );
   }
 }
