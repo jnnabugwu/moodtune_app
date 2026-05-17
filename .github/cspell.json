@@ -16,6 +16,7 @@
   ],
   "useGitignore": true,
   "words": [
+    "applinks",
     "Contador",
     "localizable",
     "mostrado",
