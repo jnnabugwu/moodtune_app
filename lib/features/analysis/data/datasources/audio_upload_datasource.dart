@@ -9,16 +9,16 @@ class AudioUploadRemoteDataSource {
     String baseUrl = defaultBaseUrl,
   }) : _dio =
            dio ??
-           Dio(
-             BaseOptions(
-               baseUrl: baseUrl,
-               connectTimeout: const Duration(seconds: 30),
-               receiveTimeout: const Duration(seconds: 90),
-               sendTimeout: const Duration(seconds: 90),
-             ),
-           )
-            ..interceptors.add(TalkerDioLogger(talker: talker))
-            ..addSentry();
+                 Dio(
+                   BaseOptions(
+                     baseUrl: baseUrl,
+                     connectTimeout: const Duration(seconds: 30),
+                     receiveTimeout: const Duration(seconds: 90),
+                     sendTimeout: const Duration(seconds: 90),
+                   ),
+                 )
+             ..interceptors.add(TalkerDioLogger(talker: talker))
+             ..addSentry();
 
   static const defaultBaseUrl = 'http://127.0.0.1:8000/api/v1';
   final Dio _dio;

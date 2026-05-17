@@ -13,6 +13,9 @@ class UploadAudioFeatures extends Equatable {
     required this.dynamicRange,
     required this.mfccMean,
     required this.durationSeconds,
+    required this.energyLabel,
+    required this.brightnessLabel,
+    required this.textureLabel,
   });
 
   final double tempo;
@@ -27,6 +30,11 @@ class UploadAudioFeatures extends Equatable {
   final List<double> mfccMean;
   final double durationSeconds;
 
+  /// Human-readable labels for Results screen (e.g. "High (0.84)")
+  final String energyLabel;
+  final String brightnessLabel;
+  final String textureLabel;
+
   @override
   List<Object?> get props => [
     tempo,
@@ -40,6 +48,9 @@ class UploadAudioFeatures extends Equatable {
     dynamicRange,
     mfccMean,
     durationSeconds,
+    energyLabel,
+    brightnessLabel,
+    textureLabel,
   ];
 }
 
@@ -50,6 +61,7 @@ class UploadMoodResult extends Equatable {
     required this.confidence,
     required this.reasoning,
     required this.audioFeatures,
+    required this.descriptors,
   });
 
   final String primaryMood;
@@ -58,6 +70,10 @@ class UploadMoodResult extends Equatable {
   final String reasoning;
   final UploadAudioFeatures audioFeatures;
 
+  /// Short mood tags for descriptor pills,
+  /// e.g. ["upbeat", "danceable", "bright"]
+  final List<String> descriptors;
+
   @override
   List<Object?> get props => [
     primaryMood,
@@ -65,6 +81,7 @@ class UploadMoodResult extends Equatable {
     confidence,
     reasoning,
     audioFeatures,
+    descriptors,
   ];
 }
 
@@ -81,6 +98,7 @@ class AudioUploadAnalysis extends Equatable {
     this.title,
     this.artist,
     this.album,
+    this.jamendoTrackUrl,
   });
 
   final String id;
@@ -95,6 +113,10 @@ class AudioUploadAnalysis extends Equatable {
   final DateTime processedAt;
   final double processingTimeSeconds;
 
+  /// Set when the analysis originated from a Jamendo catalog track.
+  /// Used for the attribution row on the Results screen.
+  final String? jamendoTrackUrl;
+
   @override
   List<Object?> get props => [
     id,
@@ -108,5 +130,6 @@ class AudioUploadAnalysis extends Equatable {
     analysisMethod,
     processedAt,
     processingTimeSeconds,
+    jamendoTrackUrl,
   ];
 }

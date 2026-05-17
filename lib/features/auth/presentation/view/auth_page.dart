@@ -122,8 +122,9 @@ class _AuthPageState extends State<AuthPage> {
                     ),
                     const SizedBox(height: 12),
                     CupertinoButton(
-                      onPressed:
-                          isLoading ? null : () => context.go(RouteNames.guest),
+                      onPressed: isLoading
+                          ? null
+                          : () => context.go(RouteNames.guest),
                       child: const Text('Continue as guest'),
                     ),
                   ],

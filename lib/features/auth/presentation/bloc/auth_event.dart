@@ -34,3 +34,21 @@ class AuthSignUpRequested extends AuthEvent {
 class AuthSignOutRequested extends AuthEvent {
   const AuthSignOutRequested();
 }
+
+class ResendVerificationRequested extends AuthEvent {
+  const ResendVerificationRequested(this.email);
+
+  final String email;
+
+  @override
+  List<Object?> get props => [email];
+}
+
+class ForgotPasswordRequested extends AuthEvent {
+  const ForgotPasswordRequested(this.email);
+
+  final String email;
+
+  @override
+  List<Object?> get props => [email];
+}

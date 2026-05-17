@@ -49,14 +49,14 @@ class _UploadMusicPageState extends State<UploadMusicPage> {
   void _analyze() {
     if (_fileBytes == null || _fileName == null) return;
     context.read<AnalysisBloc>().add(
-          AudioUploadRequested(
-            bytes: _fileBytes!,
-            filename: _fileName!,
-            title: _titleController.text.trim(),
-            artist: _artistController.text.trim(),
-            album: _albumController.text.trim(),
-          ),
-        );
+      AudioUploadRequested(
+        bytes: _fileBytes!,
+        filename: _fileName!,
+        title: _titleController.text.trim(),
+        artist: _artistController.text.trim(),
+        album: _albumController.text.trim(),
+      ),
+    );
   }
 
   @override
@@ -154,8 +154,9 @@ class _UploadMusicPageState extends State<UploadMusicPage> {
                 ),
                 const SizedBox(height: 20),
                 CupertinoButton.filled(
-                  onPressed:
-                      isUploading || _fileBytes == null ? null : _analyze,
+                  onPressed: isUploading || _fileBytes == null
+                      ? null
+                      : _analyze,
                   child: isUploading
                       ? const CupertinoActivityIndicator(
                           color: CupertinoColors.white,
@@ -279,8 +280,7 @@ class _UploadAnalysisResult extends StatelessWidget {
           ),
           _MetricRow(
             label: 'Tempo',
-            value:
-                '${mood.audioFeatures.tempo.toStringAsFixed(0)} BPM',
+            value: '${mood.audioFeatures.tempo.toStringAsFixed(0)} BPM',
           ),
           _MetricRow(
             label: 'Energy',

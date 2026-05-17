@@ -13,6 +13,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
        super(const AnalysisState()) {
     on<AnalyzePlaylistRequested>(_onAnalyzeRequested);
     on<AnalysisHistoryRequested>(_onHistoryRequested);
+    on<AnalysisHistoryFilterChanged>(_onHistoryFilterChanged);
     on<AnalysisByIdRequested>(_onAnalysisByIdRequested);
     on<AnalyzeSongRequested>(_onAnalyzeSongRequested);
     on<AnalysisClearErrorRequested>(_onClearError);
@@ -80,7 +81,33 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
         state.copyWith(
           historyLoading: false,
           history: analyses,
+          // Reset filtered view to full list on fresh load
+          filteredHistory: analyses,
+          historyMoodFilter: null,
         ),
+      ),
+    );
+  }
+
+  void _onHistoryFilterChanged(
+    AnalysisHistoryFilterChanged event,
+    Emitter<AnalysisState> emit,
+  ) {
+    final mood = event.mood;
+    final filtered = mood == null || mood.isEmpty
+        ? state.history
+        : state.history
+              .where(
+                (a) =>
+                    a.moodResult.primaryMood.toLowerCase() ==
+                    mood.toLowerCase(),
+              )
+              .toList();
+
+    emit(
+      state.copyWith(
+        filteredHistory: filtered,
+        historyMoodFilter: mood,
       ),
     );
   }

@@ -36,7 +36,8 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
         'sessionId': _sessionId,
         'runId': _runId,
         'hypothesisId': hypothesisId,
-        'location': 'connect_spotify_page.dart:'
+        'location':
+            'connect_spotify_page.dart:'
             '${StackTrace.current.toString().split('\n').first}',
         'message': message,
         'data': data,
@@ -124,11 +125,13 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
             state.authorizeUrl != null &&
             state.authorizeUrl != _lastLaunchedUrl) {
           _lastLaunchedUrl = state.authorizeUrl;
-          unawaited(_log('H2', 'launch authorize url', {
-            'status': state.status.toString(),
-            'authorizeUrl': state.authorizeUrl,
-            'lastLaunched': _lastLaunchedUrl,
-          }));
+          unawaited(
+            _log('H2', 'launch authorize url', {
+              'status': state.status.toString(),
+              'authorizeUrl': state.authorizeUrl,
+              'lastLaunched': _lastLaunchedUrl,
+            }),
+          );
           await launchUrl(
             Uri.parse(state.authorizeUrl!),
             mode: LaunchMode.externalApplication,
