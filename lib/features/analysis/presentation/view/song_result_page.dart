@@ -125,7 +125,7 @@ class _MoodCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${(mood.confidence * 100).toStringAsFixed(0)}% confidence',
+                    '${(mood.confidence * 100).toStringAsFixed(0)}% confidence',
                       style: theme.textTheme.textStyle.copyWith(
                         color: theme.textTheme.textStyle.color?.withValues(
                           alpha: 0.7,
