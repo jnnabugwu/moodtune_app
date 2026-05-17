@@ -15,8 +15,7 @@ class AnalysisRepositoryImpl implements AnalysisRepository {
     AnalysisRemoteDataSource? remoteDataSource,
     AudioUploadRemoteDataSource? uploadRemoteDataSource,
   }) : _remote = remoteDataSource ?? AnalysisRemoteDataSource(),
-       _uploadRemote =
-           uploadRemoteDataSource ?? AudioUploadRemoteDataSource();
+       _uploadRemote = uploadRemoteDataSource ?? AudioUploadRemoteDataSource();
 
   final AnalysisRemoteDataSource _remote;
   final AudioUploadRemoteDataSource _uploadRemote;

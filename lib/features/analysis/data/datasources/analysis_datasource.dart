@@ -21,9 +21,9 @@ class AnalysisRemoteDataSource {
                      receiveTimeout: const Duration(seconds: 10),
                    ),
                  )
-            ..interceptors.add(AuthInterceptor())
-            ..interceptors.add(TalkerDioLogger(talker: talker))
-            ..addSentry();
+             ..interceptors.add(AuthInterceptor())
+             ..interceptors.add(TalkerDioLogger(talker: talker))
+             ..addSentry();
 
   static const defaultBaseUrl = 'http://127.0.0.1:8000/api/v1';
   final Dio _dio;

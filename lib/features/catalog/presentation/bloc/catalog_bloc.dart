@@ -8,13 +8,12 @@ part 'catalog_event.dart';
 part 'catalog_state.dart';
 
 EventTransformer<E> _debounceSwitch<E>(Duration duration) =>
-    (events, mapper) =>
-        events.debounceTime(duration).switchMap(mapper);
+    (events, mapper) => events.debounceTime(duration).switchMap(mapper);
 
 class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
   CatalogBloc({required SearchCatalog searchCatalog})
-      : _searchCatalog = searchCatalog,
-        super(const CatalogInitial()) {
+    : _searchCatalog = searchCatalog,
+      super(const CatalogInitial()) {
     on<CatalogSearchRequested>(
       _onSearchRequested,
       transformer: _debounceSwitch(const Duration(milliseconds: 300)),

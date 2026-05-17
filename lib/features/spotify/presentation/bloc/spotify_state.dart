@@ -53,8 +53,8 @@ class SpotifyState extends Equatable {
       isConnected: isConnected ?? this.isConnected,
       playlists: playlists ?? this.playlists,
       playlistTracks: playlistTracks ?? this.playlistTracks,
-      playlistTracksLoading: 
-      playlistTracksLoading ?? this.playlistTracksLoading,
+      playlistTracksLoading:
+          playlistTracksLoading ?? this.playlistTracksLoading,
       playlistTracksError: playlistTracksError,
     );
   }

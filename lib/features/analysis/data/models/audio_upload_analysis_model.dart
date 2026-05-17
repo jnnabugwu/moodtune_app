@@ -22,22 +22,17 @@ class UploadAudioFeaturesModel {
     return UploadAudioFeaturesModel(
       tempo: (json['tempo'] as num?)?.toDouble() ?? 0,
       beatStrength: (json['beat_strength'] as num?)?.toDouble() ?? 0,
-      spectralCentroid:
-          (json['spectral_centroid'] as num?)?.toDouble() ?? 0,
-      spectralRolloff:
-          (json['spectral_rolloff'] as num?)?.toDouble() ?? 0,
-      spectralBandwidth:
-          (json['spectral_bandwidth'] as num?)?.toDouble() ?? 0,
+      spectralCentroid: (json['spectral_centroid'] as num?)?.toDouble() ?? 0,
+      spectralRolloff: (json['spectral_rolloff'] as num?)?.toDouble() ?? 0,
+      spectralBandwidth: (json['spectral_bandwidth'] as num?)?.toDouble() ?? 0,
       harmonicRatio: (json['harmonic_ratio'] as num?)?.toDouble() ?? 0,
-      zeroCrossingRate:
-          (json['zero_crossing_rate'] as num?)?.toDouble() ?? 0,
+      zeroCrossingRate: (json['zero_crossing_rate'] as num?)?.toDouble() ?? 0,
       rmsEnergy: (json['rms_energy'] as num?)?.toDouble() ?? 0,
       dynamicRange: (json['dynamic_range'] as num?)?.toDouble() ?? 0,
       mfccMean: (json['mfcc_mean'] as List<dynamic>? ?? [])
           .map((e) => (e as num).toDouble())
           .toList(),
-      durationSeconds:
-          (json['duration_seconds'] as num?)?.toDouble() ?? 0,
+      durationSeconds: (json['duration_seconds'] as num?)?.toDouble() ?? 0,
       energyLabel: json['energy_label'] as String? ?? '',
       brightnessLabel: json['brightness_label'] as String? ?? '',
       textureLabel: json['texture_label'] as String? ?? '',
@@ -90,8 +85,9 @@ class UploadMoodResultModel {
   });
 
   factory UploadMoodResultModel.fromJson(Map<String, dynamic> json) {
-    final scores = (json['mood_scores'] as Map<String, dynamic>? ?? {})
-        .map((key, value) => MapEntry(key, (value as num).toDouble()));
+    final scores = (json['mood_scores'] as Map<String, dynamic>? ?? {}).map(
+      (key, value) => MapEntry(key, (value as num).toDouble()),
+    );
     return UploadMoodResultModel(
       primaryMood: json['primary_mood'] as String? ?? '',
       moodScores: scores,
@@ -146,19 +142,17 @@ class AudioUploadAnalysisModel {
       id: json['id'] as String? ?? '',
       filename: json['filename'] as String? ?? '',
       fileSizeBytes: (json['file_size_bytes'] as num?)?.toInt() ?? 0,
-      durationSeconds:
-          (json['duration_seconds'] as num?)?.toDouble() ?? 0,
+      durationSeconds: (json['duration_seconds'] as num?)?.toDouble() ?? 0,
       title: json['title'] as String?,
       artist: json['artist'] as String?,
       album: json['album'] as String?,
       mood: UploadMoodResultModel.fromJson(
         json['mood'] as Map<String, dynamic>? ?? {},
       ),
-      analysisMethod:
-          json['analysis_method'] as String? ?? 'direct_audio',
+      analysisMethod: json['analysis_method'] as String? ?? 'direct_audio',
       processedAt:
           DateTime.tryParse(json['processed_at'] as String? ?? '') ??
-              DateTime.fromMillisecondsSinceEpoch(0),
+          DateTime.fromMillisecondsSinceEpoch(0),
       processingTimeSeconds:
           (json['processing_time_seconds'] as num?)?.toDouble() ?? 0,
       jamendoTrackUrl: json['jamendo_track_url'] as String?,

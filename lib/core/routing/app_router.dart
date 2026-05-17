@@ -114,18 +114,15 @@ class AppRouter {
       ),
       GoRoute(
         path: RouteNames.emailVerify,
-        builder: (context, state) =>
-            const _StubPage(title: 'Email Verify'),
+        builder: (context, state) => const _StubPage(title: 'Email Verify'),
       ),
       GoRoute(
         path: RouteNames.forgotPassword,
-        builder: (context, state) =>
-            const _StubPage(title: 'Forgot Password'),
+        builder: (context, state) => const _StubPage(title: 'Forgot Password'),
       ),
       GoRoute(
         path: RouteNames.homeAuth,
-        builder: (context, state) =>
-            const _StubPage(title: 'Home (Auth)'),
+        builder: (context, state) => const _StubPage(title: 'Home (Auth)'),
       ),
       GoRoute(
         path: RouteNames.history,
@@ -133,18 +130,15 @@ class AppRouter {
       ),
       GoRoute(
         path: RouteNames.catalog,
-        builder: (context, state) =>
-            const _StubPage(title: 'Catalog Search'),
+        builder: (context, state) => const _StubPage(title: 'Catalog Search'),
       ),
       GoRoute(
         path: RouteNames.analysisLoading,
-        builder: (context, state) =>
-            const _StubPage(title: 'Analyzing…'),
+        builder: (context, state) => const _StubPage(title: 'Analyzing…'),
       ),
       GoRoute(
         path: RouteNames.result,
-        builder: (context, state) =>
-            const _StubPage(title: 'Results'),
+        builder: (context, state) => const _StubPage(title: 'Results'),
       ),
     ],
     errorBuilder: (context, state) => ErrorPage(error: state.error),

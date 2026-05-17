@@ -97,12 +97,12 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
     final filtered = mood == null || mood.isEmpty
         ? state.history
         : state.history
-            .where(
-              (a) =>
-                  a.moodResult.primaryMood.toLowerCase() ==
-                  mood.toLowerCase(),
-            )
-            .toList();
+              .where(
+                (a) =>
+                    a.moodResult.primaryMood.toLowerCase() ==
+                    mood.toLowerCase(),
+              )
+              .toList();
 
     emit(
       state.copyWith(

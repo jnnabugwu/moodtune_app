@@ -36,14 +36,14 @@ class JamendoTrack extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        artistName,
-        albumImageUrl,
-        duration,
-        tags,
-        audioUrl,
-        jamendoPageUrl,
-        audiodownloadAllowed,
-      ];
+    id,
+    name,
+    artistName,
+    albumImageUrl,
+    duration,
+    tags,
+    audioUrl,
+    jamendoPageUrl,
+    audiodownloadAllowed,
+  ];
 }

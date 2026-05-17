@@ -77,19 +77,19 @@ class AnalysisState extends Equatable {
 
   @override
   List<Object?> get props => [
-        status,
-        history,
-        filteredHistory,
-        historyMoodFilter,
-        currentAnalysis,
-        currentSongAnalysis,
-        currentUploadAnalysis,
-        error,
-        historyLoading,
-        historyError,
-        uploadStatus,
-        uploadError,
-      ];
+    status,
+    history,
+    filteredHistory,
+    historyMoodFilter,
+    currentAnalysis,
+    currentSongAnalysis,
+    currentUploadAnalysis,
+    error,
+    historyLoading,
+    historyError,
+    uploadStatus,
+    uploadError,
+  ];
 }
 
 /// Sentinel object used in copyWith to distinguish null from "no change".

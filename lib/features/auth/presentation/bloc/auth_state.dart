@@ -45,13 +45,13 @@ class AuthState extends Equatable {
 
   @override
   List<Object?> get props => [
-        status,
-        user,
-        error,
-        justSignedUp,
-        pendingVerificationEmail,
-        passwordResetSent,
-      ];
+    status,
+    user,
+    error,
+    justSignedUp,
+    pendingVerificationEmail,
+    passwordResetSent,
+  ];
 }
 
 const Object _keep = Object();

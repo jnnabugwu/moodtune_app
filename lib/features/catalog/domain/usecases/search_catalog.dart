@@ -12,6 +12,5 @@ class SearchCatalog {
   ResultFuture<List<JamendoTrack>> call({
     String? query,
     String? moodTag,
-  }) =>
-      _repository.searchTracks(query: query, moodTag: moodTag);
+  }) => _repository.searchTracks(query: query, moodTag: moodTag);
 }

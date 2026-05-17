@@ -10,14 +10,15 @@ class JamendoRemoteDataSource {
   JamendoRemoteDataSource({
     required this.clientId,
     Dio? dio,
-  }) : _dio = dio ??
-            Dio(
-              BaseOptions(
-                baseUrl: 'https://api.jamendo.com/v3.0',
-                connectTimeout: const Duration(seconds: 10),
-                receiveTimeout: const Duration(seconds: 15),
-              ),
-            );
+  }) : _dio =
+           dio ??
+           Dio(
+             BaseOptions(
+               baseUrl: 'https://api.jamendo.com/v3.0',
+               connectTimeout: const Duration(seconds: 10),
+               receiveTimeout: const Duration(seconds: 15),
+             ),
+           );
 
   static const _limit = 20;
 
@@ -58,8 +59,7 @@ class JamendoRemoteDataSource {
       final results = data['results'] as List<dynamic>? ?? [];
       return results
           .map(
-            (e) =>
-                JamendoTrackModel.fromJson(e as Map<String, dynamic>),
+            (e) => JamendoTrackModel.fromJson(e as Map<String, dynamic>),
           )
           .toList();
     } on DioException catch (e) {

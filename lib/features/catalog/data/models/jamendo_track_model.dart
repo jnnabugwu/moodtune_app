@@ -21,10 +21,8 @@ class JamendoTrackModel {
 
     // Tags live inside musicinfo.tags
     // Combine vartags + genres (up to 2 shown in UI)
-    final musicInfo =
-        json['musicinfo'] as Map<String, dynamic>? ?? {};
-    final tagMap =
-        musicInfo['tags'] as Map<String, dynamic>? ?? {};
+    final musicInfo = json['musicinfo'] as Map<String, dynamic>? ?? {};
+    final tagMap = musicInfo['tags'] as Map<String, dynamic>? ?? {};
     final vartags = (tagMap['vartags'] as List<dynamic>? ?? [])
         .map((e) => e as String)
         .toList();

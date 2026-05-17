@@ -50,6 +50,5 @@ class RouteNames {
   static String playlistTracksFor(String playlistId) =>
       '/playlist/$playlistId/tracks';
 
-  static String songAnalyzingFor(String trackId) =>
-      '/song/analyzing/$trackId';
+  static String songAnalyzingFor(String trackId) => '/song/analyzing/$trackId';
 }
