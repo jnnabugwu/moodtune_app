@@ -42,9 +42,7 @@ class MoodChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: isSelected
-                ? CupertinoColors.white
-                : CupertinoColors.label,
+            color: isSelected ? CupertinoColors.white : CupertinoColors.label,
           ),
         ),
       ),

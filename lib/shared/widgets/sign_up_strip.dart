@@ -40,8 +40,7 @@ class SignUpStrip extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           CupertinoButton(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
             color: CupertinoColors.activeBlue,
             borderRadius: BorderRadius.circular(20),
             minimumSize: const Size(36, 36),

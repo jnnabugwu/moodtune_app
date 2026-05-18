@@ -97,8 +97,7 @@ class _MoodHeroCardState extends State<MoodHeroCard>
 
   @override
   Widget build(BuildContext context) {
-    final identity =
-        MoodTheme.fromString(widget.analysis.mood.primaryMood);
+    final identity = MoodTheme.fromString(widget.analysis.mood.primaryMood);
     final colors = MoodTheme.colorsFor(identity);
     final icon = MoodTheme.iconFor(identity);
     final quadrant = MoodTheme.quadrantLabel(identity);

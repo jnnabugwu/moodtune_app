@@ -8,8 +8,7 @@ class MoodTuneBottomSheet extends StatelessWidget {
   const MoodTuneBottomSheet({
     required this.child,
     super.key,
-    this.contentPadding =
-        const EdgeInsets.fromLTRB(16, 0, 16, 32),
+    this.contentPadding = const EdgeInsets.fromLTRB(16, 0, 16, 32),
   });
 
   final Widget child;

@@ -67,8 +67,7 @@ class _CollapsibleSectionState extends State<CollapsibleSection>
           onTap: _toggle,
           behavior: HitTestBehavior.opaque,
           child: Padding(
-            padding:
-                const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             child: Row(
               children: [
                 Expanded(
