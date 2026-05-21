@@ -67,6 +67,26 @@ class AnalyzeSongRequested extends AnalysisEvent {
   List<Object?> get props => [trackId];
 }
 
+class CatalogTrackAnalyzeRequested extends AnalysisEvent {
+  const CatalogTrackAnalyzeRequested({
+    required this.audioUrl,
+    required this.trackId,
+    required this.trackName,
+    required this.artistName,
+    required this.jamendoPageUrl,
+  });
+
+  final String audioUrl;
+  final String trackId;
+  final String trackName;
+  final String artistName;
+  final String jamendoPageUrl;
+
+  @override
+  List<Object?> get props =>
+      [audioUrl, trackId, trackName, artistName, jamendoPageUrl];
+}
+
 class AudioUploadRequested extends AnalysisEvent {
   const AudioUploadRequested({
     required this.bytes,

@@ -122,4 +122,29 @@ class AnalysisRepositoryImpl implements AnalysisRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  ResultFuture<AudioUploadAnalysis> analyzeCatalogTrack({
+    required String audioUrl,
+    required String trackId,
+    required String trackName,
+    required String artistName,
+    required String jamendoPageUrl,
+  }) async {
+    try {
+      final json = await _uploadRemote.analyzeCatalogTrack(
+        audioUrl: audioUrl,
+        trackId: trackId,
+        trackName: trackName,
+        artistName: artistName,
+        jamendoPageUrl: jamendoPageUrl,
+      );
+      final model = AudioUploadAnalysisModel.fromJson(json);
+      return Right(model.toDomain());
+    } on DioException catch (e) {
+      return Left(_mapDioError(e));
+    } on Exception catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

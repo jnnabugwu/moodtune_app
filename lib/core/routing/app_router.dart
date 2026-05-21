@@ -1,12 +1,16 @@
 import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
+import 'package:moodtune_app/di/injector.dart';
 import 'package:moodtune_app/features/analysis/domain/entities/entities.dart';
 import 'package:moodtune_app/features/analysis/presentation/view/view.dart';
 import 'package:moodtune_app/features/auth/presentation/view/auth_gate_page.dart';
 import 'package:moodtune_app/features/auth/presentation/view/email_verify_page.dart';
 import 'package:moodtune_app/features/auth/presentation/view/forgot_password_page.dart';
 import 'package:moodtune_app/features/auth/presentation/view/sign_in_page.dart';
+import 'package:moodtune_app/features/catalog/presentation/bloc/catalog_bloc.dart';
+import 'package:moodtune_app/features/catalog/presentation/view/catalog_search_page.dart';
 import 'package:moodtune_app/features/spotify/domain/entities/entities.dart';
 import 'package:moodtune_app/features/spotify/presentation/view/playlist_tracks_page.dart';
 import 'package:moodtune_app/features/spotify/presentation/view/playlists_page.dart';
@@ -51,18 +55,21 @@ class AppRouter {
         ),
       ),
 
-      // ── Authenticated home (stub — Part 4) ───────────────────────────
+      // ── Authenticated home ────────────────────────────────────────────
       GoRoute(
         path: RouteNames.homeAuth,
-        builder: (context, state) => const _StubPage(title: 'Home (Auth)'),
+        builder: (context, state) => const HomeAuthPage(),
       ),
       GoRoute(
         path: RouteNames.history,
-        builder: (context, state) => const _StubPage(title: 'History'),
+        builder: (context, state) => const HistoryPage(),
       ),
       GoRoute(
         path: RouteNames.catalog,
-        builder: (context, state) => const _StubPage(title: 'Catalog Search'),
+        builder: (context, state) => BlocProvider(
+          create: (_) => getIt<CatalogBloc>(),
+          child: const CatalogSearchPage(),
+        ),
       ),
 
       // ── Upload + analysis ─────────────────────────────────────────────
@@ -72,11 +79,19 @@ class AppRouter {
       ),
       GoRoute(
         path: RouteNames.analysisLoading,
-        builder: (context, state) => const _StubPage(title: 'Analyzing…'),
+        builder: (context, state) {
+          final source =
+              state.extra as AnalysisSource? ?? AnalysisSource.upload;
+          return AnalysisLoadingPage(source: source);
+        },
       ),
       GoRoute(
         path: RouteNames.result,
-        builder: (context, state) => const _StubPage(title: 'Results'),
+        builder: (context, state) {
+          final source =
+              state.extra as AnalysisSource? ?? AnalysisSource.upload;
+          return ResultsPage(source: source);
+        },
       ),
 
       // ── Spotify / legacy analysis ─────────────────────────────────────
@@ -177,21 +192,6 @@ class NotFoundPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Center(
       child: Text('Page not found'),
-    );
-  }
-}
-
-/// Temporary placeholder used for redesign routes before their real
-/// screens are built in Part 4.
-class _StubPage extends StatelessWidget {
-  const _StubPage({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text('[$title — coming soon]'),
     );
   }
 }

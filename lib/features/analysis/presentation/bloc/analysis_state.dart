@@ -4,6 +4,8 @@ enum AnalysisStatus { initial, loading, analyzing, success, error }
 
 enum UploadStatus { initial, uploading, success, error }
 
+enum CatalogAnalysisStatus { initial, analyzing, success, error }
+
 class AnalysisState extends Equatable {
   const AnalysisState({
     this.status = AnalysisStatus.initial,
@@ -18,6 +20,9 @@ class AnalysisState extends Equatable {
     this.historyError,
     this.uploadStatus = UploadStatus.initial,
     this.uploadError,
+    this.catalogStatus = CatalogAnalysisStatus.initial,
+    this.currentCatalogAnalysis,
+    this.catalogError,
   });
 
   final AnalysisStatus status;
@@ -41,6 +46,11 @@ class AnalysisState extends Equatable {
   final UploadStatus uploadStatus;
   final String? uploadError;
 
+  /// Catalog track analysis (Jamendo → /catalog/analyze → AudioUploadAnalysis).
+  final CatalogAnalysisStatus catalogStatus;
+  final AudioUploadAnalysis? currentCatalogAnalysis;
+  final String? catalogError;
+
   AnalysisState copyWith({
     AnalysisStatus? status,
     List<PlaylistAnalysis>? history,
@@ -55,6 +65,9 @@ class AnalysisState extends Equatable {
     String? historyError,
     UploadStatus? uploadStatus,
     String? uploadError,
+    CatalogAnalysisStatus? catalogStatus,
+    AudioUploadAnalysis? currentCatalogAnalysis,
+    String? catalogError,
   }) {
     return AnalysisState(
       status: status ?? this.status,
@@ -72,6 +85,10 @@ class AnalysisState extends Equatable {
       historyError: historyError,
       uploadStatus: uploadStatus ?? this.uploadStatus,
       uploadError: uploadError,
+      catalogStatus: catalogStatus ?? this.catalogStatus,
+      currentCatalogAnalysis:
+          currentCatalogAnalysis ?? this.currentCatalogAnalysis,
+      catalogError: catalogError,
     );
   }
 
@@ -89,6 +106,9 @@ class AnalysisState extends Equatable {
     historyError,
     uploadStatus,
     uploadError,
+    catalogStatus,
+    currentCatalogAnalysis,
+    catalogError,
   ];
 }
 

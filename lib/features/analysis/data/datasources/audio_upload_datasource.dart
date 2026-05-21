@@ -23,6 +23,26 @@ class AudioUploadRemoteDataSource {
   static const defaultBaseUrl = 'http://127.0.0.1:8000/api/v1';
   final Dio _dio;
 
+  Future<Map<String, dynamic>> analyzeCatalogTrack({
+    required String audioUrl,
+    required String trackId,
+    required String trackName,
+    required String artistName,
+    required String jamendoPageUrl,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/catalog/analyze',
+      data: {
+        'audio_url': audioUrl,
+        'track_id': trackId,
+        'track_name': trackName,
+        'artist_name': artistName,
+        'jamendo_page_url': jamendoPageUrl,
+      },
+    );
+    return response.data ?? <String, dynamic>{};
+  }
+
   Future<Map<String, dynamic>> uploadAndAnalyzeAudio({
     required List<int> bytes,
     required String filename,

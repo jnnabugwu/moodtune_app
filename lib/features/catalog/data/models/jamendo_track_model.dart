@@ -39,7 +39,9 @@ class JamendoTrackModel {
       albumImageUrl: json['album_image'] as String? ?? '',
       durationSeconds: (json['duration'] as num?)?.toInt() ?? 0,
       tags: tags,
-      audioUrl: json['audiodownload'] as String? ?? '',
+      // `audiodownload` requires Jamendo auth (403 from backend).
+      // `audio` is a signed streaming URL — publicly accessible.
+      audioUrl: json['audio'] as String? ?? '',
       jamendoPageUrl: json['shareurl'] as String? ?? '',
       audiodownloadAllowed: downloadAllowed,
     );
