@@ -1,6 +1,10 @@
+export 'analysis_loading_page.dart';
 export 'analysis_result_page.dart';
 export 'analyzing_page.dart';
 export 'guest_page.dart';
+export 'history_page.dart';
+export 'home_auth_page.dart';
+export 'results_page.dart';
 export 'song_analyzing_page.dart';
 export 'song_result_page.dart';
 export 'upload_music_page.dart';

@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:moodtune_app/core/error/failures.dart';
 import 'package:moodtune_app/features/analysis/domain/domain.dart';
 
 part 'analysis_event.dart';
@@ -18,6 +19,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
     on<AnalyzeSongRequested>(_onAnalyzeSongRequested);
     on<AnalysisClearErrorRequested>(_onClearError);
     on<AudioUploadRequested>(_onAudioUploadRequested);
+    on<CatalogTrackAnalyzeRequested>(_onCatalogTrackAnalyzeRequested);
   }
 
   final AnalysisRepository _repository;
@@ -213,5 +215,35 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
     Emitter<AnalysisState> emit,
   ) {
     emit(state.copyWith(error: null, historyError: null, uploadError: null));
+  }
+
+  Future<void> _onCatalogTrackAnalyzeRequested(
+    CatalogTrackAnalyzeRequested event,
+    Emitter<AnalysisState> emit,
+  ) async {
+    emit(state.copyWith(
+      catalogStatus: CatalogAnalysisStatus.analyzing,
+      catalogError: null,
+      currentCatalogAnalysis: null,
+    ));
+
+    final result = await _repository.analyzeCatalogTrack(
+      audioUrl: event.audioUrl,
+      trackId: event.trackId,
+      trackName: event.trackName,
+      artistName: event.artistName,
+      jamendoPageUrl: event.jamendoPageUrl,
+    );
+
+    result.fold(
+      (Failure failure) => emit(state.copyWith(
+        catalogStatus: CatalogAnalysisStatus.error,
+        catalogError: failure.message,
+      )),
+      (AudioUploadAnalysis analysis) => emit(state.copyWith(
+        catalogStatus: CatalogAnalysisStatus.success,
+        currentCatalogAnalysis: analysis,
+      )),
+    );
   }
 }

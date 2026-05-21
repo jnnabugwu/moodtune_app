@@ -24,4 +24,12 @@ abstract class AnalysisRepository {
     String? artist,
     String? album,
   });
+
+  ResultFuture<AudioUploadAnalysis> analyzeCatalogTrack({
+    required String audioUrl,
+    required String trackId,
+    required String trackName,
+    required String artistName,
+    required String jamendoPageUrl,
+  });
 }
