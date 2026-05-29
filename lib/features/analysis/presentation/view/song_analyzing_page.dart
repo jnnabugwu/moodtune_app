@@ -5,7 +5,7 @@ import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/spotify/domain/entities/spotify_track.dart';
 
-class SongAnalyzingPage extends StatefulWidget {
+class SongAnalyzingPage extends StatelessWidget {
   const SongAnalyzingPage({
     required this.trackId,
     this.track,
@@ -16,27 +16,8 @@ class SongAnalyzingPage extends StatefulWidget {
   final SpotifyTrack? track;
 
   @override
-  State<SongAnalyzingPage> createState() => _SongAnalyzingPageState();
-}
-
-class _SongAnalyzingPageState extends State<SongAnalyzingPage> {
-  bool _requested = false;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_requested) {
-      _requested = true;
-      context.read<AnalysisBloc>().add(
-        AnalyzeSongRequested(widget.trackId),
-      );
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     final theme = CupertinoTheme.of(context);
-    final track = widget.track;
 
     return BlocListener<AnalysisBloc, AnalysisState>(
       listenWhen: (prev, curr) => prev.status != curr.status,
@@ -90,7 +71,7 @@ class _SongAnalyzingPageState extends State<SongAnalyzingPage> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    if (track != null) _TrackMeta(track: track),
+                    if (track case final t?) _TrackMeta(track: t),
                     const SizedBox(height: 32),
                     Center(
                       child: Column(

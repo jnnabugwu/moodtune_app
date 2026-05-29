@@ -157,7 +157,7 @@ class _MoodHeroCardState extends State<MoodHeroCard>
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: colors.text.withAlpha(180),
+                  color: colors.text.withAlpha(210),
                 ),
               ),
             ),

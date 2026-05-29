@@ -33,6 +33,7 @@ dependencies:
 
 dev_dependencies:
   bloc_test: ^10.0.0
+  flutter_launcher_icons: ^0.14.4
   flutter_test:
     sdk: flutter
   mocktail: ^1.0.4
@@ -43,8 +44,22 @@ flutter:
   generate: true
   uses-material-design: true
 
+  assets:
+    - assets/icons/
+
 sentry:
   upload_debug_symbols: true
   upload_source_maps: true
   project: moodtune-app
   org: jordan-nnabugwu
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/icon.png"
+  remove_alpha_ios: true
+  # Adaptive icon: full-bleed gradient foreground over terracotta background.
+  # The gradient fills the safe zone so the background only peeks through
+  # on extreme parallax — terracotta (#d4885f) is the gradient's mid-stop.
+  adaptive_icon_background: "#d4885f"
+  adaptive_icon_foreground: "assets/icons/icon.png"

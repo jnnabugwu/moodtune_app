@@ -86,6 +86,11 @@ class _SpotifyProfilePageState extends State<SpotifyProfilePage> {
                                       );
                                   if (!context.mounted) return;
                                   if (confirmed ?? false) {
+                                    context.read<AnalysisBloc>().add(
+                                      AnalyzePlaylistRequested(
+                                        playlistId: p.id,
+                                      ),
+                                    );
                                     unawaited(
                                       context.push(
                                         RouteNames.analyzingFor(p.id),

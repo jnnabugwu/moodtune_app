@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220">
+  <!-- Peach note on transparent background — Android adaptive icon foreground.
+       Face features use cream so they read on the ink (#2d2a26) background. -->
+  <g transform="translate(10,10)">
+    <rect x="138" y="0" width="13" height="150" fill="#d99d77"/>
+    <path d="M 151 0 C 198 18 208 60 178 86 C 200 56 188 30 151 22 Z" fill="#d99d77"/>
+    <ellipse cx="100" cy="158" rx="58" ry="42" fill="#d99d77"
+             transform="rotate(-22 100 158)"/>
+    <g transform="rotate(-22 100 158)">
+      <circle cx="84" cy="150" r="6.5" fill="#efece6"/>
+      <circle cx="116" cy="150" r="6.5" fill="#efece6"/>
+      <path d="M 80 170 Q 100 186 120 170"
+            stroke="#efece6" stroke-width="6" stroke-linecap="round" fill="none"/>
+    </g>
+  </g>
+</svg>

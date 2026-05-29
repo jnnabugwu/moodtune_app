@@ -1,9 +1,11 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:moodtune_app/app/view/splash_page.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/di/injector.dart';
 import 'package:moodtune_app/features/analysis/domain/entities/entities.dart';
+import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/analysis/presentation/view/view.dart';
 import 'package:moodtune_app/features/auth/presentation/view/auth_gate_page.dart';
 import 'package:moodtune_app/features/auth/presentation/view/email_verify_page.dart';
@@ -19,8 +21,12 @@ class AppRouter {
   AppRouter._();
 
   static final GoRouter router = GoRouter(
-    initialLocation: RouteNames.landing,
+    initialLocation: RouteNames.splash,
     routes: [
+      GoRoute(
+        path: RouteNames.splash,
+        builder: (context, state) => const SplashPage(),
+      ),
       // ── Legacy redirects ──────────────────────────────────────────────
       GoRoute(
         path: RouteNames.login,
@@ -134,6 +140,18 @@ class AppRouter {
         builder: (context, state) {
           final analysisId = state.pathParameters['id']!;
           final initialAnalysis = state.extra as PlaylistAnalysis?;
+          // Deep-link path: no pre-fetched data passed via extra, so
+          // schedule a fetch after the frame when the widget is mounted.
+          if (initialAnalysis == null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!context.mounted) return;
+              final bloc = context.read<AnalysisBloc>();
+              final current = bloc.state.currentAnalysis;
+              if (current == null || current.id != analysisId) {
+                bloc.add(AnalysisByIdRequested(analysisId));
+              }
+            });
+          }
           return AnalysisResultPage(
             analysisId: analysisId,
             initialAnalysis: initialAnalysis,

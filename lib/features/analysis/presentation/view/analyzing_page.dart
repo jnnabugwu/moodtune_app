@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 
-class AnalyzingPage extends StatefulWidget {
+class AnalyzingPage extends StatelessWidget {
   const AnalyzingPage({
     required this.playlistId,
     this.playlistName,
@@ -17,27 +17,6 @@ class AnalyzingPage extends StatefulWidget {
   final String? playlistName;
   final int? trackCount;
   final int limit;
-
-  @override
-  State<AnalyzingPage> createState() => _AnalyzingPageState();
-}
-
-class _AnalyzingPageState extends State<AnalyzingPage> {
-  bool _requested = false;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_requested) {
-      _requested = true;
-      context.read<AnalysisBloc>().add(
-        AnalyzePlaylistRequested(
-          playlistId: widget.playlistId,
-          limit: widget.limit,
-        ),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -107,9 +86,9 @@ class _AnalyzingPageState extends State<AnalyzingPage> {
                     ),
                     const SizedBox(height: 24),
                     _PlaylistMeta(
-                      name: widget.playlistName ?? 'Playlist',
-                      trackCount: widget.trackCount,
-                      limit: widget.limit,
+                      name: playlistName ?? 'Playlist',
+                      trackCount: trackCount,
+                      limit: limit,
                     ),
                     const SizedBox(height: 32),
                     Center(

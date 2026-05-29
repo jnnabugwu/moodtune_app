@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
+import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/spotify/domain/entities/entities.dart';
 import 'package:moodtune_app/features/spotify/presentation/bloc/spotify_bloc.dart';
 
@@ -110,6 +111,9 @@ class _PlaylistTracksPageState extends State<PlaylistTracksPage> {
               track: track,
               onTap: hasPreview
                   ? () {
+                      context.read<AnalysisBloc>().add(
+                        AnalyzeSongRequested(track.id),
+                      );
                       context.push(
                         RouteNames.songAnalyzingFor(track.id),
                         extra: track,

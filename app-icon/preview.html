@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MoodTune app icon — preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #efece6; color: #2d2a26;
+    font-family: "Inter Tight", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 56px 40px 80px; }
+  h1 { font-size: 36px; letter-spacing: -0.02em; margin: 0 0 4px; }
+  .crumbs { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8a8275; }
+  .row {
+    display: flex; align-items: flex-end; gap: 32px; flex-wrap: wrap;
+    padding: 32px; border-radius: 18px; margin-top: 28px;
+  }
+  .row.light { background: #f5f1e7; border: 1px solid #d9d3c6; }
+  .row.dark  { background: #2d2a26; }
+  .row.dark .cap { color: #8a8275; }
+  .step { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .step img { border-radius: 22.37%; box-shadow: 0 8px 20px -8px rgba(0,0,0,0.4); display: block; }
+  .cap { font-family: "JetBrains Mono", monospace; font-size: 10px; color: #8a8275; letter-spacing: 0.1em; }
+  .lead { display: flex; gap: 28px; align-items: center; margin-top: 28px; flex-wrap: wrap; }
+  .lead img { border-radius: 22.37%; box-shadow: 0 24px 50px -18px rgba(0,0,0,0.45); width: 220px; height: 220px; }
+  .lead .copy { max-width: 360px; }
+  .lead .copy p { font-size: 13px; line-height: 1.6; color: #6b6256; margin: 0; }
+  .lead .copy .sw { display: flex; gap: 8px; margin-top: 14px; }
+  .lead .copy .sw span { width: 28px; height: 28px; border-radius: 7px; border: 1px solid rgba(0,0,0,0.08); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="crumbs">MoodTune · App icon · Monogram</div>
+    <h1>Sunset “m” — final</h1>
+
+    <div class="lead">
+      <img src="icon-1024.png" alt="MoodTune app icon">
+      <div class="copy">
+        <p>Lowercase monogram on the MoodTune sunset gradient. No dot. Full-bleed square master ships as SVG; PNGs are pre-cut at every Apple size.</p>
+        <div class="sw">
+          <span style="background:#e9b489"></span>
+          <span style="background:#d4885f"></span>
+          <span style="background:#b16a8a"></span>
+          <span style="background:#efece6"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="row light">
+      <div class="step"><img src="icon-180.png" width="120" height="120" alt=""><span class="cap">120px</span></div>
+      <div class="step"><img src="icon-180.png" width="80" height="80" alt=""><span class="cap">80px</span></div>
+      <div class="step"><img src="icon-120.png" width="60" height="60" alt=""><span class="cap">60px</span></div>
+      <div class="step"><img src="icon-80.png" width="40" height="40" alt=""><span class="cap">40px</span></div>
+      <div class="step"><img src="icon-60.png" width="29" height="29" alt=""><span class="cap">29px</span></div>
+    </div>
+
+    <div class="row dark">
+      <div class="step"><img src="icon-180.png" width="120" height="120" alt=""><span class="cap">120px</span></div>
+      <div class="step"><img src="icon-180.png" width="80" height="80" alt=""><span class="cap">80px</span></div>
+      <div class="step"><img src="icon-120.png" width="60" height="60" alt=""><span class="cap">60px</span></div>
+      <div class="step"><img src="icon-80.png" width="40" height="40" alt=""><span class="cap">40px</span></div>
+      <div class="step"><img src="icon-60.png" width="29" height="29" alt=""><span class="cap">29px</span></div>
+    </div>
+  </div>
+</body>
+</html>
