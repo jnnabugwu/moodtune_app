@@ -5,7 +5,7 @@ import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.d
 import 'package:moodtune_app/features/analysis/presentation/widgets/mood_distribution_chart.dart';
 import 'package:moodtune_app/features/analysis/presentation/widgets/top_track_card.dart';
 
-class AnalysisResultPage extends StatefulWidget {
+class AnalysisResultPage extends StatelessWidget {
   const AnalysisResultPage({
     required this.analysisId,
     this.initialAnalysis,
@@ -14,31 +14,6 @@ class AnalysisResultPage extends StatefulWidget {
 
   final String analysisId;
   final PlaylistAnalysis? initialAnalysis;
-
-  @override
-  State<AnalysisResultPage> createState() => _AnalysisResultPageState();
-}
-
-class _AnalysisResultPageState extends State<AnalysisResultPage> {
-  bool _requested = false;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_requested) return;
-    final bloc = context.read<AnalysisBloc>();
-    final current = bloc.state.currentAnalysis;
-    final hasAnalysisForId = current != null && current.id == widget.analysisId;
-    if (!hasAnalysisForId && widget.initialAnalysis == null) {
-      _requested = true;
-      bloc.add(AnalysisByIdRequested(widget.analysisId));
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,9 +25,9 @@ class _AnalysisResultPageState extends State<AnalysisResultPage> {
       child: SafeArea(
         child: BlocBuilder<AnalysisBloc, AnalysisState>(
           builder: (context, state) {
-            final analysis = state.currentAnalysis?.id == widget.analysisId
+            final analysis = state.currentAnalysis?.id == analysisId
                 ? state.currentAnalysis
-                : widget.initialAnalysis;
+                : initialAnalysis;
 
             if (analysis == null) {
               return _ResultLoading(status: state.status);

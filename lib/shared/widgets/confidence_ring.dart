@@ -83,9 +83,9 @@ class ConfidenceRing extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           _matchLabel,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
-            color: CupertinoColors.secondaryLabel,
+            color: color.withAlpha(160),
             fontWeight: FontWeight.w500,
           ),
         ),

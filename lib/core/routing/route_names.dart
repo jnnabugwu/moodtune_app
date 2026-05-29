@@ -1,6 +1,9 @@
 class RouteNames {
   RouteNames._();
 
+  /// App entry point — shows the branded splash and resolves auth state.
+  static const String splash = '/splash';
+
   // ── Legacy routes (kept for backward compat) ────────────────────────
   static const String login = '/login';
   static const String signup = '/signup';

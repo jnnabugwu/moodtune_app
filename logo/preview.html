@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MoodTune logo — preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #efece6;
+    color: #2d2a26;
+    font-family: "Inter Tight", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 56px 40px 80px; }
+  h1 { font-size: 36px; letter-spacing: -0.02em; margin: 0 0 4px; }
+  .crumbs { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8a8275; }
+  .row { display: grid; gap: 14px; margin-top: 28px; }
+  .row.three { grid-template-columns: 1.4fr 1fr 1fr; }
+  .card {
+    background: #f5f1e7;
+    border: 1px solid #d9d3c6;
+    border-radius: 16px;
+    padding: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
+    position: relative;
+    color: #2d2a26;
+  }
+  .card.dark { background: #2d2a26; color: #d99d77; }
+  .card .meta {
+    position: absolute; bottom: 12px; left: 14px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: #8a8275;
+  }
+  .card.dark .meta { color: #8a8275; }
+  .card img { max-width: 86%; max-height: 160px; }
+  .card.lockup img { max-width: 92%; }
+  .scale {
+    display: flex; align-items: flex-end; gap: 28px;
+    padding: 24px; border: 1px dashed #b9b1a3; border-radius: 14px;
+    margin-top: 24px; background: rgba(255,255,255,0.4);
+  }
+  .scale .step { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .scale .step .cap { font-family: "JetBrains Mono", monospace; font-size: 10px; color: #8a8275; letter-spacing: 0.1em; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="crumbs">MoodTune · Logo · Notehead</div>
+    <h1>Notehead — handoff assets</h1>
+
+    <div class="row three">
+      <div class="card lockup">
+        <img src="moodtune-lockup.svg" alt="MoodTune lockup">
+        <span class="meta">moodtune-lockup.svg</span>
+      </div>
+      <div class="card">
+        <img src="moodtune-mark.svg" alt="MoodTune mark">
+        <span class="meta">moodtune-mark.svg</span>
+      </div>
+      <div class="card dark">
+        <img src="moodtune-mark-dark.svg" alt="MoodTune mark, dark">
+        <span class="meta">moodtune-mark-dark.svg</span>
+      </div>
+    </div>
+
+    <div class="scale">
+      <div class="step"><img src="moodtune-mark.svg" alt="" width="96" height="96"><span class="cap">96px</span></div>
+      <div class="step"><img src="moodtune-mark.svg" alt="" width="64" height="64"><span class="cap">64px</span></div>
+      <div class="step"><img src="moodtune-mark.svg" alt="" width="40" height="40"><span class="cap">40px</span></div>
+      <div class="step"><img src="moodtune-mark.svg" alt="" width="24" height="24"><span class="cap">24px</span></div>
+      <div class="step"><img src="moodtune-mark.svg" alt="" width="16" height="16"><span class="cap">16px · favicon</span></div>
+    </div>
+  </div>
+</body>
+</html>
