@@ -1,9 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:moodtune_app/app/theme/mood_theme.dart';
-import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
+import 'package:moodtune_app/shared/widgets/analysis_source_sheet.dart';
 import 'package:moodtune_app/shared/widgets/history_row_item.dart';
 import 'package:moodtune_app/shared/widgets/mood_chip.dart';
 
@@ -193,7 +192,7 @@ class _HistoryPageState extends State<HistoryPage> {
     if (items.isEmpty) {
       return _EmptyState(
         hasFilter: _selectedMood != null,
-        onAnalyse: () => context.push(RouteNames.uploadMusic),
+        onAnalyse: () => showAnalysisSourceSheet(context),
         onClearFilter: () => _applyFilter(null),
       );
     }

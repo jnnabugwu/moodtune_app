@@ -1,13 +1,18 @@
 import 'package:dio/dio.dart';
 import 'package:moodtune_app/core/logging/talker.dart';
+import 'package:moodtune_app/core/network/auth_interceptor.dart';
 import 'package:sentry_dio/sentry_dio.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
+
+typedef AudioUploadTokenProvider = Future<String?> Function();
 
 class AudioUploadRemoteDataSource {
   AudioUploadRemoteDataSource({
     Dio? dio,
     String baseUrl = defaultBaseUrl,
-  }) : _dio =
+    AudioUploadTokenProvider? tokenProvider,
+  }) : _tokenProvider = tokenProvider ?? _noToken,
+       _dio =
            dio ??
                  Dio(
                    BaseOptions(
@@ -17,11 +22,22 @@ class AudioUploadRemoteDataSource {
                      sendTimeout: const Duration(seconds: 90),
                    ),
                  )
+             ..interceptors.add(AuthInterceptor())
              ..interceptors.add(TalkerDioLogger(talker: talker))
              ..addSentry();
 
   static const defaultBaseUrl = 'http://127.0.0.1:8000/api/v1';
   final Dio _dio;
+  final AudioUploadTokenProvider _tokenProvider;
+
+  static Future<String?> _noToken() async => null;
+
+  Future<Options> _options() async {
+    final token = await _tokenProvider();
+    return Options(
+      headers: token != null ? {'Authorization': 'Bearer $token'} : null,
+    );
+  }
 
   Future<Map<String, dynamic>> analyzeCatalogTrack({
     required String audioUrl,
@@ -39,6 +55,7 @@ class AudioUploadRemoteDataSource {
         'artist_name': artistName,
         'jamendo_page_url': jamendoPageUrl,
       },
+      options: await _options(),
     );
     return response.data ?? <String, dynamic>{};
   }
@@ -60,6 +77,7 @@ class AudioUploadRemoteDataSource {
     final response = await _dio.post<Map<String, dynamic>>(
       '/audio-upload/analyze',
       data: data,
+      options: await _options(),
     );
     return response.data ?? <String, dynamic>{};
   }

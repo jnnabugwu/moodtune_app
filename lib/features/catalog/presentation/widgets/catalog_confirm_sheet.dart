@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:go_router/go_router.dart';
 import 'package:moodtune_app/features/catalog/domain/entities/jamendo_track.dart';
 
 /// Bottom sheet that confirms before analysing a Jamendo catalog track.
@@ -77,22 +78,38 @@ class CatalogConfirmSheet extends StatelessWidget {
           ],
         ),
       ),
-      message: const Text(
-        "We'll analyse the mood of this track from Jamendo's free "
-        'music library.',
-        textAlign: TextAlign.center,
+      message: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            "We'll analyse the mood of this track from Jamendo's free "
+            'music library.',
+            textAlign: TextAlign.center,
+          ),
+          if (track.duration.inSeconds > 300) ...[
+            const SizedBox(height: 8),
+            const Text(
+              'Tracks over 5 minutes — only the first 5 will be analysed.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: CupertinoColors.secondaryLabel,
+              ),
+            ),
+          ],
+        ],
       ),
       actions: [
         CupertinoActionSheetAction(
           onPressed: () {
-            Navigator.of(context).pop();
+            context.pop();
             onConfirm();
           },
           child: const Text('Analyse this track'),
         ),
       ],
       cancelButton: CupertinoActionSheetAction(
-        onPressed: () => Navigator.of(context).pop(),
+        onPressed: () => context.pop(),
         child: const Text('Cancel'),
       ),
     );

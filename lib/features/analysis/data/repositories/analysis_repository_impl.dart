@@ -37,17 +37,20 @@ class AnalysisRepositoryImpl implements AnalysisRepository {
   }
 
   @override
-  ResultFuture<List<PlaylistAnalysis>> getHistory({
-    int limit = 3,
+  ResultFuture<List<HistoryEntry>> getHistory({
+    int limit = 50,
     int offset = 0,
   }) async {
     try {
-      final items = await _remote.getHistory(limit: limit, offset: offset);
-      final analyses = items
-          .map(PlaylistAnalysisModel.fromJson)
+      final raw = await _remote.getSongHistory(
+        limit: limit,
+        offset: offset,
+      );
+      final entries = raw
+          .map(SongHistoryEntryModel.fromJson)
           .map((m) => m.toDomain())
           .toList();
-      return Right(analyses);
+      return Right(entries);
     } on DioException catch (e) {
       return Left(_mapDioError(e));
     } on Exception catch (e) {

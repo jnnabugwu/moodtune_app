@@ -8,8 +8,10 @@ abstract class AnalysisRepository {
     int limit = 50,
   });
 
-  ResultFuture<List<PlaylistAnalysis>> getHistory({
-    int limit = 3,
+  /// Fetches playlist and song analyses, merges and sorts by date
+  /// (newest first).
+  ResultFuture<List<HistoryEntry>> getHistory({
+    int limit = 50,
     int offset = 0,
   });
 

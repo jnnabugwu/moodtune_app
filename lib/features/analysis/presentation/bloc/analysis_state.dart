@@ -28,11 +28,11 @@ class AnalysisState extends Equatable {
   final AnalysisStatus status;
 
   /// Full list (up to 50 most recent), loaded from the API.
-  final List<PlaylistAnalysis> history;
+  final List<HistoryEntry> history;
 
   /// Filtered view — derived in-memory from [history] when a mood filter
   /// is active. Equals [history] when [historyMoodFilter] is null.
-  final List<PlaylistAnalysis> filteredHistory;
+  final List<HistoryEntry> filteredHistory;
 
   /// Currently active mood filter, e.g. "happy". Null = show all.
   final String? historyMoodFilter;
@@ -53,8 +53,8 @@ class AnalysisState extends Equatable {
 
   AnalysisState copyWith({
     AnalysisStatus? status,
-    List<PlaylistAnalysis>? history,
-    List<PlaylistAnalysis>? filteredHistory,
+    List<HistoryEntry>? history,
+    List<HistoryEntry>? filteredHistory,
     // Use a sentinel to distinguish "set to null" from "leave unchanged"
     Object? historyMoodFilter = _keep,
     PlaylistAnalysis? currentAnalysis,

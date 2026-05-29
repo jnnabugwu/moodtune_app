@@ -101,7 +101,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
         : state.history
               .where(
                 (a) =>
-                    a.moodResult.primaryMood.toLowerCase() ==
+                    a.primaryMood.toLowerCase() ==
                     mood.toLowerCase(),
               )
               .toList();

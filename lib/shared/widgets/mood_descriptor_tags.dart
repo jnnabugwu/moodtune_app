@@ -4,15 +4,16 @@ import 'package:flutter/cupertino.dart';
 ///
 /// Used below the hero card on the Results screen to display mood descriptors
 /// such as "upbeat", "danceable", "bright".
+///
+/// Uses the wireframe neutral palette — warm cream background with dark-brown
+/// text — so the pills read cleanly on any page background.
 class MoodDescriptorTags extends StatelessWidget {
   const MoodDescriptorTags({
     required this.tags,
-    required this.accentColor,
     super.key,
   });
 
   final List<String> tags;
-  final Color accentColor;
 
   @override
   Widget build(BuildContext context) {
@@ -21,38 +22,36 @@ class MoodDescriptorTags extends StatelessWidget {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: tags
-          .map((tag) => _DescriptorPill(tag: tag, accentColor: accentColor))
-          .toList(),
+      children: tags.map((tag) => _DescriptorPill(tag: tag)).toList(),
     );
   }
 }
 
 class _DescriptorPill extends StatelessWidget {
-  const _DescriptorPill({required this.tag, required this.accentColor});
+  const _DescriptorPill({required this.tag});
 
   final String tag;
-  final Color accentColor;
+
+  // Wireframe neutral palette: warm cream / warm mid-border / dark-brown text.
+  static const _bg = Color(0xFFD4CEC1);
+  static const _border = Color(0xFFB9B1A3);
+  static const _text = Color(0xFF2D2A26);
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        // ~15 % opacity background
-        color: accentColor.withAlpha(38),
+        color: _bg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: accentColor.withAlpha(80),
-          width: 0.5,
-        ),
+        border: Border.all(color: _border, width: 0.5),
       ),
       child: Text(
         tag,
-        style: TextStyle(
+        style: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: accentColor,
+          color: _text,
         ),
       ),
     );

@@ -55,10 +55,10 @@ class App extends StatelessWidget {
             supportedLocales: AppLocalizations.supportedLocales,
             routerConfig: AppRouter.router,
           ),
-          themeMode: ThemeMode.dark,
-          darkTheme: ShadThemeData(
-            brightness: Brightness.dark,
-            colorScheme: const ShadSlateColorScheme.dark(),
+          themeMode: ThemeMode.light,
+          theme: ShadThemeData(
+            brightness: Brightness.light,
+            colorScheme: const ShadSlateColorScheme.light(),
           ),
         ),
       ),

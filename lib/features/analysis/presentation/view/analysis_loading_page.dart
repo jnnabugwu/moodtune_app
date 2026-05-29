@@ -12,6 +12,25 @@ import 'package:moodtune_app/shared/widgets/animated_waveform.dart';
 /// knows which BLoC state fields to watch.
 enum AnalysisSource { upload, catalog }
 
+/// Navigation arguments for [AnalysisLoadingPage].
+///
+/// Pass this as `extra` when pushing [RouteNames.analysisLoading].
+class AnalysisLoadingArgs {
+  const AnalysisLoadingArgs({
+    required this.source,
+    this.trackDurationSeconds,
+  });
+
+  final AnalysisSource source;
+
+  /// Known or estimated track duration in seconds.
+  ///
+  /// When > 240 (4 min) the 35-second timeout UI is suppressed — the page
+  /// waits for a BLoC success/error instead and stays pinned to the last
+  /// phase message.
+  final int? trackDurationSeconds;
+}
+
 /// Full-screen loading experience shown while a track is being analysed.
 ///
 /// Cycles through phase messages every 5 seconds, reveals a blurred ghost
@@ -20,11 +39,18 @@ enum AnalysisSource { upload, catalog }
 class AnalysisLoadingPage extends StatefulWidget {
   const AnalysisLoadingPage({
     required this.source,
+    this.trackDurationSeconds,
     super.key,
   });
 
   /// Whether the analysis originated from a file upload or Jamendo catalog.
   final AnalysisSource source;
+
+  /// Known or estimated track duration in seconds.
+  ///
+  /// When > 240 (4 min) the timeout UI is suppressed so long tracks don't
+  /// falsely surface "taking longer than expected."
+  final int? trackDurationSeconds;
 
   @override
   State<AnalysisLoadingPage> createState() => _AnalysisLoadingPageState();
@@ -67,6 +93,14 @@ class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
       ? _uploadPhases
       : _catalogPhases;
 
+  // ── Computed ─────────────────────────────────────────────────────────
+
+  /// True when the track is longer than 4 minutes.
+  ///
+  /// Long tracks skip the timeout UI — the last phase stays pinned until
+  /// the BLoC emits success or error.
+  bool get _isLongTrack => (widget.trackDurationSeconds ?? 0) > 240;
+
   // ── Lifecycle ───────────────────────────────────────────────────────
 
   @override
@@ -91,14 +125,19 @@ class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
       },
     );
 
-    _timeoutTimer = Timer(
-      const Duration(seconds: _timeoutSecs),
-      () {
-        if (!mounted) return;
-        _phaseTimer?.cancel();
-        setState(() => _timedOut = true);
-      },
-    );
+    // For tracks longer than 4 min, skip the timeout UI entirely.
+    // The BLoC error state handles genuine backend failures, and Dio's own
+    // receive timeout (90 s) acts as the hard ceiling.
+    if (!_isLongTrack) {
+      _timeoutTimer = Timer(
+        const Duration(seconds: _timeoutSecs),
+        () {
+          if (!mounted) return;
+          _phaseTimer?.cancel();
+          setState(() => _timedOut = true);
+        },
+      );
+    }
   }
 
   @override

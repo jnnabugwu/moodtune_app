@@ -1,20 +1,23 @@
 import 'package:flutter/cupertino.dart';
-import 'package:moodtune_app/features/analysis/domain/entities/entities.dart';
+import 'package:moodtune_app/features/analysis/domain/entities/history_entry.dart';
 
 class AnalysisCard extends StatelessWidget {
   const AnalysisCard({
-    required this.analysis,
+    required this.entry,
     this.onTap,
     super.key,
   });
 
-  final PlaylistAnalysis analysis;
+  final HistoryEntry entry;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = CupertinoTheme.of(context);
-    final mood = analysis.moodResult;
+    final isSong = entry.type == HistoryEntryType.song;
+    final confidencePct =
+        '${(entry.confidence * 100).toStringAsFixed(0)}% confidence';
+    final typeLabel = isSong ? 'Song' : 'Playlist';
 
     return GestureDetector(
       onTap: onTap,
@@ -27,8 +30,9 @@ class AnalysisCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Title (playlist name or track name)
             Text(
-              analysis.playlistName,
+              entry.title,
               style: theme.textTheme.textStyle.copyWith(
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
@@ -36,9 +40,24 @@ class AnalysisCard extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
+            // Artist name for songs
+            if (isSong && entry.subtitle != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                entry.subtitle!,
+                style: theme.textTheme.textStyle.copyWith(
+                  fontSize: 13,
+                  color:
+                      theme.textTheme.textStyle.color?.withValues(alpha: 0.6),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
             const SizedBox(height: 6),
+            // Mood label
             Text(
-              mood.primaryMood,
+              entry.primaryMood,
               style: theme.textTheme.textStyle.copyWith(
                 color: theme.textTheme.textStyle.color?.withValues(alpha: 0.8),
               ),
@@ -49,8 +68,8 @@ class AnalysisCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _Tag('${mood.confidence.toStringAsFixed(0)}% confidence'),
-                _Tag('${mood.trackCount} tracks'),
+                _Tag(confidencePct),
+                _Tag(typeLabel),
               ],
             ),
           ],
@@ -75,8 +94,8 @@ class _Tag extends StatelessWidget {
       child: Text(
         label,
         style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(
-          fontSize: 12,
-        ),
+              fontSize: 12,
+            ),
       ),
     );
   }

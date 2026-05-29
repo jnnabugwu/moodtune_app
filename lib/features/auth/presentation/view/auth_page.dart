@@ -51,6 +51,7 @@ class _AuthPageState extends State<AuthPage> {
               actions: [
                 CupertinoDialogAction(
                   child: const Text('OK'),
+                  // TODO(post-testflight): migrate to context.pop()
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],

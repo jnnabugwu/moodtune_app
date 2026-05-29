@@ -86,8 +86,15 @@ class AppRouter {
       GoRoute(
         path: RouteNames.analysisLoading,
         builder: (context, state) {
-          final source =
-              state.extra as AnalysisSource? ?? AnalysisSource.upload;
+          final extra = state.extra;
+          if (extra is AnalysisLoadingArgs) {
+            return AnalysisLoadingPage(
+              source: extra.source,
+              trackDurationSeconds: extra.trackDurationSeconds,
+            );
+          }
+          // Legacy callers that pass a bare AnalysisSource.
+          final source = extra as AnalysisSource? ?? AnalysisSource.upload;
           return AnalysisLoadingPage(source: source);
         },
       ),

@@ -61,12 +61,19 @@ class _CatalogSearchPageState extends State<CatalogSearchPage> {
   }
 
   void _showConfirmSheet(BuildContext context, JamendoTrack track) {
+    // Resolve the BLoC and router eagerly, before the modal opens.
+    // The onConfirm closure runs after the sheet is dismissed (context
+    // deactivated), so capturing `context` directly would throw
+    // "Looking up a deactivated widget's ancestor is unsafe".
+    final analysisBloc = context.read<AnalysisBloc>();
+    final router = GoRouter.of(context);
+
     showCupertinoModalPopup<void>(
       context: context,
       builder: (_) => CatalogConfirmSheet(
         track: track,
         onConfirm: () {
-          context.read<AnalysisBloc>().add(
+          analysisBloc.add(
             CatalogTrackAnalyzeRequested(
               audioUrl: track.audioUrl,
               trackId: track.id,
@@ -75,9 +82,12 @@ class _CatalogSearchPageState extends State<CatalogSearchPage> {
               jamendoPageUrl: track.jamendoPageUrl,
             ),
           );
-          context.push(
+          router.push(
             RouteNames.analysisLoading,
-            extra: AnalysisSource.catalog,
+            extra: AnalysisLoadingArgs(
+              source: AnalysisSource.catalog,
+              trackDurationSeconds: track.duration.inSeconds,
+            ),
           );
         },
       ),

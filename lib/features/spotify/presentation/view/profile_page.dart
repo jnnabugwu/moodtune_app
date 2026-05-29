@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
+import 'package:moodtune_app/features/analysis/domain/entities/history_entry.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/analysis/presentation/widgets/analysis_card.dart';
 import 'package:moodtune_app/features/analysis/presentation/widgets/analysis_disclaimer_sheet.dart';
@@ -196,14 +197,17 @@ class _RecentAnalyses extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             ...state.history.map(
-              (analysis) => Padding(
+              (entry) => Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: AnalysisCard(
-                  analysis: analysis,
-                  onTap: () => context.go(
-                    RouteNames.analysisResultFor(analysis.id),
-                    extra: analysis,
-                  ),
+                  entry: entry,
+                  // Playlist entries navigate to the result page (fetched by
+                  // ID). Song entries have no detail page yet.
+                  onTap: entry.type == HistoryEntryType.playlist
+                      ? () => context.go(
+                            RouteNames.analysisResultFor(entry.id),
+                          )
+                      : null,
                 ),
               ),
             ),

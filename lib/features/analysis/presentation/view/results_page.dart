@@ -1,22 +1,32 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:moodtune_app/app/theme/mood_theme.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/analysis/presentation/view/analysis_loading_page.dart';
 import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:moodtune_app/shared/widgets/analysis_source_sheet.dart';
 import 'package:moodtune_app/shared/widgets/collapsible_section.dart';
 import 'package:moodtune_app/shared/widgets/mood_descriptor_tags.dart';
 import 'package:moodtune_app/shared/widgets/mood_hero_card.dart';
 import 'package:moodtune_app/shared/widgets/sign_up_strip.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+// Wireframe neutral palette — applied to all page-level elements outside the
+// mood hero card (which keeps its mood-specific gradient).
+const _pageBackground = Color(0xFFF5F1E7); // warm cream
+const _textPrimary = Color(0xFF2D2A26); // dark brown
+const _textSecondary = Color(0xFF6B6256); // medium brown-gray
+const _textMuted = Color(0xFF8A8275); // warm gray
+
 /// Unified results screen for both upload and catalog analysis flows.
 ///
 /// Reads [AnalysisSource] from the router's `state.extra` to determine
 /// which BLoC field to display. Guest users see a [SignUpStrip]; catalog
 /// sources show a Jamendo attribution row.
+///
+/// The page uses the wireframe warm-cream light theme outside the mood hero
+/// card. The card itself keeps its mood-specific gradient (palette intent).
 class ResultsPage extends StatefulWidget {
   const ResultsPage({required this.source, super.key});
 
@@ -121,18 +131,30 @@ class _ResultsPageState extends State<ResultsPage>
 
     if (analysis == null) {
       return CupertinoPageScaffold(
+        backgroundColor: _pageBackground,
         navigationBar: const CupertinoNavigationBar(
-          middle: Text('Song Analysis'),
+          backgroundColor: _pageBackground,
+          middle: Text(
+            'Song Analysis',
+            style: TextStyle(
+              color: _textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
         child: SafeArea(
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('No result available.'),
+                const Text(
+                  'No result available.',
+                  style: TextStyle(color: _textSecondary),
+                ),
                 const SizedBox(height: 16),
                 CupertinoButton(
-                  onPressed: () => context.go(RouteNames.uploadMusic),
+                  onPressed: () =>
+                      showAnalysisSourceSheet(context),
                   child: const Text('Analyse a new song'),
                 ),
               ],
@@ -142,125 +164,150 @@ class _ResultsPageState extends State<ResultsPage>
       );
     }
 
-    final identity = MoodTheme.fromString(analysis.mood.primaryMood);
-    final colors = MoodTheme.colorsFor(identity);
     final isCatalog = analysis.jamendoTrackUrl != null;
 
     return CupertinoPageScaffold(
+      backgroundColor: _pageBackground,
       navigationBar: const CupertinoNavigationBar(
-        middle: Text('Song Analysis'),
+        backgroundColor: _pageBackground,
+        middle: Text(
+          'Song Analysis',
+          style: TextStyle(
+            color: _textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
-      child: Column(
-        children: [
-          Expanded(
-            child: CustomScrollView(
-              slivers: [
-                SliverSafeArea(
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      // Hero card with stagger animation
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                        child: MoodHeroCard(analysis: analysis),
-                      ),
-
-                      // Descriptor tags
-                      if (analysis.mood.descriptors.isNotEmpty)
+        child: Column(
+          children: [
+            Expanded(
+              child: CustomScrollView(
+                slivers: [
+                  SliverSafeArea(
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        // Hero card — keeps mood-specific gradient palette
                         Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          child: MoodDescriptorTags(
-                            tags: analysis.mood.descriptors,
-                            accentColor: colors.accent,
-                          ),
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                          child: MoodHeroCard(analysis: analysis),
                         ),
 
-                      // Reasoning
-                      if (analysis.mood.reasoning.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
+                        // Descriptor tags — wireframe neutral pill style
+                        if (analysis.mood.descriptors.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            child: MoodDescriptorTags(
+                              tags: analysis.mood.descriptors,
+                            ),
                           ),
-                          child: Text(
-                            analysis.mood.reasoning,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: CupertinoColors.secondaryLabel,
-                              height: 1.5,
+
+                        // Reasoning — wireframe secondary warm-gray
+                        if (analysis.mood.reasoning.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            child: Text(
+                              analysis.mood.reasoning,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: _textSecondary,
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+
+                        // Audio details collapsible
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: CollapsibleSection(
+                            title: 'Audio details',
+                            child: _AudioDetailsUpload(
+                              tempo: analysis.mood.audioFeatures.tempo,
+                              energyLabel:
+                                  analysis.mood.audioFeatures.energyLabel,
+                              brightnessLabel:
+                                  analysis.mood.audioFeatures.brightnessLabel,
+                              textureLabel:
+                                  analysis.mood.audioFeatures.textureLabel,
                             ),
                           ),
                         ),
 
-                      // Audio details collapsible
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: CollapsibleSection(
-                          title: 'Audio details',
-                          child: _AudioDetailsUpload(
-                            tempo: analysis.mood.audioFeatures.tempo,
-                            energyLabel:
-                                analysis.mood.audioFeatures.energyLabel,
-                            brightnessLabel:
-                                analysis.mood.audioFeatures.brightnessLabel,
-                            textureLabel:
-                                analysis.mood.audioFeatures.textureLabel,
+                        // Jamendo attribution (catalog source only)
+                        if (isCatalog)
+                          _JamendoAttribution(
+                            artistName: analysis.artist ?? 'Artist',
+                            pageUrl: analysis.jamendoTrackUrl!,
                           ),
-                        ),
-                      ),
 
-                      // Jamendo attribution (catalog source only)
-                      if (isCatalog)
-                        _JamendoAttribution(
-                          artistName: analysis.artist ?? 'Artist',
-                          pageUrl: analysis.jamendoTrackUrl!,
-                        ),
+                        // Analyse another song — dark filled button
 
-                      // Analyse another song
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                        child: CupertinoButton(
-                          color: CupertinoColors.tertiarySystemFill,
-                          borderRadius: BorderRadius.circular(12),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          onPressed: () =>
-                              context.go(RouteNames.uploadMusic),
-                          child: const Text(
-                            'Analyse another song',
-                            style: TextStyle(
-                              color: CupertinoColors.label,
-                              fontWeight: FontWeight.w600,
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                          child: CupertinoButton(
+                            color: _textPrimary,
+                            borderRadius: BorderRadius.circular(12),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            onPressed: () =>
+                                showAnalysisSourceSheet(context),
+                            child: const Text(
+                              'Analyse another song',
+                              style: TextStyle(
+                                color: _pageBackground,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ]),
+
+                        // Go to Home — secondary text button (authenticated only)
+                        if (!isGuest)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                            child: CupertinoButton(
+                              onPressed: () =>
+                                  context.go(
+                                    RouteNames.homeAuth,
+                                  ),
+                              child: const Text(
+                                'Go to Home',
+                                style: TextStyle(
+                                  color: _textPrimary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ]),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Guest sign-up strip pinned below SafeArea
+            if (isGuest)
+              AnimatedBuilder(
+                animation: _stripSlide,
+                builder: (context, child) => Transform.translate(
+                  offset: Offset(0, _stripSlide.value),
+                  child: child,
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: SignUpStrip(
+                    onSignUp: () => context.push(RouteNames.signIn),
                   ),
                 ),
-              ],
-            ),
-          ),
-
-          // Guest sign-up strip pinned below SafeArea
-          if (isGuest)
-            AnimatedBuilder(
-              animation: _stripSlide,
-              builder: (context, child) => Transform.translate(
-                offset: Offset(0, _stripSlide.value),
-                child: child,
               ),
-              child: SafeArea(
-                top: false,
-                child: SignUpStrip(
-                  onSignUp: () => context.push(RouteNames.signIn),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────
@@ -319,7 +366,7 @@ class _DetailRow extends StatelessWidget {
             label,
             style: const TextStyle(
               fontSize: 14,
-              color: CupertinoColors.secondaryLabel,
+              color: _textMuted, // wireframe: warm gray label
             ),
           ),
           Text(
@@ -327,7 +374,7 @@ class _DetailRow extends StatelessWidget {
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: CupertinoColors.label,
+              color: _textPrimary, // wireframe: dark brown value
             ),
           ),
         ],
@@ -356,7 +403,7 @@ class _JamendoAttribution extends StatelessWidget {
           const Icon(
             CupertinoIcons.music_note,
             size: 14,
-            color: CupertinoColors.secondaryLabel,
+            color: _textMuted,
           ),
           const SizedBox(width: 6),
           Expanded(
@@ -370,7 +417,7 @@ class _JamendoAttribution extends StatelessWidget {
                   fontSize: 13,
                   color: pageUrl.isNotEmpty
                       ? CupertinoColors.activeBlue
-                      : CupertinoColors.secondaryLabel,
+                      : _textMuted,
                   decoration: pageUrl.isNotEmpty
                       ? TextDecoration.underline
                       : TextDecoration.none,
@@ -383,7 +430,7 @@ class _JamendoAttribution extends StatelessWidget {
             'Via Jamendo Free Music',
             style: TextStyle(
               fontSize: 11,
-              color: CupertinoColors.tertiaryLabel,
+              color: _textMuted,
             ),
           ),
         ],

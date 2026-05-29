@@ -1,5 +1,6 @@
 export 'audio_features_summary_model.dart';
 export 'audio_upload_analysis_model.dart';
+export 'history_entry_model.dart';
 export 'mood_distribution_model.dart';
 export 'mood_result_model.dart';
 export 'playlist_analysis_model.dart';

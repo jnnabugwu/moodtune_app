@@ -37,6 +37,7 @@ Future<void> configureDependencies({
         ),
         uploadRemoteDataSource: AudioUploadRemoteDataSource(
           baseUrl: apiBaseUrl,
+          tokenProvider: tokenProvider,
         ),
       ),
     )

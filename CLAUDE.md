@@ -10,11 +10,11 @@ MoodTune is a Flutter mobile app (iOS + Android) that analyzes songs for mood. U
 
 ### Run the app
 
-Always pass env vars via `--dart-define-from-file`. The `.env` file holds `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `API_BASE_URL`.
+Always pass env vars via `--dart-define-from-file`. `dev.env` holds development keys; `.env` holds production keys.
 
 ```sh
 # Development (most common)
-flutter run --flavor development --target lib/main_development.dart --dart-define-from-file=.env
+flutter run --flavor development --target lib/main_development.dart --dart-define-from-file=dev.env
 
 # Staging / Production
 flutter run --flavor staging --target lib/main_staging.dart --dart-define-from-file=.env

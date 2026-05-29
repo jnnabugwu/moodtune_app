@@ -5,6 +5,7 @@ import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/analysis/presentation/view/history_page.dart';
 import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:moodtune_app/shared/widgets/analysis_source_sheet.dart';
 import 'package:moodtune_app/shared/widgets/history_row_item.dart';
 
 /// Authenticated home shell — two-tab layout (Home + History).
@@ -142,7 +143,7 @@ class _HomeTabState extends State<_HomeTab> {
                     if (recent.isEmpty) {
                       return _EmptyHistoryState(
                         onAnalyse: () =>
-                            context.push(RouteNames.uploadMusic),
+                            showAnalysisSourceSheet(context),
                       );
                     }
 
@@ -218,7 +219,7 @@ class _HomeTabState extends State<_HomeTab> {
           CupertinoActionSheetAction(
             isDestructiveAction: true,
             onPressed: () {
-              Navigator.of(context).pop();
+              context.pop();
               context.read<AuthBloc>().add(const AuthSignOutRequested());
             },
             child: const Text('Sign out'),

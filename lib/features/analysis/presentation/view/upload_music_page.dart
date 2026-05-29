@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
+import 'package:moodtune_app/features/analysis/presentation/view/analysis_loading_page.dart';
 import 'package:moodtune_app/shared/widgets/widgets.dart';
 
 /// Redesigned upload screen with drop-zone card, metadata collapsible,
@@ -100,6 +101,11 @@ class _UploadMusicPageState extends State<UploadMusicPage> {
   void _dispatch() {
     final file = _selectedFile;
     if (file == null || file.bytes == null) return;
+
+    // Estimate duration from file size (approx 20 KB/s at 160 kbps).
+    // TODO(metadata): replace with audio_metadata_reader for exact duration.
+    final estimatedDurationSeconds = (file.size / 20000).round();
+
     context.read<AnalysisBloc>().add(
       AudioUploadRequested(
         bytes: Uint8List.fromList(file.bytes!),
@@ -109,7 +115,13 @@ class _UploadMusicPageState extends State<UploadMusicPage> {
         album: _albumCtrl.text.trim(),
       ),
     );
-    context.push(RouteNames.analysisLoading);
+    context.push(
+      RouteNames.analysisLoading,
+      extra: AnalysisLoadingArgs(
+        source: AnalysisSource.upload,
+        trackDurationSeconds: estimatedDurationSeconds,
+      ),
+    );
   }
 
   // ---------------------------------------------------------------------------
