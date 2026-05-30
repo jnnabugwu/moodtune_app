@@ -4,7 +4,7 @@ workflows:
     instance_type: mac_mini_m2
     max_build_duration: 60
     integrations:
-      app_store_connect: YOUR_ASC_INTEGRATION  # TODO: replace once set up in Codemagic → Integrations
+      app_store_connect: Codemagic
     environment:
       ios_signing:
         distribution_type: app_store
@@ -14,20 +14,15 @@ workflows:
         APP_STORE_APP_ID: 6774329207 
         XCODE_WORKSPACE: Runner.xcworkspace
         XCODE_SCHEME: Runner
-        API_BASE_URL: https://moodtune-backend-production-e4fe.up.railway.app/api/v1
       groups:
-        - Supabase  # must contain: SUPABASE_URL, SUPABASE_ANON_KEY
-        - Sentry    # must contain: SENTRY_DSN
+        - Supabase   # must contain: SUPABASE_URL, SUPABASE_ANON_KEY
+        - Sentry     # must contain: SENTRY_DSN
+        - MoodTune   # must contain: API_BASE_URL, JAMENDO_CLIENT_ID
       flutter: stable
       xcode: latest
       cocoapods: default
     triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: main
-          include: true
-          source: true
+      events: []
     scripts:
       - name: Flutter packages
         script: flutter pub get
@@ -56,6 +51,7 @@ workflows:
             --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
             --dart-define=API_BASE_URL=$API_BASE_URL \
             --dart-define=SENTRY_DSN=$SENTRY_DSN \
+            --dart-define=JAMENDO_CLIENT_ID=$JAMENDO_CLIENT_ID \
             --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
