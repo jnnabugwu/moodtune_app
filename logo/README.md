@@ -6,14 +6,14 @@ Three SVG assets, all built around a single concept: a quarter note whose head i
 
 | File | When to use |
 |---|---|
-| `moodtune-mark.svg` | App icon, favicon, anywhere you need just the symbol. Uses `currentColor` for the note, so colour it via CSS (`color: …`). Face cut-outs use `#efece6` (cream) so the smile reads on most light backgrounds; for very dark backgrounds, use the dark variant instead. |
+| `moodtune-mark.svg` | App icon, favicon, anywhere you need just the symbol. Uses `currentColor` for the note, so color it via CSS (`color: …`). Face cut-outs use `#efece6` (cream) so the smile reads on most light backgrounds; for very dark backgrounds, use the dark variant instead. |
 | `moodtune-mark-dark.svg` | Reverse / accent variant. Peach `#d99d77` mark on ink `#2d2a26` square. Drop in as-is. |
-| `moodtune-lockup.svg` | Primary lockup — mark + wordmark side by side. Uses `currentColor` for both, so it inherits text colour. Wordmark is set in **Inter Tight 700**; load that font in your app for it to render correctly (otherwise falls back to the system sans). |
+| `moodtune-lockup.svg` | Primary lockup — mark + wordmark side by side. Uses `currentColor` for both, so it inherits text color. Wordmark is set in **Inter Tight 700**; load that font in your app for it to render correctly (otherwise falls back to the system sans). |
 
-## Brand colours
+## Brand colors
 
 ```
---ink:   #2d2a26   /* primary, wordmark, default mark colour */
+--ink:   #2d2a26   /* primary, wordmark, default mark color */
 --cream: #efece6   /* background, face features */
 --peach: #d99d77   /* accent — used in the dark mark */
 ```
@@ -24,7 +24,7 @@ Three SVG assets, all built around a single concept: a quarter note whose head i
 <!-- Header lockup, inherits text color -->
 <img src="/logo/moodtune-lockup.svg" alt="MoodTune" height="32" />
 
-<!-- Or inline so you can colour it with CSS -->
+<!-- Or inline so you can color it with CSS -->
 <span style="color: #2d2a26;">
   <!-- paste contents of moodtune-mark.svg here -->
 </span>
