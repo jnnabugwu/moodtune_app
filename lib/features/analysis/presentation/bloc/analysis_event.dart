@@ -83,8 +83,13 @@ class CatalogTrackAnalyzeRequested extends AnalysisEvent {
   final String jamendoPageUrl;
 
   @override
-  List<Object?> get props =>
-      [audioUrl, trackId, trackName, artistName, jamendoPageUrl];
+  List<Object?> get props => [
+    audioUrl,
+    trackId,
+    trackName,
+    artistName,
+    jamendoPageUrl,
+  ];
 }
 
 class AudioUploadRequested extends AnalysisEvent {

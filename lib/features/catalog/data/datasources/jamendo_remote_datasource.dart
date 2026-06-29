@@ -89,8 +89,7 @@ class JamendoRemoteDataSource {
     if (moodTag != null && moodTag.isNotEmpty) {
       // Append to any existing tags value with a space (Jamendo treats as AND)
       final existing = queryParams['tags'] as String?;
-      queryParams['tags'] =
-          existing != null ? '$existing $moodTag' : moodTag;
+      queryParams['tags'] = existing != null ? '$existing $moodTag' : moodTag;
     }
 
     final response = await _dio.get<Map<String, dynamic>>(

@@ -31,12 +31,12 @@ class HistoryEntry extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        title,
-        subtitle,
-        primaryMood,
-        confidence,
-        createdAt,
-        type,
-      ];
+    id,
+    title,
+    subtitle,
+    primaryMood,
+    confidence,
+    createdAt,
+    type,
+  ];
 }

@@ -100,9 +100,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
         ? state.history
         : state.history
               .where(
-                (a) =>
-                    a.primaryMood.toLowerCase() ==
-                    mood.toLowerCase(),
+                (a) => a.primaryMood.toLowerCase() == mood.toLowerCase(),
               )
               .toList();
 
@@ -221,11 +219,13 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
     CatalogTrackAnalyzeRequested event,
     Emitter<AnalysisState> emit,
   ) async {
-    emit(state.copyWith(
-      catalogStatus: CatalogAnalysisStatus.analyzing,
-      catalogError: null,
-      currentCatalogAnalysis: null,
-    ));
+    emit(
+      state.copyWith(
+        catalogStatus: CatalogAnalysisStatus.analyzing,
+        catalogError: null,
+        currentCatalogAnalysis: null,
+      ),
+    );
 
     final result = await _repository.analyzeCatalogTrack(
       audioUrl: event.audioUrl,
@@ -236,14 +236,18 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
     );
 
     result.fold(
-      (Failure failure) => emit(state.copyWith(
-        catalogStatus: CatalogAnalysisStatus.error,
-        catalogError: failure.message,
-      )),
-      (AudioUploadAnalysis analysis) => emit(state.copyWith(
-        catalogStatus: CatalogAnalysisStatus.success,
-        currentCatalogAnalysis: analysis,
-      )),
+      (Failure failure) => emit(
+        state.copyWith(
+          catalogStatus: CatalogAnalysisStatus.error,
+          catalogError: failure.message,
+        ),
+      ),
+      (AudioUploadAnalysis analysis) => emit(
+        state.copyWith(
+          catalogStatus: CatalogAnalysisStatus.success,
+          currentCatalogAnalysis: analysis,
+        ),
+      ),
     );
   }
 }

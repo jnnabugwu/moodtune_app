@@ -47,8 +47,9 @@ class AnalysisCard extends StatelessWidget {
                 entry.subtitle!,
                 style: theme.textTheme.textStyle.copyWith(
                   fontSize: 13,
-                  color:
-                      theme.textTheme.textStyle.color?.withValues(alpha: 0.6),
+                  color: theme.textTheme.textStyle.color?.withValues(
+                    alpha: 0.6,
+                  ),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -94,8 +95,8 @@ class _Tag extends StatelessWidget {
       child: Text(
         label,
         style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(
-              fontSize: 12,
-            ),
+          fontSize: 12,
+        ),
       ),
     );
   }

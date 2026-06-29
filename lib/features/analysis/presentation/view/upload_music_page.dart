@@ -530,7 +530,7 @@ class _ConsentSheet extends StatelessWidget {
         const SizedBox(height: 12),
         Text(
           'By uploading this track you agree that it will be temporarily '
-          'processed by our servers to analyse its audio characteristics. '
+          'processed by our servers to analyze its audio characteristics. '
           'We never store audio files after analysis.',
           style: theme.textTheme.textStyle.copyWith(
             color: CupertinoColors.secondaryLabel,

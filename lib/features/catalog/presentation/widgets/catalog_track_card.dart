@@ -4,17 +4,17 @@ import 'package:moodtune_app/features/catalog/domain/entities/jamendo_track.dart
 /// A compact list tile representing a single Jamendo track.
 ///
 /// Shows a 48×48 album art thumbnail, track name, artist + duration,
-/// up to two tag pills, and an "Analyse →" pill button that triggers
-/// [onAnalyseTap].
+/// up to two tag pills, and an "Analyze →" pill button that triggers
+/// [onAnalyzeTap].
 class CatalogTrackCard extends StatelessWidget {
   const CatalogTrackCard({
     required this.track,
-    required this.onAnalyseTap,
+    required this.onAnalyzeTap,
     super.key,
   });
 
   final JamendoTrack track;
-  final VoidCallback onAnalyseTap;
+  final VoidCallback onAnalyzeTap;
 
   @override
   Widget build(BuildContext context) {
@@ -39,8 +39,7 @@ class CatalogTrackCard extends StatelessWidget {
                   ? Image.network(
                       track.albumImageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) =>
-                          const _AlbumArtPlaceholder(),
+                      errorBuilder: (_, _, _) => const _AlbumArtPlaceholder(),
                     )
                   : const _AlbumArtPlaceholder(),
             ),
@@ -89,15 +88,15 @@ class CatalogTrackCard extends StatelessWidget {
           ),
           const SizedBox(width: 12),
 
-          // Analyse button
+          // Analyze button
           CupertinoButton(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             color: CupertinoColors.activeBlue,
             borderRadius: BorderRadius.circular(20),
             minimumSize: const Size(0, 32),
-            onPressed: onAnalyseTap,
+            onPressed: onAnalyzeTap,
             child: const Text(
-              'Analyse →',
+              'Analyze →',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
