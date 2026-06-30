@@ -61,4 +61,5 @@ workflows:
         auth: integration
         submit_to_testflight: true
         beta_groups:
-          - Internal Testing
+          - Beta Testers
+          - First batch
