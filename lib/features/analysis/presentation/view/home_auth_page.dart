@@ -101,7 +101,7 @@ class _HomeTabState extends State<_HomeTab> {
                 // Upload card
                 _ActionCard(
                   icon: CupertinoIcons.music_note,
-                  title: 'Analyse a new song',
+                  title: 'Analyze a new song',
                   subtitle: 'Tap to upload a file',
                   isPrimary: true,
                   onTap: () => context.push(RouteNames.uploadMusic),
@@ -142,8 +142,7 @@ class _HomeTabState extends State<_HomeTab> {
 
                     if (recent.isEmpty) {
                       return _EmptyHistoryState(
-                        onAnalyse: () =>
-                            showAnalysisSourceSheet(context),
+                        onAnalyze: () => showAnalysisSourceSheet(context),
                       );
                     }
 
@@ -331,9 +330,9 @@ class _ActionCard extends StatelessWidget {
 // ── Empty history state ────────────────────────────────────────────────
 
 class _EmptyHistoryState extends StatelessWidget {
-  const _EmptyHistoryState({required this.onAnalyse});
+  const _EmptyHistoryState({required this.onAnalyze});
 
-  final VoidCallback onAnalyse;
+  final VoidCallback onAnalyze;
 
   @override
   Widget build(BuildContext context) {
@@ -363,9 +362,9 @@ class _EmptyHistoryState extends StatelessWidget {
               horizontal: 20,
               vertical: 10,
             ),
-            onPressed: onAnalyse,
+            onPressed: onAnalyze,
             child: const Text(
-              'Analyse your first song →',
+              'Analyze your first song →',
               style: TextStyle(
                 fontSize: 14,
                 color: CupertinoColors.label,

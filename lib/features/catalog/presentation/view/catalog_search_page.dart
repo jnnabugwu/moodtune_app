@@ -28,7 +28,7 @@ class _CatalogSearchPageState extends State<CatalogSearchPage> {
   String? _selectedMood;
 
   static const List<({String label, MoodIdentity identity, String? tag})>
-      _moodFilters = [
+  _moodFilters = [
     (label: 'All', identity: MoodIdentity.upbeat, tag: null),
     (label: 'Upbeat', identity: MoodIdentity.upbeat, tag: 'upbeat'),
     (label: 'Serene', identity: MoodIdentity.serene, tag: 'serene'),
@@ -48,11 +48,11 @@ class _CatalogSearchPageState extends State<CatalogSearchPage> {
 
   void _search({String? query, String? moodTag}) {
     context.read<CatalogBloc>().add(
-          CatalogSearchRequested(
-            query: query ?? _searchController.text,
-            moodTag: moodTag ?? _selectedMood,
-          ),
-        );
+      CatalogSearchRequested(
+        query: query ?? _searchController.text,
+        moodTag: moodTag ?? _selectedMood,
+      ),
+    );
   }
 
   void _selectMood(String? tag) {
@@ -171,8 +171,7 @@ class _CatalogSearchPageState extends State<CatalogSearchPage> {
                     label: filter.label,
                     mood: filter.identity,
                     isSelected: isSelected,
-                    onTap: () =>
-                        _selectMood(isSelected ? null : filter.tag),
+                    onTap: () => _selectMood(isSelected ? null : filter.tag),
                   );
                 },
               ),
@@ -181,22 +180,20 @@ class _CatalogSearchPageState extends State<CatalogSearchPage> {
             // Results / states
             Expanded(
               child: BlocBuilder<CatalogBloc, CatalogState>(
-                builder: (context, state) =>
-                    switch (state) {
-                      CatalogInitial() => const _EmptyPrompt(),
-                      CatalogLoading() => const _ShimmerList(),
-                      CatalogLoaded(:final tracks) when tracks.isEmpty =>
-                        _NoResults(query: _searchController.text),
-                      CatalogLoaded(:final tracks) => ListView.builder(
-                          itemCount: tracks.length,
-                          itemBuilder: (context, i) => CatalogTrackCard(
-                            track: tracks[i],
-                            onAnalyseTap: () =>
-                                _showConfirmSheet(context, tracks[i]),
-                          ),
-                        ),
-                      CatalogError() => _ApiError(onRetry: _search),
-                    },
+                builder: (context, state) => switch (state) {
+                  CatalogInitial() => const _EmptyPrompt(),
+                  CatalogLoading() => const _ShimmerList(),
+                  CatalogLoaded(:final tracks) when tracks.isEmpty =>
+                    _NoResults(query: _searchController.text),
+                  CatalogLoaded(:final tracks) => ListView.builder(
+                    itemCount: tracks.length,
+                    itemBuilder: (context, i) => CatalogTrackCard(
+                      track: tracks[i],
+                      onAnalyzeTap: () => _showConfirmSheet(context, tracks[i]),
+                    ),
+                  ),
+                  CatalogError() => _ApiError(onRetry: _search),
+                },
               ),
             ),
           ],
@@ -304,7 +301,7 @@ class _NoResults extends StatelessWidget {
         child: Text(
           query.isNotEmpty
               ? "No tracks found for '$query'.\n"
-                  'Try different keywords or clear the mood filter.'
+                    'Try different keywords or clear the mood filter.'
               : 'No tracks match this mood.\nTry clearing the filter.',
           textAlign: TextAlign.center,
           style: const TextStyle(

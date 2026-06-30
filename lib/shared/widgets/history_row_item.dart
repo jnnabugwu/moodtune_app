@@ -24,8 +24,9 @@ class HistoryRowItem extends StatelessWidget {
     final short = MoodTheme.shortLabel(identity);
 
     final rawTitle = item.title;
-    final title =
-        rawTitle.length > 24 ? '${rawTitle.substring(0, 24)}…' : rawTitle;
+    final title = rawTitle.length > 24
+        ? '${rawTitle.substring(0, 24)}…'
+        : rawTitle;
 
     final date = DateFormat.yMMMd().format(item.createdAt);
     final confidencePct = '${(item.confidence * 100).round()}%';
@@ -39,8 +40,7 @@ class HistoryRowItem extends StatelessWidget {
           children: [
             // Mood chip
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: colors.accent,
                 borderRadius: BorderRadius.circular(12),

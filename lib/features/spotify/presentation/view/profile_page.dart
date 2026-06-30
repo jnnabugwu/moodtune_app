@@ -205,8 +205,8 @@ class _RecentAnalyses extends StatelessWidget {
                   // ID). Song entries have no detail page yet.
                   onTap: entry.type == HistoryEntryType.playlist
                       ? () => context.go(
-                            RouteNames.analysisResultFor(entry.id),
-                          )
+                          RouteNames.analysisResultFor(entry.id),
+                        )
                       : null,
                 ),
               ),

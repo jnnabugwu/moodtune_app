@@ -25,9 +25,8 @@ class _HistoryPageState extends State<HistoryPage> {
   /// Null means "All" (no filter active).
   String? _selectedMood;
 
-  static const List<
-    ({String label, MoodIdentity identity, String? value})
-  > _moodFilters = [
+  static const List<({String label, MoodIdentity identity, String? value})>
+  _moodFilters = [
     (label: 'All', identity: MoodIdentity.upbeat, value: null),
     (label: 'Upbeat', identity: MoodIdentity.upbeat, value: 'upbeat'),
     (label: 'Serene', identity: MoodIdentity.serene, value: 'serene'),
@@ -52,9 +51,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
   void _applyFilter(String? mood) {
     setState(() => _selectedMood = mood);
-    context
-        .read<AnalysisBloc>()
-        .add(AnalysisHistoryFilterChanged(mood));
+    context.read<AnalysisBloc>().add(AnalysisHistoryFilterChanged(mood));
   }
 
   @override
@@ -176,9 +173,9 @@ class _HistoryPageState extends State<HistoryPage> {
               ),
               const SizedBox(height: 16),
               CupertinoButton(
-                onPressed: () => context
-                    .read<AnalysisBloc>()
-                    .add(const AnalysisHistoryRequested()),
+                onPressed: () => context.read<AnalysisBloc>().add(
+                  const AnalysisHistoryRequested(),
+                ),
                 child: const Text('Try again'),
               ),
             ],
@@ -192,7 +189,7 @@ class _HistoryPageState extends State<HistoryPage> {
     if (items.isEmpty) {
       return _EmptyState(
         hasFilter: _selectedMood != null,
-        onAnalyse: () => showAnalysisSourceSheet(context),
+        onAnalyze: () => showAnalysisSourceSheet(context),
         onClearFilter: () => _applyFilter(null),
       );
     }
@@ -229,12 +226,12 @@ class _HistoryPageState extends State<HistoryPage> {
 class _EmptyState extends StatelessWidget {
   const _EmptyState({
     required this.hasFilter,
-    required this.onAnalyse,
+    required this.onAnalyze,
     required this.onClearFilter,
   });
 
   final bool hasFilter;
-  final VoidCallback onAnalyse;
+  final VoidCallback onAnalyze;
   final VoidCallback onClearFilter;
 
   @override
@@ -272,8 +269,8 @@ class _EmptyState extends StatelessWidget {
             else
               CupertinoButton.filled(
                 borderRadius: BorderRadius.circular(12),
-                onPressed: onAnalyse,
-                child: const Text('Analyse a song'),
+                onPressed: onAnalyze,
+                child: const Text('Analyze a song'),
               ),
           ],
         ),

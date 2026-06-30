@@ -153,9 +153,8 @@ class _ResultsPageState extends State<ResultsPage>
                 ),
                 const SizedBox(height: 16),
                 CupertinoButton(
-                  onPressed: () =>
-                      showAnalysisSourceSheet(context),
-                  child: const Text('Analyse a new song'),
+                  onPressed: () => showAnalysisSourceSheet(context),
+                  child: const Text('Analyze a new song'),
                 ),
               ],
             ),
@@ -178,136 +177,134 @@ class _ResultsPageState extends State<ResultsPage>
           ),
         ),
       ),
-        child: Column(
-          children: [
-            Expanded(
-              child: CustomScrollView(
-                slivers: [
-                  SliverSafeArea(
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate([
-                        // Hero card — keeps mood-specific gradient palette
+      child: Column(
+        children: [
+          Expanded(
+            child: CustomScrollView(
+              slivers: [
+                SliverSafeArea(
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      // Hero card — keeps mood-specific gradient palette
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                        child: MoodHeroCard(analysis: analysis),
+                      ),
+
+                      // Descriptor tags — wireframe neutral pill style
+                      if (analysis.mood.descriptors.isNotEmpty)
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                          child: MoodHeroCard(analysis: analysis),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          child: MoodDescriptorTags(
+                            tags: analysis.mood.descriptors,
+                          ),
                         ),
 
-                        // Descriptor tags — wireframe neutral pill style
-                        if (analysis.mood.descriptors.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            child: MoodDescriptorTags(
-                              tags: analysis.mood.descriptors,
-                            ),
-                          ),
-
-                        // Reasoning — wireframe secondary warm-gray
-                        if (analysis.mood.reasoning.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            child: Text(
-                              analysis.mood.reasoning,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: _textSecondary,
-                                height: 1.5,
-                              ),
-                            ),
-                          ),
-
-                        // Audio details collapsible
+                      // Reasoning — wireframe secondary warm-gray
+                      if (analysis.mood.reasoning.isNotEmpty)
                         Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: CollapsibleSection(
-                            title: 'Audio details',
-                            child: _AudioDetailsUpload(
-                              tempo: analysis.mood.audioFeatures.tempo,
-                              energyLabel:
-                                  analysis.mood.audioFeatures.energyLabel,
-                              brightnessLabel:
-                                  analysis.mood.audioFeatures.brightnessLabel,
-                              textureLabel:
-                                  analysis.mood.audioFeatures.textureLabel,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          child: Text(
+                            analysis.mood.reasoning,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: _textSecondary,
+                              height: 1.5,
                             ),
                           ),
                         ),
 
-                        // Jamendo attribution (catalog source only)
-                        if (isCatalog)
-                          _JamendoAttribution(
-                            artistName: analysis.artist ?? 'Artist',
-                            pageUrl: analysis.jamendoTrackUrl!,
+                      // Audio details collapsible
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: CollapsibleSection(
+                          title: 'Audio details',
+                          child: _AudioDetailsUpload(
+                            tempo: analysis.mood.audioFeatures.tempo,
+                            energyLabel:
+                                analysis.mood.audioFeatures.energyLabel,
+                            brightnessLabel:
+                                analysis.mood.audioFeatures.brightnessLabel,
+                            textureLabel:
+                                analysis.mood.audioFeatures.textureLabel,
                           ),
+                        ),
+                      ),
 
-                        // Analyse another song — dark filled button
+                      // Jamendo attribution (catalog source only)
+                      if (isCatalog)
+                        _JamendoAttribution(
+                          artistName: analysis.artist ?? 'Artist',
+                          pageUrl: analysis.jamendoTrackUrl!,
+                        ),
 
+                      // Analyze another song — dark filled button
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                        child: CupertinoButton(
+                          color: _textPrimary,
+                          borderRadius: BorderRadius.circular(12),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          onPressed: () => showAnalysisSourceSheet(context),
+                          child: const Text(
+                            'Analyze another song',
+                            style: TextStyle(
+                              color: _pageBackground,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Go to Home — secondary text button
+                      //(authenticated only
+                      if (!isGuest)
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                           child: CupertinoButton(
-                            color: _textPrimary,
-                            borderRadius: BorderRadius.circular(12),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            onPressed: () =>
-                                showAnalysisSourceSheet(context),
+                            onPressed: () => context.go(
+                              RouteNames.homeAuth,
+                            ),
                             child: const Text(
-                              'Analyse another song',
+                              'Go to Home',
                               style: TextStyle(
-                                color: _pageBackground,
-                                fontWeight: FontWeight.w600,
+                                color: _textPrimary,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
                         ),
-
-                        // Go to Home — secondary text button (authenticated only)
-                        if (!isGuest)
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                            child: CupertinoButton(
-                              onPressed: () =>
-                                  context.go(
-                                    RouteNames.homeAuth,
-                                  ),
-                              child: const Text(
-                                'Go to Home',
-                                style: TextStyle(
-                                  color: _textPrimary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ]),
-                    ),
+                    ]),
                   ),
-                ],
+                ),
+              ],
+            ),
+          ),
+
+          // Guest sign-up strip pinned below SafeArea
+          if (isGuest)
+            AnimatedBuilder(
+              animation: _stripSlide,
+              builder: (context, child) => Transform.translate(
+                offset: Offset(0, _stripSlide.value),
+                child: child,
+              ),
+              child: SafeArea(
+                top: false,
+                child: SignUpStrip(
+                  onSignUp: () => context.push(RouteNames.signIn),
+                ),
               ),
             ),
-
-            // Guest sign-up strip pinned below SafeArea
-            if (isGuest)
-              AnimatedBuilder(
-                animation: _stripSlide,
-                builder: (context, child) => Transform.translate(
-                  offset: Offset(0, _stripSlide.value),
-                  child: child,
-                ),
-                child: SafeArea(
-                  top: false,
-                  child: SignUpStrip(
-                    onSignUp: () => context.push(RouteNames.signIn),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      );
+        ],
+      ),
+    );
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────

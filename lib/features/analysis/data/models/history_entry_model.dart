@@ -18,7 +18,8 @@ class PlaylistHistoryEntryModel {
       playlistName: json['playlist_name'] as String? ?? '',
       primaryMood: moodResults['primary_mood'] as String? ?? '',
       confidence: (moodResults['confidence'] as num?)?.toDouble() ?? 0,
-      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
+      createdAt:
+          DateTime.tryParse(json['created_at'] as String? ?? '') ??
           DateTime.now(),
     );
   }
@@ -30,13 +31,13 @@ class PlaylistHistoryEntryModel {
   final DateTime createdAt;
 
   HistoryEntry toDomain() => HistoryEntry(
-        id: id,
-        title: playlistName,
-        primaryMood: primaryMood,
-        confidence: confidence,
-        createdAt: createdAt,
-        type: HistoryEntryType.playlist,
-      );
+    id: id,
+    title: playlistName,
+    primaryMood: primaryMood,
+    confidence: confidence,
+    createdAt: createdAt,
+    type: HistoryEntryType.playlist,
+  );
 }
 
 /// Converts a song_analyses row (from GET /song/history) to [HistoryEntry].
@@ -59,7 +60,8 @@ class SongHistoryEntryModel {
       artistName: json['artist_name'] as String? ?? '',
       primaryMood: moodResults['primary_mood'] as String? ?? '',
       confidence: (moodResults['confidence'] as num?)?.toDouble() ?? 0,
-      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
+      createdAt:
+          DateTime.tryParse(json['created_at'] as String? ?? '') ??
           DateTime.now(),
     );
   }
@@ -72,12 +74,12 @@ class SongHistoryEntryModel {
   final DateTime createdAt;
 
   HistoryEntry toDomain() => HistoryEntry(
-        id: id,
-        title: trackName,
-        subtitle: artistName,
-        primaryMood: primaryMood,
-        confidence: confidence,
-        createdAt: createdAt,
-        type: HistoryEntryType.song,
-      );
+    id: id,
+    title: trackName,
+    subtitle: artistName,
+    primaryMood: primaryMood,
+    confidence: confidence,
+    createdAt: createdAt,
+    type: HistoryEntryType.song,
+  );
 }

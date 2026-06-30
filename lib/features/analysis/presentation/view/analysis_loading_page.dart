@@ -31,7 +31,7 @@ class AnalysisLoadingArgs {
   final int? trackDurationSeconds;
 }
 
-/// Full-screen loading experience shown while a track is being analysed.
+/// Full-screen loading experience shown while a track is being analyzed.
 ///
 /// Cycles through phase messages every 5 seconds, reveals a blurred ghost
 /// result card at ~28 s, and surfaces a timeout UI at 35 s. Listens to
@@ -89,9 +89,8 @@ class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
     'Almost there…',
   ];
 
-  List<String> get _phases => widget.source == AnalysisSource.upload
-      ? _uploadPhases
-      : _catalogPhases;
+  List<String> get _phases =>
+      widget.source == AnalysisSource.upload ? _uploadPhases : _catalogPhases;
 
   // ── Computed ─────────────────────────────────────────────────────────
 
@@ -217,10 +216,12 @@ class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
       },
       child: BlocBuilder<AnalysisBloc, AnalysisState>(
         builder: (context, state) {
-          final hasUploadError = widget.source == AnalysisSource.upload &&
+          final hasUploadError =
+              widget.source == AnalysisSource.upload &&
               state.uploadStatus == UploadStatus.error &&
               state.uploadError != null;
-          final hasCatalogError = widget.source == AnalysisSource.catalog &&
+          final hasCatalogError =
+              widget.source == AnalysisSource.catalog &&
               state.catalogStatus == CatalogAnalysisStatus.error &&
               state.catalogError != null;
           final hasError = hasUploadError || hasCatalogError;
