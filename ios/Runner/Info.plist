@@ -84,6 +84,8 @@
 	<false/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>MoodTune requires microphone access to enable audio playback and song preview features.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>MoodTune needs access to your photo library to allow you to select audio files for mood analysis.</string>
 </dict>
