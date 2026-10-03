@@ -1,6 +1,6 @@
 name: moodtune_app
 description: An app that analyzes songs and playlists
-version: 1.0.0+2
+version: 1.0.0+6
 publish_to: none
 
 environment:

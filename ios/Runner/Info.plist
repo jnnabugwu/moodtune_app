@@ -84,6 +84,10 @@
 	<false/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSCameraUsageDescription</key>
+	<string>MoodTune does not use your camera. This permission is only requested by a file selection component and will not be used.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>MoodTune does not use your location. This permission is only requested by a third-party component and will not be used.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>MoodTune requires microphone access to enable audio playback and song preview features.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
