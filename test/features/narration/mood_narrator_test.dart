@@ -73,6 +73,43 @@ void main() {
       expect(result.source, NarrationSource.template);
     });
 
+    test('passes the remaining budget to the engine', () async {
+      final engine = FakeNarrationEngine(
+        output: _good,
+        availabilityDelay: const Duration(milliseconds: 20),
+      );
+      final narrator = MoodNarrator(
+        engine: engine,
+        timeout: const Duration(seconds: 1),
+      );
+
+      await narrator.narrate(buildAnalysis());
+
+      expect(engine.lastTimeout, isNotNull);
+      expect(
+        engine.lastTimeout,
+        lessThanOrEqualTo(const Duration(milliseconds: 980)),
+      );
+      expect(engine.lastTimeout, greaterThan(Duration.zero));
+    });
+
+    test('skips generation when availability uses the whole budget', () async {
+      final engine = FakeNarrationEngine(
+        output: _good,
+        availabilityDelay: const Duration(milliseconds: 30),
+      );
+      final narrator = MoodNarrator(
+        engine: engine,
+        timeout: const Duration(milliseconds: 10),
+      );
+
+      final result = await narrator.narrate(buildAnalysis());
+
+      expect(result.source, NarrationSource.template);
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+      expect(engine.narrateCalls, 0);
+    });
+
     test('falls back to template when output is not grounded', () async {
       final narrator = MoodNarrator(
         engine: FakeNarrationEngine(

@@ -25,11 +25,15 @@ class MoodNarrationChannel implements NarrationEngine {
 
   /// The native side replies with `text` and which instruction set produced
   /// it (`full`, or `minimal` after an `unsupportedLanguageOrLocale` retry).
+  /// It cancels the model request itself once `timeoutMs` elapses.
   @override
-  Future<String> narrate(NarrationInput input) async {
+  Future<String> narrate(
+    NarrationInput input, {
+    required Duration timeout,
+  }) async {
     final reply = await _channel.invokeMapMethod<String, String>(
       'narrate',
-      input.toMap(),
+      {...input.toMap(), 'timeoutMs': timeout.inMilliseconds},
     );
     final text = reply?['text'];
     if (text == null) {

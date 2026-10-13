@@ -113,7 +113,10 @@ class NarrationInput extends Equatable {
 abstract interface class NarrationEngine {
   Future<bool> isAvailable();
 
-  Future<String> narrate(NarrationInput input);
+  /// Engines must abandon generation once [timeout] elapses: by then
+  /// [MoodNarrator] has already returned template copy, so further work only
+  /// burns battery on output nobody will read.
+  Future<String> narrate(NarrationInput input, {required Duration timeout});
 }
 
 /// Produces the "why this mood" copy for a result.
@@ -172,14 +175,20 @@ class MoodNarrator {
 
   /// Returns null when the model is unavailable or its output is rejected.
   Future<MoodNarration?> _narrateOnDevice(AudioUploadAnalysis analysis) async {
+    final budget = Stopwatch()..start();
     if (!await _engine.isAvailable()) {
       talker.info('Narration: on-device model unavailable; using template');
       return null;
     }
 
+    // Hand the engine whatever is left of [timeout] so it can cancel the
+    // model itself; the `.timeout` in [narrate] only stops Dart waiting.
+    final remaining = timeout - budget.elapsed;
+    if (remaining <= Duration.zero) return null;
+
     final input = NarrationInput.fromMood(analysis.mood);
     final stopwatch = Stopwatch()..start();
-    final text = (await _engine.narrate(input)).trim();
+    final text = (await _engine.narrate(input, timeout: remaining)).trim();
     final elapsed = stopwatch.elapsedMilliseconds;
 
     if (!isGrounded(text, input)) {

@@ -5,6 +5,8 @@ import 'package:moodtune_app/features/narration/domain/mood_narrator.dart';
 
 import 'narration_fixtures.dart';
 
+const _timeout = Duration(seconds: 4);
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -26,29 +28,32 @@ void main() {
         (_) => {'text': 'This track feels upbeat.', 'instructions': 'full'},
       );
 
-      final text = await MoodNarrationChannel().narrate(input);
+      final text = await MoodNarrationChannel().narrate(
+        input,
+        timeout: _timeout,
+      );
 
       expect(text, 'This track feels upbeat.');
     });
 
-    test('sends the narration input as the call arguments', () async {
+    test('sends the narration input and native deadline', () async {
       MethodCall? received;
       reply((call) {
         received = call;
         return {'text': 'ok', 'instructions': 'minimal'};
       });
 
-      await MoodNarrationChannel().narrate(input);
+      await MoodNarrationChannel().narrate(input, timeout: _timeout);
 
       expect(received?.method, 'narrate');
-      expect(received?.arguments, input.toMap());
+      expect(received?.arguments, {...input.toMap(), 'timeoutMs': 4000});
     });
 
     test('throws when the reply has no text', () async {
       reply((_) => <String, String>{});
 
       expect(
-        () => MoodNarrationChannel().narrate(input),
+        () => MoodNarrationChannel().narrate(input, timeout: _timeout),
         throwsA(isA<PlatformException>()),
       );
     });

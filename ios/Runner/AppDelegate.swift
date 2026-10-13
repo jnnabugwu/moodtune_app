@@ -77,17 +77,22 @@ enum MoodNarrationChannel {
     return false
   }
 
+  /// Used when Dart sends no `timeoutMs`; matches `MoodNarrator.timeout`.
+  static let defaultTimeoutMs = 5000
+
   static func narrate(_ args: [String: Any], result: @escaping FlutterResult) {
     #if canImport(FoundationModels)
     if #available(iOS 26.0, *) {
+      let prompt = prompt(from: args)
+      let timeout = Duration.milliseconds(args["timeoutMs"] as? Int ?? defaultTimeoutMs)
       Task {
         do {
-          let narration = try await generate(prompt(from: args))
+          let narration = try await withDeadline(timeout) { try await generate(prompt) }
           await MainActor.run { result(narration) }
         } catch {
           await MainActor.run {
             result(FlutterError(
-              code: "generation_failed",
+              code: error is DeadlineExceeded ? "timeout" : "generation_failed",
               message: error.localizedDescription,
               details: diagnostics(for: error)
             ))
@@ -100,7 +105,35 @@ enum MoodNarrationChannel {
     result(FlutterError(code: "unavailable", message: "On-device model unavailable", details: nil))
   }
 
+  struct DeadlineExceeded: LocalizedError {
+    var errorDescription: String? { "Narration deadline exceeded" }
+  }
+
   #if canImport(FoundationModels)
+  /// Runs `operation`, cancelling it once `timeout` elapses. Dart stops
+  /// waiting at the same deadline and shows template copy, so cancelling
+  /// keeps the on-device model from generating text nobody will read.
+  /// Covers the `minimalInstructions` retry too, since it runs inside
+  /// `operation`.
+  @available(iOS 26.0, *)
+  static func withDeadline<T: Sendable>(
+    _ timeout: Duration,
+    operation: @escaping @Sendable () async throws -> T
+  ) async throws -> T {
+    try await withThrowingTaskGroup(of: T.self) { group in
+      group.addTask(operation: operation)
+      group.addTask {
+        try await Task.sleep(for: timeout)
+        throw DeadlineExceeded()
+      }
+      // Whichever child finishes first wins; cancel the other. On timeout
+      // this cancels the in-flight `LanguageModelSession.respond`.
+      defer { group.cancelAll() }
+      guard let first = try await group.next() else { throw DeadlineExceeded() }
+      return first
+    }
+  }
+
   /// Returns `text` plus which `instructions` set produced it, so Dart can
   /// log whether the fallback was needed.
   @available(iOS 26.0, *)

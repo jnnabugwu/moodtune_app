@@ -19,6 +19,7 @@ class FakeNarrationEngine implements NarrationEngine {
   final Duration? delay;
   final Duration? availabilityDelay;
   int narrateCalls = 0;
+  Duration? lastTimeout;
 
   @override
   Future<bool> isAvailable() async {
@@ -29,8 +30,12 @@ class FakeNarrationEngine implements NarrationEngine {
   }
 
   @override
-  Future<String> narrate(NarrationInput input) async {
+  Future<String> narrate(
+    NarrationInput input, {
+    required Duration timeout,
+  }) async {
     narrateCalls++;
+    lastTimeout = timeout;
     if (delay != null) await Future<void>.delayed(delay!);
     if (error != null) throw error!;
     return output;
