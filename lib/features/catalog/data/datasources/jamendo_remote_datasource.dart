@@ -56,7 +56,7 @@ class JamendoRemoteDataSource {
       }
 
       // No text query — mood chip only.
-      return _fetchTracks(moodTag: moodTag);
+      return await _fetchTracks(moodTag: moodTag);
     } on DioException catch (e) {
       throw ServerException(
         e.response?.data?.toString() ?? e.message ?? 'Jamendo API error',
