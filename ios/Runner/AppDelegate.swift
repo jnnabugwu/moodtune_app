@@ -41,6 +41,15 @@ enum MoodNarrationChannel {
     and a bright, flowing sound make it lively and easy to dance to.
     """
 
+  /// Close to the first instructions that generated on device. Used when the
+  /// full instructions are rejected with `unsupportedLanguageOrLocale`.
+  static let minimalInstructions = """
+    You explain in plain language why a song has a certain mood. \
+    Write one or two sentences, under 60 words, about the song itself. \
+    Use only the facts provided and name the mood. \
+    Do not mention lyrics, genre, the artist, or anything not in the facts.
+    """
+
   static func register(with messenger: FlutterBinaryMessenger) {
     let channel = FlutterMethodChannel(name: "moodtune/narration", binaryMessenger: messenger)
     channel.setMethodCallHandler { call, result in
@@ -73,12 +82,8 @@ enum MoodNarrationChannel {
     if #available(iOS 26.0, *) {
       Task {
         do {
-          let session = LanguageModelSession(instructions: instructions)
-          let response = try await session.respond(
-            to: prompt(from: args),
-            options: GenerationOptions(temperature: 0.4)
-          )
-          await MainActor.run { result(response.content) }
+          let narration = try await generate(prompt(from: args))
+          await MainActor.run { result(narration) }
         } catch {
           await MainActor.run {
             result(FlutterError(
@@ -96,6 +101,30 @@ enum MoodNarrationChannel {
   }
 
   #if canImport(FoundationModels)
+  /// Returns `text` plus which `instructions` set produced it, so Dart can
+  /// log whether the fallback was needed.
+  @available(iOS 26.0, *)
+  static func generate(_ prompt: String) async throws -> [String: String] {
+    do {
+      let text = try await respond(to: prompt, instructions: instructions)
+      return ["text": text, "instructions": "full"]
+    } catch let error as LanguageModelSession.GenerationError {
+      guard case .unsupportedLanguageOrLocale = error else { throw error }
+      let text = try await respond(to: prompt, instructions: minimalInstructions)
+      return ["text": text, "instructions": "minimal"]
+    }
+  }
+
+  @available(iOS 26.0, *)
+  static func respond(to prompt: String, instructions: String) async throws -> String {
+    let session = LanguageModelSession(instructions: instructions)
+    let response = try await session.respond(
+      to: prompt,
+      options: GenerationOptions(temperature: 0.4)
+    )
+    return response.content
+  }
+
   /// Context for failures such as `unsupportedLanguageOrLocale`, logged by Dart.
   @available(iOS 26.0, *)
   static func diagnostics(for error: Error) -> String {

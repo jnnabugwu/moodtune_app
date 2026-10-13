@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:moodtune_app/core/logging/talker.dart';
 import 'package:moodtune_app/features/narration/domain/mood_narrator.dart';
 
 /// [NarrationEngine] backed by Apple's on-device Foundation Models through
@@ -22,12 +23,19 @@ class MoodNarrationChannel implements NarrationEngine {
     }
   }
 
+  /// The native side replies with `text` and which instruction set produced
+  /// it (`full`, or `minimal` after an `unsupportedLanguageOrLocale` retry).
   @override
   Future<String> narrate(NarrationInput input) async {
-    final text = await _channel.invokeMethod<String>('narrate', input.toMap());
+    final reply = await _channel.invokeMapMethod<String, String>(
+      'narrate',
+      input.toMap(),
+    );
+    final text = reply?['text'];
     if (text == null) {
       throw PlatformException(code: 'empty', message: 'No narration returned');
     }
+    talker.info('Narration instructions: ${reply?['instructions']}');
     return text;
   }
 }
