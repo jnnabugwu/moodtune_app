@@ -3,16 +3,19 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
+import 'package:moodtune_app/di/injector.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/analysis/presentation/view/analysis_loading_page.dart';
 import 'package:moodtune_app/features/analysis/presentation/view/results_page.dart';
 import 'package:moodtune_app/features/auth/domain/entities/app_user.dart';
 import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:moodtune_app/features/narration/presentation/mood_narrator.dart';
 import 'package:moodtune_app/shared/widgets/mood_descriptor_tags.dart';
 import 'package:moodtune_app/shared/widgets/mood_hero_card.dart';
 import 'package:moodtune_app/shared/widgets/sign_up_strip.dart';
 
 import '../../../../helpers/helpers.dart';
+import '../../../narration/narration_fixtures.dart';
 import 'results_fixtures.dart';
 
 const _authenticated = AuthState(
@@ -23,6 +26,15 @@ const _authenticated = AuthState(
 const _urlLauncherChannel = MethodChannel('plugins.flutter.io/url_launcher');
 
 void main() {
+  // ResultsPage resolves MoodNarrator from getIt. An unavailable engine makes
+  // it fall back to the backend's template reasoning, which these tests assert.
+  setUp(() {
+    getIt.registerSingleton<MoodNarrator>(
+      MoodNarrator(engine: FakeNarrationEngine(available: false)),
+    );
+  });
+  tearDown(() => getIt.unregister<MoodNarrator>());
+
   group('ResultsPage', () {
     Future<void> pumpResults(
       WidgetTester tester, {

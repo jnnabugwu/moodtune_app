@@ -2,9 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
+import 'package:moodtune_app/di/injector.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/analysis/presentation/view/analysis_loading_page.dart';
 import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:moodtune_app/features/narration/presentation/mood_narration_text.dart';
 import 'package:moodtune_app/shared/widgets/analysis_source_sheet.dart';
 import 'package:moodtune_app/shared/widgets/collapsible_section.dart';
 import 'package:moodtune_app/shared/widgets/mood_descriptor_tags.dart';
@@ -203,22 +205,22 @@ class _ResultsPageState extends State<ResultsPage>
                           ),
                         ),
 
-                      // Reasoning — wireframe secondary warm-gray
-                      if (analysis.mood.reasoning.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          child: Text(
-                            analysis.mood.reasoning,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: _textSecondary,
-                              height: 1.5,
-                            ),
-                          ),
+                      // Reasoning — wireframe secondary warm-gray. Always
+                      // mounted: on-device narration can fill in when the
+                      // backend sends no template reasoning.
+                      MoodNarrationText(
+                        analysis: analysis,
+                        narrator: getIt(),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
                         ),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: _textSecondary,
+                          height: 1.5,
+                        ),
+                      ),
 
                       // Audio details collapsible
                       Padding(
