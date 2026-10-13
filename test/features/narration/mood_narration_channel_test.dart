@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moodtune_app/features/narration/data/mood_narration_channel.dart';
-import 'package:moodtune_app/features/narration/domain/mood_narrator.dart';
+import 'package:moodtune_app/features/narration/presentation/mood_narrator.dart';
 
 import 'narration_fixtures.dart';
 
@@ -13,7 +13,7 @@ void main() {
   const methodChannel = MethodChannel('moodtune/narration');
   final messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-  final input = NarrationInput.fromMood(buildAnalysis().mood);
+  final input = narrationInputFor(buildAnalysis().mood);
 
   void reply(Object? Function(MethodCall call) handler) =>
       messenger.setMockMethodCallHandler(methodChannel, (call) async {

@@ -1,12 +1,12 @@
 import 'package:flutter/services.dart';
 import 'package:moodtune_app/core/logging/talker.dart';
-import 'package:moodtune_app/features/narration/domain/mood_narrator.dart';
+import 'package:moodtune_app/features/narration/domain/narration.dart';
 
 /// [NarrationEngine] backed by Apple's on-device Foundation Models through
 /// the `moodtune/narration` method channel (see ios/Runner/AppDelegate.swift).
 ///
 /// Platforms without a handler (Android, older iOS builds) throw
-/// [MissingPluginException], which [MoodNarrator] treats as unavailable.
+/// [MissingPluginException], which `MoodNarrator` treats as unavailable.
 class MoodNarrationChannel implements NarrationEngine {
   MoodNarrationChannel({
     MethodChannel channel = const MethodChannel('moodtune/narration'),

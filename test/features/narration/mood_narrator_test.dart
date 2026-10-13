@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:moodtune_app/features/narration/domain/mood_narrator.dart';
+import 'package:moodtune_app/features/narration/presentation/mood_narrator.dart';
 
 import 'narration_fixtures.dart';
 
@@ -122,6 +122,26 @@ void main() {
       expect(result.source, NarrationSource.template);
     });
 
+    test('skips the model when the result has no tempo', () async {
+      final engine = FakeNarrationEngine(output: _good);
+      final narrator = MoodNarrator(engine: engine);
+
+      final result = await narrator.narrate(buildAnalysis(tempo: 0));
+
+      expect(result.source, NarrationSource.template);
+      expect(engine.narrateCalls, 0);
+    });
+
+    test('does not share a cache entry between results with no id', () async {
+      final engine = FakeNarrationEngine(output: _good);
+      final narrator = MoodNarrator(engine: engine);
+
+      await narrator.narrate(buildAnalysis(id: ''));
+      await narrator.narrate(buildAnalysis(id: ''));
+
+      expect(engine.narrateCalls, 2);
+    });
+
     test('caches on-device narration per analysis id', () async {
       final engine = FakeNarrationEngine(output: _good);
       final narrator = MoodNarrator(engine: engine);
@@ -135,7 +155,7 @@ void main() {
 
   group('NarrationInput', () {
     test('uses the on-screen mood name, not the backend label', () {
-      final input = NarrationInput.fromMood(
+      final input = narrationInputFor(
         buildAnalysis(primaryMood: 'calm').mood,
       );
 
@@ -144,7 +164,7 @@ void main() {
     });
 
     test('pre-phrases sound facts so the model cannot echo raw labels', () {
-      final input = NarrationInput.fromMood(buildAnalysis().mood);
+      final input = narrationInputFor(buildAnalysis().mood);
 
       expect(input.tempo, 128);
       expect(input.tempoFeel, 'fast');
@@ -153,26 +173,49 @@ void main() {
       expect(input.texture, 'a dense sound');
     });
 
-    test('sends no confidence score to the model', () {
-      final map = NarrationInput.fromMood(buildAnalysis().mood).toMap();
+    test('sends only classifier facts to the model', () {
+      final map = narrationInputFor(buildAnalysis().mood).toMap();
 
-      expect(map.keys, isNot(contains('confidence')));
+      // No confidence, title, artist, filename or ids may reach the model.
+      expect(
+        map.keys,
+        unorderedEquals([
+          'mood',
+          'moodSummary',
+          'tempo',
+          'tempoFeel',
+          'energy',
+          'tone',
+          'texture',
+          'descriptors',
+        ]),
+      );
     });
   });
 
   group('isGrounded', () {
-    final input = NarrationInput.fromMood(buildAnalysis().mood);
+    final input = narrationInputFor(buildAnalysis().mood);
 
     test('rejects text that is too short or too long', () {
       expect(MoodNarrator.isGrounded('energetic', input), isFalse);
       expect(MoodNarrator.isGrounded('energetic ' * 50, input), isFalse);
     });
 
-    test('rejects links', () {
-      expect(
-        MoodNarrator.isGrounded('Energetic track, see https://x.co', input),
-        isFalse,
-      );
+    test('rejects text over the word limit', () {
+      final text = 'Energetic ${'and fast ' * 30}'.trim();
+
+      expect(text.length, lessThan(400));
+      expect(MoodNarrator.isGrounded(text, input), isFalse);
+    });
+
+    test('rejects links in any case, with or without a scheme', () {
+      for (final text in [
+        'Energetic track, see https://x.co',
+        'Energetic track, see HTTPS://X.CO',
+        'Energetic track, see www.example.com',
+      ]) {
+        expect(MoodNarrator.isGrounded(text, input), isFalse, reason: text);
+      }
     });
 
     test('rejects topics the model has no facts about', () {
@@ -181,9 +224,32 @@ void main() {
         'Energetic, like most songs in the genre.',
         'The artist keeps it energetic throughout.',
         'Energetic, driven by powerful vocals.',
+        'Energetic, driven by pounding drums and guitars.',
+        'An energetic live recording.',
+        'The analysis shows an energetic track.',
+        'Energetic, with a high confidence score.',
+        'The app classified this energetic track.',
       ]) {
         expect(MoodNarrator.isGrounded(text, input), isFalse, reason: text);
       }
+    });
+
+    test('ignores blank descriptors when looking for the mood', () {
+      final blanks = narrationInputFor(
+        buildAnalysis(descriptors: const ['', '  ']).mood,
+      );
+
+      expect(
+        MoodNarrator.isGrounded('A track with a fast, bright pulse.', blanks),
+        isFalse,
+      );
+    });
+
+    test('accepts "lively", which only looks like "live"', () {
+      expect(
+        MoodNarrator.isGrounded('A lively, danceable track.', input),
+        isTrue,
+      );
     });
 
     test('accepts text that names a descriptor instead of the mood', () {

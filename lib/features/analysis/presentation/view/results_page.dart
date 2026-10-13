@@ -205,23 +205,22 @@ class _ResultsPageState extends State<ResultsPage>
                           ),
                         ),
 
-                      // Reasoning — wireframe secondary warm-gray
-                      if (analysis.mood.reasoning.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          child: MoodNarrationText(
-                            analysis: analysis,
-                            narrator: getIt(),
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: _textSecondary,
-                              height: 1.5,
-                            ),
-                          ),
+                      // Reasoning — wireframe secondary warm-gray. Always
+                      // mounted: on-device narration can fill in when the
+                      // backend sends no template reasoning.
+                      MoodNarrationText(
+                        analysis: analysis,
+                        narrator: getIt(),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
                         ),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: _textSecondary,
+                          height: 1.5,
+                        ),
+                      ),
 
                       // Audio details collapsible
                       Padding(

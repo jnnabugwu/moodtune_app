@@ -1,5 +1,5 @@
 import 'package:moodtune_app/features/analysis/domain/entities/audio_upload_analysis.dart';
-import 'package:moodtune_app/features/narration/domain/mood_narrator.dart';
+import 'package:moodtune_app/features/narration/domain/narration.dart';
 
 const templateReasoning =
     'Derived from tempo, brightness, and energy patterns.';
@@ -46,6 +46,8 @@ AudioUploadAnalysis buildAnalysis({
   String id = 'a1',
   String primaryMood = 'energetic',
   String reasoning = templateReasoning,
+  double tempo = 128,
+  List<String> descriptors = const ['upbeat', 'danceable'],
 }) => AudioUploadAnalysis(
   id: id,
   filename: 'song.mp3',
@@ -56,8 +58,8 @@ AudioUploadAnalysis buildAnalysis({
     moodScores: const {'energetic': 0.8},
     confidence: 0.72,
     reasoning: reasoning,
-    audioFeatures: const UploadAudioFeatures(
-      tempo: 128,
+    audioFeatures: UploadAudioFeatures(
+      tempo: tempo,
       beatStrength: 0.7,
       spectralCentroid: 2500,
       spectralRolloff: 4000,
@@ -66,13 +68,13 @@ AudioUploadAnalysis buildAnalysis({
       zeroCrossingRate: 0.1,
       rmsEnergy: 0.3,
       dynamicRange: 0.4,
-      mfccMean: [],
+      mfccMean: const [],
       durationSeconds: 30,
       energyLabel: 'High (0.84)',
       brightnessLabel: 'Bright',
       textureLabel: 'Dense',
     ),
-    descriptors: const ['upbeat', 'danceable'],
+    descriptors: descriptors,
   ),
   analysisMethod: 'librosa',
   processedAt: DateTime(2026, 10, 12),

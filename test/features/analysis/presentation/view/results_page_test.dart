@@ -9,7 +9,7 @@ import 'package:moodtune_app/features/analysis/presentation/view/analysis_loadin
 import 'package:moodtune_app/features/analysis/presentation/view/results_page.dart';
 import 'package:moodtune_app/features/auth/domain/entities/app_user.dart';
 import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:moodtune_app/features/narration/domain/mood_narrator.dart';
+import 'package:moodtune_app/features/narration/presentation/mood_narrator.dart';
 import 'package:moodtune_app/shared/widgets/mood_descriptor_tags.dart';
 import 'package:moodtune_app/shared/widgets/mood_hero_card.dart';
 import 'package:moodtune_app/shared/widgets/sign_up_strip.dart';
