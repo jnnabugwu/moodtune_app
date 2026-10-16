@@ -81,8 +81,8 @@ class YamnetMoodModel {
   final double epsilon;
 
   /// Lowest mean score some mood class must reach for [interpret] to call
-  /// a mood. Below it the softmax only sees [epsilon], which would label
-  /// silence or a test tone "angry" (the lowest reference mean).
+  /// a mood. Below it the softmax is relative, so near-silence or a test tone
+  /// reads as "angry" (the lowest reference mean).
   final double minScore;
 
   /// Allowed instrument, vocal and genre classes and their display tag.
