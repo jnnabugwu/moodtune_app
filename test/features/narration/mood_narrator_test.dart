@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moodtune_app/features/narration/presentation/mood_narrator.dart';
 
@@ -306,6 +309,31 @@ void main() {
         isTrue,
       );
       expect(MoodNarrator.isGrounded(text, withTags(const ['jazz'])), isFalse);
+    });
+
+    test('guards every tag the model can produce', () {
+      final config =
+          jsonDecode(File('assets/models/yamnet_mood.json').readAsStringSync())
+              as Map<String, dynamic>;
+      final tags = {
+        for (final c in (config['tags'] as Map)['classes'] as List)
+          (c as Map)['tag'] as String,
+      };
+      expect(tags, isNotEmpty);
+
+      for (final tag in tags) {
+        final text = 'This track feels serene, with a soft $tag behind it.';
+        expect(
+          MoodNarrator.isGrounded(text, withTags(const [])),
+          isFalse,
+          reason: '"$tag" passed without a tag backing it',
+        );
+        expect(
+          MoodNarrator.isGrounded(text, withTags([tag])),
+          isTrue,
+          reason: '"$tag" was rejected although a tag backs it',
+        );
+      }
     });
 
     test('rejects genre names when there are no tags', () {

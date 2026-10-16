@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:moodtune_app/core/error/exceptions.dart';
 import 'package:moodtune_app/core/logging/talker.dart';
 import 'package:moodtune_app/features/on_device_mood/domain/decoded_audio.dart';
 import 'package:moodtune_app/features/on_device_mood/domain/on_device_mood.dart';
@@ -52,7 +53,14 @@ class OnDeviceMoodClassifier {
       );
     } on Object catch (error) {
       talker.warning('On-device mood failed ($error); keeping backend mood');
-      return OnDeviceMoodAttempt(elapsed: stopwatch.elapsed, failure: '$error');
+      // The error text can hold the file's path, so only a category is
+      // kept for recording.
+      return OnDeviceMoodAttempt(
+        elapsed: stopwatch.elapsed,
+        failure: error is AudioDecodeException
+            ? 'decode: ${error.code}'
+            : 'classification_failed',
+      );
     }
   }
 

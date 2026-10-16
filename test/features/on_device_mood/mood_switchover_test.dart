@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:moodtune_app/features/analysis/domain/entities/audio_upload_analysis.dart';
@@ -34,10 +35,14 @@ void main() {
     when(() => classifier.attempt(any())).thenAnswer((_) async => _success);
   });
 
-  MoodSwitchover build({Future<bool> Function()? isEnabled}) => MoodSwitchover(
+  MoodSwitchover build({
+    Future<bool> Function()? isEnabled,
+    bool isSupported = true,
+  }) => MoodSwitchover(
     classifier: classifier,
     downloader: downloader,
     isEnabled: isEnabled ?? () async => enabled,
+    isSupported: isSupported,
   );
 
   group('MoodSwitchover.apply', () {
@@ -102,6 +107,13 @@ void main() {
 
       expect(attempt, _success);
     });
+
+    test('skips classification where it is unsupported', () async {
+      final attempt = await build(isSupported: false).classifyFile('/a.mp3');
+
+      expect(attempt.failure, 'unsupported');
+      verifyNever(() => classifier.attempt(any()));
+    });
   });
 
   group('classifyUrl', () {
@@ -110,7 +122,7 @@ void main() {
       final file = File('${dir.path}/track.mp3')..writeAsBytesSync([1, 2, 3]);
       when(
         () => downloader.download('https://audio'),
-      ).thenAnswer((_) async => file);
+      ).thenAnswer((_) async => file.path);
 
       final attempt = await build().classifyUrl('https://audio');
 
@@ -127,8 +139,40 @@ void main() {
       final attempt = await build().classifyUrl('https://audio');
 
       expect(attempt.mood, isNull);
-      expect(attempt.failure, startsWith('download:'));
+      expect(attempt.failure, 'download: error');
       verifyNever(() => classifier.attempt(any()));
+    });
+
+    test('records the Dio error type, never its URL', () async {
+      when(() => downloader.download(any())).thenThrow(
+        DioException.receiveTimeout(
+          timeout: const Duration(seconds: 30),
+          requestOptions: RequestOptions(path: 'https://audio?client=secret'),
+        ),
+      );
+
+      final attempt = await build().classifyUrl('https://audio?client=secret');
+
+      expect(attempt.failure, 'download: receiveTimeout');
+    });
+
+    test('deletes the download when classification throws', () async {
+      final dir = await Directory.systemTemp.createTemp('switchover_test');
+      final file = File('${dir.path}/track.mp3')..writeAsBytesSync([1]);
+      when(() => downloader.download(any())).thenAnswer((_) async => file.path);
+      when(() => classifier.attempt(any())).thenThrow(StateError('boom'));
+
+      final attempt = await build().classifyUrl('https://audio');
+
+      expect(attempt.failure, 'classification_failed');
+      expect(dir.existsSync(), isFalse);
+    });
+
+    test('skips the download where it is unsupported', () async {
+      final attempt = await build(isSupported: false).classifyUrl('https://a');
+
+      expect(attempt.failure, 'unsupported');
+      verifyNever(() => downloader.download(any()));
     });
 
     test('skips the download when the kill switch is off', () async {

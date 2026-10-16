@@ -9,28 +9,29 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 class _MockDeviceInfoPlugin extends Mock implements DeviceInfoPlugin {}
 
-IosDeviceInfo _iosInfo() => IosDeviceInfo.setMockInitialValues(
-  name: 'Jordan’s iPhone',
-  systemName: 'iOS',
-  systemVersion: '18.1',
-  model: 'iPhone',
-  modelName: 'iPhone 14 Pro',
-  localizedModel: 'iPhone',
-  freeDiskSize: 0,
-  totalDiskSize: 0,
-  isPhysicalDevice: true,
-  isiOSAppOnMac: false,
-  isiOSAppOnVision: false,
-  physicalRamSize: 0,
-  availableRamSize: 0,
-  utsname: IosUtsname.setMockInitialValues(
-    sysname: 'Darwin',
-    nodename: 'node',
-    release: '24.1.0',
-    version: 'Darwin Kernel',
-    machine: 'iPhone15,2',
-  ),
-);
+IosDeviceInfo _iosInfo({bool isPhysicalDevice = true}) =>
+    IosDeviceInfo.setMockInitialValues(
+      name: 'Jordan’s iPhone',
+      systemName: 'iOS',
+      systemVersion: '18.1',
+      model: 'iPhone',
+      modelName: 'iPhone 14 Pro',
+      localizedModel: 'iPhone',
+      freeDiskSize: 0,
+      totalDiskSize: 0,
+      isPhysicalDevice: isPhysicalDevice,
+      isiOSAppOnMac: false,
+      isiOSAppOnVision: false,
+      physicalRamSize: 0,
+      availableRamSize: 0,
+      utsname: IosUtsname.setMockInitialValues(
+        sysname: 'Darwin',
+        nodename: 'node',
+        release: '24.1.0',
+        version: 'Darwin Kernel',
+        machine: 'iPhone15,2',
+      ),
+    );
 
 AndroidDeviceInfo _androidInfo() => AndroidDeviceInfo.setMockInitialValues(
   version: AndroidBuildVersion.setMockInitialValues(
@@ -109,6 +110,21 @@ void main() {
         appVersion: '1.0.0+7',
       ),
     );
+  });
+
+  test('leaves the model out on the iOS Simulator', () async {
+    when(
+      () => plugin.iosInfo,
+    ).thenAnswer((_) async => _iosInfo(isPhysicalDevice: false));
+
+    final details = await DeviceContext(
+      deviceInfo: plugin,
+      packageInfo: package,
+      platform: TargetPlatform.iOS,
+    ).load();
+
+    expect(details.deviceModel, isNull);
+    expect(details.osVersion, '18.1');
   });
 
   test('reads Android release and manufacturer + model', () async {

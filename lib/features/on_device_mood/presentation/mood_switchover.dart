@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:moodtune_app/core/logging/talker.dart';
 import 'package:moodtune_app/features/analysis/domain/entities/audio_upload_analysis.dart';
 import 'package:moodtune_app/features/on_device_mood/presentation/on_device_mood_classifier.dart';
@@ -23,6 +24,7 @@ class MoodSwitchover {
     required OnDeviceMoodClassifier classifier,
     required AudioDownloader downloader,
     required Future<bool> Function() isEnabled,
+    this.isSupported = true,
   }) : _classifier = classifier,
        _downloader = downloader,
        _isEnabled = isEnabled;
@@ -31,29 +33,44 @@ class MoodSwitchover {
   final AudioDownloader _downloader;
   final Future<bool> Function() _isEnabled;
 
+  /// False where there's no native decoder (Android), so nothing is
+  /// downloaded or loaded only to fail at the decode step.
+  final bool isSupported;
+
   /// Classifies a file already on the phone (an upload).
   Future<OnDeviceMoodAttempt> classifyFile(String path) async {
+    if (!isSupported) return _unsupported;
     if (!await _enabled()) return _disabled;
     return await _classifier.attempt(path);
   }
 
   /// Downloads a catalog track, classifies it, and deletes the download.
   Future<OnDeviceMoodAttempt> classifyUrl(String url) async {
+    if (!isSupported) return _unsupported;
     if (!await _enabled()) return _disabled;
-    File? file;
+    final String path;
     try {
-      file = await _downloader.download(url);
-      return await _classifier.attempt(file.path);
+      path = await _downloader.download(url);
     } on Object catch (error) {
       talker.warning('On-device mood: download failed ($error)');
       return OnDeviceMoodAttempt(
         elapsed: Duration.zero,
-        failure: 'download: $error',
+        failure: 'download: ${_downloadReason(error)}',
+      );
+    }
+    try {
+      return await _classifier.attempt(path);
+    } on Object catch (error) {
+      // attempt() shouldn't throw, but a catalog result must never fail
+      // because of the on-device path.
+      talker.warning('On-device mood: classification threw ($error)');
+      return const OnDeviceMoodAttempt(
+        elapsed: Duration.zero,
+        failure: 'classification_failed',
       );
     } finally {
-      if (file != null) {
-        await file.parent.delete(recursive: true).catchError((_) => file!);
-      }
+      final dir = File(path).parent;
+      await dir.delete(recursive: true).catchError((_) => dir);
     }
   }
 
@@ -90,8 +107,17 @@ class MoodSwitchover {
     }
   }
 
+  /// A fixed reason, never the error text: Dio's includes the track URL.
+  static String _downloadReason(Object error) =>
+      error is DioException ? error.type.name : 'error';
+
   static const _disabled = OnDeviceMoodAttempt(
     elapsed: Duration.zero,
     failure: 'disabled',
+  );
+
+  static const _unsupported = OnDeviceMoodAttempt(
+    elapsed: Duration.zero,
+    failure: 'unsupported',
   );
 }

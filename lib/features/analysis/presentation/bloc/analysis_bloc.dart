@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moodtune_app/core/logging/talker.dart';
@@ -177,7 +178,8 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
       artist: event.artist,
       album: event.album,
     );
-    final attempt = await _settle(onDevice);
+    // A backend error is shown right away; only a result waits for on-device.
+    final attempt = result.isRight() ? await _settle(onDevice) : null;
 
     result.fold(
       (failure) => emit(
@@ -235,7 +237,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
       artistName: event.artistName,
       jamendoPageUrl: event.jamendoPageUrl,
     );
-    final attempt = await _settle(onDevice);
+    final attempt = result.isRight() ? await _settle(onDevice) : null;
 
     result.fold(
       (failure) => emit(

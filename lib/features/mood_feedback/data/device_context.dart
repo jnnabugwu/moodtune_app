@@ -38,7 +38,8 @@ class DeviceContext {
           final ios = await _deviceInfo.iosInfo;
           osVersion = ios.systemVersion;
           // Hardware id such as "iPhone15,2" (more precise than ios.model).
-          deviceModel = ios.utsname.machine;
+          // The simulator reports the Mac's architecture ("arm64") instead.
+          deviceModel = ios.isPhysicalDevice ? ios.utsname.machine : null;
         case TargetPlatform.android:
           final android = await _deviceInfo.androidInfo;
           osVersion = android.version.release;

@@ -214,6 +214,7 @@ void main() {
       );
 
       await expectLater(recorder.sendFeedback(id, agrees: true), completes);
+      verify(() => repository.sendFeedback(id: id, agrees: true)).called(1);
     });
   });
 }

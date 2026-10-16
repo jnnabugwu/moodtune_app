@@ -65,6 +65,18 @@ void main() {
     verify(() => remote.fetchConfig()).called(1);
   });
 
+  test('refetches when the clock moved back', () async {
+    when(
+      () => remote.fetchConfig(),
+    ).thenAnswer((_) async => {'on_device_mood': false});
+
+    await repository.load();
+    now = now.subtract(const Duration(hours: 1));
+    await repository.load();
+
+    verify(() => remote.fetchConfig()).called(2);
+  });
+
   test('falls back to on-device enabled when the fetch fails', () async {
     when(() => remote.fetchConfig()).thenThrow(offline());
 

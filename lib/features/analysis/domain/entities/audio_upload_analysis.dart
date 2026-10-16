@@ -81,8 +81,9 @@ class UploadMoodResult extends Equatable {
   final List<String> descriptors;
 
   /// Where [primaryMood] came from. On-device results keep the backend's
-  /// [audioFeatures] (tempo, energy...) but not its [confidence], which
-  /// belonged to the backend's label.
+  /// [audioFeatures] (tempo, energy...), [confidence] and [moodScores]
+  /// unchanged, but the last two describe the backend's label, so the UI
+  /// doesn't show them for on-device results.
   final MoodSource source;
 
   /// What YAMNet heard, e.g. ["vocals", "piano"]. Only on-device results

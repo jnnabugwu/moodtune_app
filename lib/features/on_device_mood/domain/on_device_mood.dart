@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:equatable/equatable.dart';
@@ -56,7 +55,18 @@ class OnDeviceMoodAttempt extends Equatable {
   /// Time spent classifying (decode + model), excluding any download.
   final Duration elapsed;
 
-  /// Why there's no [mood]: `disabled`, `timeout`, or the error.
+  /// Why there's no [mood], as a fixed category so no file path or URL is
+  /// recorded:
+  ///
+  /// * `disabled`: the remote kill switch is off.
+  /// * `unsupported`: no native decoder on this platform (Android).
+  /// * `download: <reason>`: fetching a catalog track failed, e.g.
+  ///   `download: receiveTimeout`.
+  /// * `timeout`: classification ran past its deadline.
+  /// * `late`: the backend answered and the grace period ran out first.
+  /// * `decode: <code>`: the native decoder's error code, e.g.
+  ///   `decode: unreadable`.
+  /// * `classification_failed`: anything else (model load or inference).
   final String? failure;
 
   @override
@@ -65,6 +75,7 @@ class OnDeviceMoodAttempt extends Equatable {
 
 /// Fetches a remote track to a local file the native decoder can open.
 abstract interface class AudioDownloader {
-  /// Callers delete the file when done.
-  Future<File> download(String url);
+  /// Returns the downloaded file's path. The file must sit alone in a new
+  /// temp directory: callers delete that whole directory when done.
+  Future<String> download(String url);
 }

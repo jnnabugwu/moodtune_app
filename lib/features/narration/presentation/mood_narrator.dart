@@ -85,6 +85,14 @@ class MoodNarrator {
     'vocals?|vocalists?|'
     'drums?|drummers?|guitars?|piano|keys|synths?|synthesizers?|bass|'
     'strings|violins?|cellos?|horns?|brass|saxophones?|trumpets?|choirs?|'
+    // Every other instrument a sound tag can name (assets/models/
+    // yamnet_mood.json), plus a few the model could invent.
+    'accordions?|bagpipes?|banjos?|bells?|chimes?|clarinets?|flutes?|'
+    'glockenspiels?|gongs?|harmonicas?|harps?|harpsichords?|mandolins?|'
+    'maracas?|marimbas?|orchestras?|organs?|percussion|pizzicato|'
+    'rattles?|rimshots?|samplers?|singing bowls?|steelpans?|strums?|'
+    'tablas?|tambourines?|trombones?|tubas?|ukuleles?|wood[- ]blocks?|'
+    'woodwinds?|xylophones?|zithers?|'
     'live|recordings?|recorded|studio|albums?|chorus|verses?|bridge|'
     r'confidence|scores?|classif\w*|analy[sz]\w*|apps?|algorithms?'
     r')\b',

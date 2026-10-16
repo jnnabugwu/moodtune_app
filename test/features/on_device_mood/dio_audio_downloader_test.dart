@@ -29,12 +29,12 @@ void main() {
             Response(requestOptions: RequestOptions(), statusCode: 200),
       );
 
-      final file = await DioAudioDownloader(
+      final path = await DioAudioDownloader(
         dio: dio,
       ).download('https://prod-1.storage.jamendo.com/?trackid=1&format=mp32');
-      addTearDown(() => file.parent.delete(recursive: true));
+      addTearDown(() => File(path).parent.delete(recursive: true));
 
-      expect(file.path, endsWith('/track.mp3'));
+      expect(path, endsWith('/track.mp3'));
     });
 
     test('keeps a known extension from the URL', () async {
@@ -43,12 +43,12 @@ void main() {
             Response(requestOptions: RequestOptions(), statusCode: 200),
       );
 
-      final file = await DioAudioDownloader(
+      final path = await DioAudioDownloader(
         dio: dio,
       ).download('https://example.com/audio/song.m4a?sig=x');
-      addTearDown(() => file.parent.delete(recursive: true));
+      addTearDown(() => File(path).parent.delete(recursive: true));
 
-      expect(file.path, endsWith('/track.m4a'));
+      expect(path, endsWith('/track.m4a'));
     });
 
     test('cancels a download that grows past the size cap', () async {
@@ -61,11 +61,11 @@ void main() {
         return Response(requestOptions: RequestOptions(), statusCode: 200);
       });
 
-      final file = await DioAudioDownloader(
+      final path = await DioAudioDownloader(
         dio: dio,
         maxBytes: 10,
       ).download('https://audio');
-      addTearDown(() => file.parent.delete(recursive: true));
+      addTearDown(() => File(path).parent.delete(recursive: true));
 
       expect(token?.isCancelled, isTrue);
     });
@@ -82,6 +82,29 @@ void main() {
         throwsA(isA<DioException>()),
       );
       expect(Directory(File(savePath!).parent.path).existsSync(), isFalse);
+    });
+
+    test('cancels a download that runs past the time limit', () async {
+      CancelToken? token;
+      stubDownload((invocation) async {
+        token = invocation.namedArguments[#cancelToken] as CancelToken;
+        throw await token!.whenCancel;
+      });
+
+      await expectLater(
+        DioAudioDownloader(
+          dio: dio,
+          timeLimit: const Duration(milliseconds: 10),
+        ).download('https://audio'),
+        throwsA(
+          isA<DioException>().having(
+            (e) => e.type,
+            'type',
+            DioExceptionType.cancel,
+          ),
+        ),
+      );
+      expect(token?.isCancelled, isTrue);
     });
   });
 }

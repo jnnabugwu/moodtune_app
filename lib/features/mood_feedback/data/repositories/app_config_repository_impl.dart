@@ -34,9 +34,10 @@ class AppConfigRepositoryImpl implements AppConfigRepository {
   Future<AppConfig> load() {
     final cached = _cached;
     final fetchedAt = _fetchedAt;
-    if (cached != null &&
-        fetchedAt != null &&
-        _clock().difference(fetchedAt) < _cacheTtl) {
+    final age = fetchedAt == null ? null : _clock().difference(fetchedAt);
+    // A negative age means the device clock went back; refetch rather than
+    // trust a cache that could be older than the TTL.
+    if (cached != null && age != null && !age.isNegative && age < _cacheTtl) {
       return Future.value(cached);
     }
     // Share one request between concurrent callers.

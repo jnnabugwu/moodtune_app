@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:moodtune_app/features/analysis/data/data.dart';
 import 'package:moodtune_app/features/analysis/domain/repositories/analysis_repository.dart';
@@ -72,6 +73,8 @@ Future<void> configureDependencies({
         // Remote kill switch: GET /api/v1/config (ON_DEVICE_MOOD_ENABLED).
         isEnabled: () async =>
             (await getIt<AppConfigRepository>().load()).onDeviceMood,
+        // Only iOS registers the native decoder (moodtune/audio_decode).
+        isSupported: defaultTargetPlatform == TargetPlatform.iOS,
       ),
     )
     // Mood observations + "Does this feel right?" feedback (ROADMAP OD-4)

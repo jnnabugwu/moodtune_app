@@ -18,6 +18,7 @@ DioException _dioError({
   DioExceptionType type = DioExceptionType.badResponse,
   Object? data,
   String? message,
+  int statusCode = 500,
 }) {
   final options = RequestOptions(path: '/mood-observations');
   return DioException(
@@ -28,7 +29,7 @@ DioException _dioError({
         ? null
         : Response<Object?>(
             requestOptions: options,
-            statusCode: 500,
+            statusCode: statusCode,
             data: data,
           ),
   );
@@ -150,7 +151,11 @@ void main() {
 
       expect(result, const Right<Failure, void>(null));
       verify(
-        () => remote.sendFeedback(id: observationId, agrees: true),
+        () => remote.sendFeedback(
+          id: observationId,
+          agrees: true,
+          userMood: null,
+        ),
       ).called(1);
     });
 
@@ -177,7 +182,12 @@ void main() {
           agrees: any(named: 'agrees'),
           userMood: any(named: 'userMood'),
         ),
-      ).thenThrow(_dioError(data: {'detail': 'Mood observation not found'}));
+      ).thenThrow(
+        _dioError(
+          statusCode: 404,
+          data: {'detail': 'Mood observation not found'},
+        ),
+      );
 
       expect(
         await repository.sendFeedback(id: observationId, agrees: true),
@@ -194,11 +204,10 @@ void main() {
         ),
       ).thenThrow(Exception('x'));
 
-      final result = await repository.sendFeedback(
-        id: observationId,
-        agrees: true,
+      expect(
+        await repository.sendFeedback(id: observationId, agrees: true),
+        const Left<Failure, void>(ServerFailure('Exception: x')),
       );
-      expect(result.isLeft(), isTrue);
     });
   });
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:bloc_test/bloc_test.dart';
@@ -623,6 +624,34 @@ void main() {
       skip: 1,
       expect: () => const [
         AnalysisState(uploadStatus: UploadStatus.error, uploadError: 'down'),
+      ],
+    );
+
+    blocTest<AnalysisBloc, AnalysisState>(
+      'shows a backend failure without waiting for on-device',
+      setUp: () {
+        when(
+          () => switchover.classifyUrl(any()),
+        ).thenAnswer((_) => Completer<OnDeviceMoodAttempt>().future);
+        when(
+          () => repository.analyzeCatalogTrack(
+            audioUrl: any(named: 'audioUrl'),
+            trackId: any(named: 'trackId'),
+            trackName: any(named: 'trackName'),
+            artistName: any(named: 'artistName'),
+            jamendoPageUrl: any(named: 'jamendoPageUrl'),
+          ),
+        ).thenAnswer((_) async => const Left(ServerFailure('down')));
+      },
+      build: () => buildWithSwitchover(grace: const Duration(seconds: 30)),
+      act: (bloc) => bloc.add(catalog),
+      wait: const Duration(milliseconds: 50),
+      skip: 1,
+      expect: () => const [
+        AnalysisState(
+          catalogStatus: CatalogAnalysisStatus.error,
+          catalogError: 'down',
+        ),
       ],
     );
   });

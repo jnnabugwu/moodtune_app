@@ -151,7 +151,10 @@ void main() {
 
       expect(attempt.mood, isNull);
       expect(attempt.failure, 'timeout');
-      expect(attempt.elapsed, greaterThanOrEqualTo(Duration.zero));
+      expect(
+        attempt.elapsed,
+        greaterThanOrEqualTo(const Duration(milliseconds: 10)),
+      );
     });
 
     test('attempt reports the error and keeps the mood on success', () async {
@@ -168,10 +171,22 @@ void main() {
         loadModel: () async => _model,
       );
 
-      expect((await failing.attempt('/a')).failure, contains('unreadable'));
+      expect((await failing.attempt('/a')).failure, 'decode: unreadable');
       final ok = await working.attempt('/a');
       expect(ok.mood?.primaryMood, 'sad');
       expect(ok.failure, isNull);
+    });
+
+    test('attempt reports other errors without their text', () async {
+      final classifier = OnDeviceMoodClassifier(
+        decoder: FakeDecoder(),
+        engine: FakeEngine(error: Exception('/private/var/My Song.mp3')),
+        loadModel: () async => _model,
+      );
+
+      final attempt = await classifier.attempt('/private/var/My Song.mp3');
+
+      expect(attempt.failure, 'classification_failed');
     });
   });
 }
