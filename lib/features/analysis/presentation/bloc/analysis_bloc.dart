@@ -1,15 +1,27 @@
+import 'dart:async';
 import 'dart:typed_data';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:moodtune_app/core/logging/talker.dart';
 import 'package:moodtune_app/features/analysis/domain/domain.dart';
+import 'package:moodtune_app/features/mood_feedback/domain/entities/entities.dart';
+import 'package:moodtune_app/features/mood_feedback/presentation/mood_observation_recorder.dart';
+import 'package:moodtune_app/features/on_device_mood/presentation/mood_switchover.dart';
 
 part 'analysis_event.dart';
 part 'analysis_state.dart';
 
 class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
-  AnalysisBloc({required AnalysisRepository repository})
-    : _repository = repository,
-      super(const AnalysisState()) {
+  AnalysisBloc({
+    required AnalysisRepository repository,
+    MoodSwitchover? switchover,
+    MoodObservationRecorder? recorder,
+    this.onDeviceGrace = const Duration(seconds: 3),
+  }) : _repository = repository,
+       _switchover = switchover,
+       _recorder = recorder,
+       super(const AnalysisState()) {
     on<AnalyzePlaylistRequested>(_onAnalyzeRequested);
     on<AnalysisHistoryRequested>(_onHistoryRequested);
     on<AnalysisHistoryFilterChanged>(_onHistoryFilterChanged);
@@ -21,6 +33,17 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
   }
 
   final AnalysisRepository _repository;
+
+  /// Shows the on-device mood instead of the backend's for uploads and
+  /// catalog tracks. Null (tests, platforms without it) keeps the backend's.
+  final MoodSwitchover? _switchover;
+
+  /// Records each upload/catalog result for comparing the two engines.
+  final MoodObservationRecorder? _recorder;
+
+  /// How long to keep waiting for on-device classification once the backend
+  /// has answered, so a slow phone or download never holds the result back.
+  final Duration onDeviceGrace;
 
   Future<void> _onAnalyzeRequested(
     AnalyzePlaylistRequested event,
@@ -141,6 +164,13 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
       ),
     );
 
+    final path = event.path;
+    final switchover = _switchover;
+    // Started before the backend call so the two run side by side.
+    final onDevice = path == null || switchover == null
+        ? null
+        : switchover.classifyFile(path);
+
     final result = await _repository.analyzeUploadedAudio(
       bytes: Uint8List.fromList(event.bytes),
       filename: event.filename,
@@ -148,6 +178,8 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
       artist: event.artist,
       album: event.album,
     );
+    // A backend error is shown right away; only a result waits for on-device.
+    final attempt = result.isRight() ? await _settle(onDevice) : null;
 
     result.fold(
       (failure) => emit(
@@ -157,13 +189,23 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
           currentUploadAnalysis: null,
         ),
       ),
-      (analysis) => emit(
-        state.copyWith(
-          uploadStatus: UploadStatus.success,
-          currentUploadAnalysis: analysis,
-          uploadError: null,
-        ),
-      ),
+      (analysis) {
+        final displayed = MoodSwitchover.apply(analysis, attempt);
+        emit(
+          state.copyWith(
+            uploadStatus: UploadStatus.success,
+            currentUploadAnalysis: displayed,
+            uploadError: null,
+            onDeviceAttempt: attempt,
+            observationId: _record(
+              MoodObservationSource.upload,
+              analysis,
+              displayed,
+              attempt,
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -186,6 +228,8 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
       ),
     );
 
+    final onDevice = _switchover?.classifyUrl(event.audioUrl);
+
     final result = await _repository.analyzeCatalogTrack(
       audioUrl: event.audioUrl,
       trackId: event.trackId,
@@ -193,6 +237,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
       artistName: event.artistName,
       jamendoPageUrl: event.jamendoPageUrl,
     );
+    final attempt = result.isRight() ? await _settle(onDevice) : null;
 
     result.fold(
       (failure) => emit(
@@ -201,12 +246,53 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
           catalogError: failure.message,
         ),
       ),
-      (analysis) => emit(
-        state.copyWith(
-          catalogStatus: CatalogAnalysisStatus.success,
-          currentCatalogAnalysis: analysis,
-        ),
-      ),
+      (analysis) {
+        final displayed = MoodSwitchover.apply(analysis, attempt);
+        emit(
+          state.copyWith(
+            catalogStatus: CatalogAnalysisStatus.success,
+            currentCatalogAnalysis: displayed,
+            onDeviceAttempt: attempt,
+            observationId: _record(
+              MoodObservationSource.catalog,
+              analysis,
+              displayed,
+              attempt,
+            ),
+          ),
+        );
+      },
     );
   }
+
+  /// Waits up to [onDeviceGrace] for on-device classification that is
+  /// still running when the backend answers.
+  Future<OnDeviceMoodAttempt?> _settle(
+    Future<OnDeviceMoodAttempt>? pending,
+  ) async {
+    if (pending == null) return null;
+    try {
+      return await pending.timeout(onDeviceGrace);
+    } on TimeoutException {
+      talker.warning(
+        'On-device mood not ready ${onDeviceGrace.inMilliseconds}ms after '
+        'the backend; showing backend mood',
+      );
+      return OnDeviceMoodAttempt(elapsed: onDeviceGrace, failure: 'late');
+    }
+  }
+
+  /// Records [displayed] next to the backend's own result; null when there's
+  /// no recorder.
+  String? _record(
+    MoodObservationSource source,
+    AudioUploadAnalysis backend,
+    AudioUploadAnalysis displayed,
+    OnDeviceMoodAttempt? attempt,
+  ) => _recorder?.record(
+    source: source,
+    backendMood: backend.mood.primaryMood,
+    displayed: displayed,
+    attempt: attempt,
+  );
 }

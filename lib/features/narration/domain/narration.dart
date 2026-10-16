@@ -30,6 +30,7 @@ class NarrationInput extends Equatable {
     required this.tone,
     required this.texture,
     required this.descriptors,
+    this.soundTags = const [],
   });
 
   final String mood;
@@ -41,6 +42,10 @@ class NarrationInput extends Equatable {
   final String texture;
   final List<String> descriptors;
 
+  /// What the on-device audio model heard ("vocals", "piano"). The model
+  /// may mention instruments, vocals or genre only when listed here.
+  final List<String> soundTags;
+
   Map<String, Object> toMap() => {
     'mood': mood,
     'moodSummary': moodSummary,
@@ -50,6 +55,7 @@ class NarrationInput extends Equatable {
     'tone': tone,
     'texture': texture,
     'descriptors': descriptors,
+    'soundTags': soundTags,
   };
 
   @override
@@ -62,6 +68,7 @@ class NarrationInput extends Equatable {
     tone,
     texture,
     descriptors,
+    soundTags,
   ];
 }
 

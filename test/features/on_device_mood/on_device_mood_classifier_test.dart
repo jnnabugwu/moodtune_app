@@ -126,8 +126,8 @@ void main() {
         timeout: const Duration(milliseconds: 10),
       );
 
-      expect(await classifier.classify('/a.mp3'), isNull);
-      expect(await classifier.classify('/b.mp3'), isNull);
+      expect((await classifier.attempt('/a.mp3')).failure, 'timeout');
+      expect((await classifier.attempt('/b.mp3')).failure, 'busy');
       expect(decoder.paths, ['/a.mp3']);
 
       await Future<void>.delayed(const Duration(milliseconds: 60));
@@ -143,6 +143,7 @@ void main() {
       );
 
       expect(await classifier.classify('/tone.wav'), isNull);
+      expect((await classifier.attempt('/tone.wav')).failure, 'no_mood');
     });
 
     test('loads the config once and reuses it', () async {
@@ -176,6 +177,56 @@ void main() {
       expect(await classifier.classify('/a.mp3'), isNull);
       expect((await classifier.classify('/a.mp3'))?.primaryMood, 'sad');
       expect(loads, 2);
+    });
+
+    test('attempt reports a timeout as the failure', () async {
+      final classifier = OnDeviceMoodClassifier(
+        decoder: FakeDecoder(),
+        engine: FakeEngine(delay: const Duration(milliseconds: 50)),
+        loadModel: () async => _model,
+        timeout: const Duration(milliseconds: 10),
+      );
+
+      final attempt = await classifier.attempt('/song.mp3');
+
+      expect(attempt.mood, isNull);
+      expect(attempt.failure, 'timeout');
+      expect(
+        attempt.elapsed,
+        greaterThanOrEqualTo(const Duration(milliseconds: 10)),
+      );
+    });
+
+    test('attempt reports the error and keeps the mood on success', () async {
+      final failing = OnDeviceMoodClassifier(
+        decoder: FakeDecoder(
+          error: const AudioDecodeException('unreadable', 'nope'),
+        ),
+        engine: FakeEngine(),
+        loadModel: () async => _model,
+      );
+      final working = OnDeviceMoodClassifier(
+        decoder: FakeDecoder(),
+        engine: FakeEngine(),
+        loadModel: () async => _model,
+      );
+
+      expect((await failing.attempt('/a')).failure, 'decode: unreadable');
+      final ok = await working.attempt('/a');
+      expect(ok.mood?.primaryMood, 'sad');
+      expect(ok.failure, isNull);
+    });
+
+    test('attempt reports other errors without their text', () async {
+      final classifier = OnDeviceMoodClassifier(
+        decoder: FakeDecoder(),
+        engine: FakeEngine(error: Exception('/private/var/My Song.mp3')),
+        loadModel: () async => _model,
+      );
+
+      final attempt = await classifier.attempt('/private/var/My Song.mp3');
+
+      expect(attempt.failure, 'classification_failed');
     });
   });
 }

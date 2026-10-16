@@ -158,13 +158,16 @@ class _MoodHeroCardState extends State<MoodHeroCard>
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-
-            // Confidence ring — mounts and self-animates when revealed
-            FadeTransition(
-              opacity: _ringOpacity,
-              child: ConfidenceRing(value: confidence, color: colors.text),
-            ),
+            // Confidence ring — mounts and self-animates when revealed. Hidden
+            // for on-device moods until their probabilities are recalibrated
+            // (ROADMAP OD-5): the backend's confidence belongs to its label.
+            if (widget.analysis.mood.source == MoodSource.backend) ...[
+              const SizedBox(height: 24),
+              FadeTransition(
+                opacity: _ringOpacity,
+                child: ConfidenceRing(value: confidence, color: colors.text),
+              ),
+            ],
           ],
         ),
       ),

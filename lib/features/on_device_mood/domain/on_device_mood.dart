@@ -43,3 +43,41 @@ class OnDeviceMood extends Equatable {
   @override
   List<Object?> get props => [primaryMood, probabilities, tags];
 }
+
+/// The outcome of one on-device classification, kept for comparison with
+/// the backend (ROADMAP OD-4) whether or not it succeeded.
+class OnDeviceMoodAttempt extends Equatable {
+  const OnDeviceMoodAttempt({required this.elapsed, this.mood, this.failure});
+
+  /// Null when the attempt failed or was skipped.
+  final OnDeviceMood? mood;
+
+  /// Time spent classifying (decode + model), excluding any download.
+  final Duration elapsed;
+
+  /// Why there's no [mood], as a fixed category so no file path or URL is
+  /// recorded:
+  ///
+  /// * `disabled`: the remote kill switch is off.
+  /// * `unsupported`: no native decoder on this platform (Android).
+  /// * `download: <reason>`: fetching a catalog track failed, e.g.
+  ///   `download: receiveTimeout`.
+  /// * `busy`: a timed-out attempt is still running on the device.
+  /// * `timeout`: classification ran past its deadline.
+  /// * `no_mood`: no mood class scored high enough (silence, test tones).
+  /// * `late`: the backend answered and the grace period ran out first.
+  /// * `decode: <code>`: the native decoder's error code, e.g.
+  ///   `decode: unreadable`.
+  /// * `classification_failed`: anything else (model load or inference).
+  final String? failure;
+
+  @override
+  List<Object?> get props => [mood, elapsed, failure];
+}
+
+/// Fetches a remote track to a local file the native decoder can open.
+abstract interface class AudioDownloader {
+  /// Returns the downloaded file's path. The file must sit alone in a new
+  /// temp directory: callers delete that whole directory when done.
+  Future<String> download(String url);
+}

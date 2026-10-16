@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:moodtune_app/features/analysis/data/data.dart';
 import 'package:moodtune_app/features/analysis/domain/repositories/analysis_repository.dart';
@@ -8,11 +9,15 @@ import 'package:moodtune_app/features/catalog/data/repositories/catalog_reposito
 import 'package:moodtune_app/features/catalog/domain/repositories/catalog_repository.dart';
 import 'package:moodtune_app/features/catalog/domain/usecases/search_catalog.dart';
 import 'package:moodtune_app/features/catalog/presentation/bloc/catalog_bloc.dart';
+import 'package:moodtune_app/features/mood_feedback/mood_feedback.dart';
+import 'package:moodtune_app/features/mood_feedback/presentation/mood_observation_recorder.dart';
 import 'package:moodtune_app/features/narration/data/mood_narration_channel.dart';
 import 'package:moodtune_app/features/narration/presentation/mood_narrator.dart';
 import 'package:moodtune_app/features/on_device_mood/data/audio_decode_channel.dart';
+import 'package:moodtune_app/features/on_device_mood/data/dio_audio_downloader.dart';
 import 'package:moodtune_app/features/on_device_mood/data/yamnet_assets.dart';
 import 'package:moodtune_app/features/on_device_mood/data/yamnet_engine.dart';
+import 'package:moodtune_app/features/on_device_mood/presentation/mood_switchover.dart';
 import 'package:moodtune_app/features/on_device_mood/presentation/on_device_mood_classifier.dart';
 import 'package:moodtune_app/features/spotify/data/data.dart';
 import 'package:moodtune_app/features/spotify/domain/repositories/spotify_repository.dart';
@@ -61,6 +66,32 @@ Future<void> configureDependencies({
         loadModel: loadYamnetMoodModel,
       ),
     )
+    ..registerLazySingleton(
+      () => MoodSwitchover(
+        classifier: getIt(),
+        downloader: DioAudioDownloader(),
+        // Remote kill switch: GET /api/v1/config (ON_DEVICE_MOOD_ENABLED).
+        isEnabled: () async =>
+            (await getIt<AppConfigRepository>().load()).onDeviceMood,
+        // Only iOS registers the native decoder (moodtune/audio_decode).
+        isSupported: defaultTargetPlatform == TargetPlatform.iOS,
+      ),
+    )
+    // Mood observations + "Does this feel right?" feedback (ROADMAP OD-4)
+    ..registerLazySingleton<AppConfigRepository>(
+      () => AppConfigRepositoryImpl(
+        remoteDataSource: AppConfigRemoteDataSource(baseUrl: apiBaseUrl),
+      ),
+    )
+    ..registerLazySingleton<MoodObservationRepository>(
+      () => MoodObservationRepositoryImpl(
+        remoteDataSource: MoodObservationRemoteDataSource(
+          baseUrl: apiBaseUrl,
+          tokenProvider: tokenProvider,
+        ),
+      ),
+    )
+    ..registerLazySingleton(() => MoodObservationRecorder(repository: getIt()))
     // Catalog use cases
     ..registerLazySingleton(() => SearchCatalog(getIt()))
     // Catalog BLoC — factory so each screen gets a fresh instance

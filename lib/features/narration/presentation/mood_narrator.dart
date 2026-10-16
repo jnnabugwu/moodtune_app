@@ -24,6 +24,7 @@ NarrationInput narrationInputFor(UploadMoodResult mood) {
     tone: _tonePhrase(features.brightnessLabel),
     texture: _texturePhrase(features.textureLabel),
     descriptors: mood.descriptors,
+    soundTags: mood.soundTags,
   );
 }
 
@@ -80,9 +81,18 @@ class MoodNarrator {
   /// analysis, which the instructions forbid mentioning.
   static final _ungroundedTopics = RegExp(
     r'\b('
-    'lyrics?|genres?|artists?|singers?|vocals?|vocalists?|'
+    'lyrics?|genres?|jazz|metal|hip[- ]hop|artists?|singers?|'
+    'vocals?|vocalists?|'
     'drums?|drummers?|guitars?|piano|keys|synths?|synthesizers?|bass|'
     'strings|violins?|cellos?|horns?|brass|saxophones?|trumpets?|choirs?|'
+    // Every other instrument a sound tag can name (assets/models/
+    // yamnet_mood.json), plus a few the model could invent.
+    'accordions?|bagpipes?|banjos?|bells?|chimes?|clarinets?|flutes?|'
+    'glockenspiels?|gongs?|harmonicas?|harps?|harpsichords?|mandolins?|'
+    'maracas?|marimbas?|orchestras?|organs?|percussion|pizzicato|'
+    'rattles?|rimshots?|samplers?|singing bowls?|steelpans?|strums?|'
+    'tablas?|tambourines?|trombones?|tubas?|ukuleles?|wood[- ]blocks?|'
+    'woodwinds?|xylophones?|zithers?|'
     'live|recordings?|recorded|studio|albums?|chorus|verses?|bridge|'
     r'confidence|scores?|classif\w*|analy[sz]\w*|apps?|algorithms?'
     r')\b',
@@ -162,12 +172,35 @@ class MoodNarrator {
     if (text.length < _minLength || text.length > _maxLength) return false;
     if (text.split(_whitespace).length > _maxWords) return false;
     if (_links.hasMatch(text)) return false;
-    if (_ungroundedTopics.hasMatch(text)) return false;
+    if (_mentionsUnheard(text, input.soundTags)) return false;
 
     final lower = text.toLowerCase();
-    return [input.mood, ...input.descriptors]
+    return [input.mood, ...input.descriptors, ...input.soundTags]
         .map((word) => word.trim().toLowerCase())
         .where((word) => word.isNotEmpty)
         .any(lower.contains);
   }
+
+  /// True when [text] mentions an instrument, vocals, or another topic the
+  /// facts don't cover. Instrument, vocal and genre words are fine when a
+  /// sound tag backs them: tag "bass guitar" allows "bass" and "guitars".
+  static bool _mentionsUnheard(String text, List<String> soundTags) {
+    final heard = {
+      for (final tag in soundTags.map(_normalise)) ...[
+        tag, // multi-word tags such as "hip hop"
+        for (final word in tag.split(' ')) word,
+      ],
+    };
+    return _ungroundedTopics
+        .allMatches(text)
+        .any((m) => !heard.contains(_normalise(m.group(0)!)));
+  }
+
+  /// Lowercase, hyphens as spaces, and each word's plural "s" dropped.
+  static String _normalise(String phrase) => phrase
+      .toLowerCase()
+      .replaceAll('-', ' ')
+      .split(_whitespace)
+      .map((w) => w.endsWith('s') ? w.substring(0, w.length - 1) : w)
+      .join(' ');
 }

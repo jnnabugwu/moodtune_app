@@ -111,6 +111,7 @@ class _UploadMusicPageState extends State<UploadMusicPage> {
       AudioUploadRequested(
         bytes: Uint8List.fromList(file.bytes!),
         filename: file.name,
+        path: file.path,
         title: _titleCtrl.text.trim(),
         artist: _artistCtrl.text.trim(),
         album: _albumCtrl.text.trim(),

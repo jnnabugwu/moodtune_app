@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moodtune_app/features/narration/presentation/mood_narrator.dart';
 
@@ -186,6 +189,7 @@ void main() {
           'tone',
           'texture',
           'descriptors',
+          'soundTags',
         ]),
       );
     });
@@ -254,6 +258,91 @@ void main() {
       expect(
         MoodNarrator.isGrounded('A danceable track with a fast pulse.', input),
         isTrue,
+      );
+    });
+  });
+
+  group('sound tags', () {
+    NarrationInput withTags(List<String> tags) {
+      final analysis = buildAnalysis(descriptors: const []);
+      return narrationInputFor(
+        analysis.mood.copyWith(soundTags: tags, primaryMood: 'calm'),
+      );
+    }
+
+    test('narrationInputFor passes the sound tags through', () {
+      expect(withTags(const ['vocals', 'piano']).soundTags, [
+        'vocals',
+        'piano',
+      ]);
+    });
+
+    test('allows instruments and vocals a tag backs', () {
+      final input = withTags(const ['vocals', 'acoustic guitar']);
+
+      expect(
+        MoodNarrator.isGrounded(
+          'This track feels serene: soft vocals over gentle guitars.',
+          input,
+        ),
+        isTrue,
+      );
+    });
+
+    test('still rejects instruments no tag backs', () {
+      final input = withTags(const ['vocals']);
+
+      expect(
+        MoodNarrator.isGrounded(
+          'This track feels serene: soft vocals over a quiet piano.',
+          input,
+        ),
+        isFalse,
+      );
+    });
+
+    test('allows a genre only when it is a tag, including two-word ones', () {
+      const text = 'This track feels serene, with a laid-back hip-hop groove.';
+
+      expect(
+        MoodNarrator.isGrounded(text, withTags(const ['hip hop'])),
+        isTrue,
+      );
+      expect(MoodNarrator.isGrounded(text, withTags(const ['jazz'])), isFalse);
+    });
+
+    test('guards every tag the model can produce', () {
+      final config =
+          jsonDecode(File('assets/models/yamnet_mood.json').readAsStringSync())
+              as Map<String, dynamic>;
+      final tags = {
+        for (final c in (config['tags'] as Map)['classes'] as List)
+          (c as Map)['tag'] as String,
+      };
+      expect(tags, isNotEmpty);
+
+      for (final tag in tags) {
+        final text = 'This track feels serene, with a soft $tag behind it.';
+        expect(
+          MoodNarrator.isGrounded(text, withTags(const [])),
+          isFalse,
+          reason: '"$tag" passed without a tag backing it',
+        );
+        expect(
+          MoodNarrator.isGrounded(text, withTags([tag])),
+          isTrue,
+          reason: '"$tag" was rejected although a tag backs it',
+        );
+      }
+    });
+
+    test('rejects genre names when there are no tags', () {
+      expect(
+        MoodNarrator.isGrounded(
+          'This track feels serene, like late-night jazz.',
+          withTags(const []),
+        ),
+        isFalse,
       );
     });
   });

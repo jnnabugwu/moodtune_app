@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:moodtune_app/core/error/exceptions.dart';
 import 'package:moodtune_app/core/logging/talker.dart';
 import 'package:moodtune_app/features/on_device_mood/domain/decoded_audio.dart';
 import 'package:moodtune_app/features/on_device_mood/domain/on_device_mood.dart';
@@ -34,31 +35,51 @@ class OnDeviceMoodClassifier {
   Future<YamnetMoodModel>? _model;
   Future<OnDeviceMood?>? _running;
 
-  Future<OnDeviceMood?> classify(String path) async {
+  Future<OnDeviceMood?> classify(String path) async =>
+      (await attempt(path)).mood;
+
+  /// Like [classify], but also reports how long it took and why it failed.
+  Future<OnDeviceMoodAttempt> attempt(String path) async {
     if (_running != null) {
       talker.warning(
         'On-device mood: previous attempt still running; keeping backend mood',
       );
-      return null;
+      return const OnDeviceMoodAttempt(elapsed: Duration.zero, failure: 'busy');
     }
+    final stopwatch = Stopwatch()..start();
     final run = _running = _classify(path).whenComplete(() {
       _running = null;
     });
     try {
-      return await run.timeout(timeout);
+      final mood = await run.timeout(timeout);
+      return OnDeviceMoodAttempt(
+        mood: mood,
+        elapsed: stopwatch.elapsed,
+        failure: mood == null ? 'no_mood' : null,
+      );
     } on TimeoutException {
       talker.warning(
         'On-device mood timed out after ${timeout.inMilliseconds}ms; '
         'keeping backend mood',
       );
-      return null;
+      return OnDeviceMoodAttempt(
+        elapsed: stopwatch.elapsed,
+        failure: 'timeout',
+      );
     } on Object catch (error, stackTrace) {
       talker.warning(
         'On-device mood failed ($error); keeping backend mood',
         error,
         stackTrace,
       );
-      return null;
+      // The error text can hold the file's path, so only a category is
+      // kept for recording.
+      return OnDeviceMoodAttempt(
+        elapsed: stopwatch.elapsed,
+        failure: error is AudioDecodeException
+            ? 'decode: ${error.code}'
+            : 'classification_failed',
+      );
     }
   }
 

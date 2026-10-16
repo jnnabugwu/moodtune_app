@@ -86,7 +86,8 @@ enum MoodNarrationChannel {
     feels like and why. Speak about the song itself, starting with "This track". \
     Name the mood word you are given and explain it using only the sound facts. \
     Never mention an app, an analysis, a classification, confidence or scores. \
-    Never mention lyrics, vocals, genre, the artist, or anything not in the facts. \
+    Never mention lyrics, the artist, or anything not in the facts. Mention \
+    instruments, vocals or a genre only if the facts say you can hear them. \
     Always answer in English.
 
     Example facts: The mood is upbeat, which means happy and energetic. The song \
@@ -103,7 +104,7 @@ enum MoodNarrationChannel {
     You explain in plain language why a song has a certain mood. \
     Write one or two sentences, under 60 words, about the song itself. \
     Use only the facts provided and name the mood. \
-    Do not mention lyrics, genre, the artist, or anything not in the facts.
+    Do not mention lyrics, the artist, or anything not in the facts.
     """
 
   static func register(with messenger: FlutterBinaryMessenger) {
@@ -235,10 +236,25 @@ enum MoodNarrationChannel {
   static func prompt(from args: [String: Any]) -> String {
     func text(_ key: String) -> String { args[key] as? String ?? "unknown" }
     let tempo = args["tempo"] as? Int ?? 0
-    let descriptors = (args["descriptors"] as? [String] ?? []).joined(separator: ", ")
-    return "The mood is \(text("mood")), which means \(text("moodSummary")). "
+    let descriptors = args["descriptors"] as? [String] ?? []
+    // What the on-device audio model heard, e.g. ["vocals", "piano"].
+    // On-device results have these instead of descriptors.
+    let sounds = args["soundTags"] as? [String] ?? []
+    var prompt = "The mood is \(text("mood")), which means \(text("moodSummary")). "
       + "The song is \(text("tempoFeel")), at \(tempo) BPM. "
-      + "It has \(text("energy")), \(text("tone")) and \(text("texture")). "
-      + "It can be described as \(descriptors)."
+      + "It has \(text("energy")), \(text("tone")) and \(text("texture"))."
+    if !descriptors.isEmpty {
+      prompt += " It can be described as \(descriptors.joined(separator: ", "))."
+    }
+    if !sounds.isEmpty {
+      prompt += " You can hear \(spokenList(sounds))."
+    }
+    return prompt
+  }
+
+  /// ["vocals", "piano", "drums"] → "vocals, piano and drums".
+  static func spokenList(_ items: [String]) -> String {
+    guard items.count > 1 else { return items.first ?? "" }
+    return items.dropLast().joined(separator: ", ") + " and " + items.last!
   }
 }
