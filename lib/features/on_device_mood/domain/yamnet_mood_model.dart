@@ -13,6 +13,7 @@ class YamnetMoodModel {
     required this.moodClasses,
     required this.logScoreMeans,
     required this.epsilon,
+    required this.minScore,
     required this.tagClasses,
     required this.tagThreshold,
     required this.maxTags,
@@ -24,6 +25,7 @@ class YamnetMoodModel {
         'classes': final List<Object?> moods,
         'logScoreMeans': final Map<String, Object?> means,
         'epsilon': final num epsilon,
+        'minScore': final num minScore,
       },
       'tags': {
         'classes': final List<Object?> tags,
@@ -31,14 +33,20 @@ class YamnetMoodModel {
         'max': final int maxTags,
       },
     }) {
+      final moodClasses = [
+        for (final c in moods)
+          if (c case {'index': final int i, 'label': final String label})
+            (index: i, label: label)
+          else
+            throw FormatException('Bad mood class: $c'),
+      ];
+      for (final c in moodClasses) {
+        if (!means.containsKey(c.label)) {
+          throw FormatException('No log-score mean for ${c.label}');
+        }
+      }
       return YamnetMoodModel(
-        moodClasses: [
-          for (final c in moods)
-            if (c case {'index': final int i, 'label': final String label})
-              (index: i, label: label)
-            else
-              throw FormatException('Bad mood class: $c'),
-        ],
+        moodClasses: moodClasses,
         logScoreMeans: means.map(
           (label, value) => switch (value) {
             final num mean => MapEntry(label, mean.toDouble()),
@@ -46,6 +54,7 @@ class YamnetMoodModel {
           },
         ),
         epsilon: epsilon.toDouble(),
+        minScore: minScore.toDouble(),
         tagClasses: [
           for (final c in tags)
             if (c case {'index': final int i, 'tag': final String tag})
@@ -71,6 +80,11 @@ class YamnetMoodModel {
   /// Added before taking logs, so a zero score can't produce -infinity.
   final double epsilon;
 
+  /// Lowest mean score some mood class must reach for [interpret] to call
+  /// a mood. Below it the softmax only sees [epsilon], which would label
+  /// silence or a test tone "angry" (the lowest reference mean).
+  final double minScore;
+
   /// Allowed instrument, vocal and genre classes and their display tag.
   /// Several classes can share a tag (all vocal classes become "vocals").
   final List<({int index, String tag})> tagClasses;
@@ -83,12 +97,17 @@ class YamnetMoodModel {
     moodClasses: moodClasses,
     logScoreMeans: logScoreMeans,
     epsilon: epsilon,
+    minScore: minScore,
     tagClasses: tagClasses,
     tagThreshold: threshold,
     maxTags: maxTags,
   );
 
-  OnDeviceMood interpret(ClassScores scores) {
+  /// The mood and tags, or null when no mood class reaches [minScore].
+  OnDeviceMood? interpret(ClassScores scores) {
+    if (!moodClasses.any((c) => scores.mean[c.index] >= minScore)) {
+      return null;
+    }
     final probabilities = _moodProbabilities(scores);
     var primary = moodClasses.first.label;
     for (final MapEntry(:key, :value) in probabilities.entries) {
@@ -97,7 +116,7 @@ class YamnetMoodModel {
     return OnDeviceMood(
       primaryMood: primary,
       probabilities: probabilities,
-      tags: _tags(scores),
+      tags: tags(scores),
     );
   }
 
@@ -123,7 +142,7 @@ class YamnetMoodModel {
   /// Each tag scores its strongest class's peak; the best [maxTags] that
   /// clear [tagThreshold] win. Ties keep allowlist order, as Python's stable
   /// sort does.
-  List<String> _tags(ClassScores scores) {
+  List<String> tags(ClassScores scores) {
     final best = <String, double>{};
     for (final c in tagClasses) {
       final score = scores.peak[c.index];

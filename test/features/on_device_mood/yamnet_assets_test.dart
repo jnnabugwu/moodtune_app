@@ -1,7 +1,26 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moodtune_app/features/on_device_mood/data/yamnet_assets.dart';
+
+/// Serves an edited copy of the shipped mood config.
+class _ConfigBundle extends CachingAssetBundle {
+  _ConfigBundle(void Function(Map<String, Object?> config) edit)
+    : _config =
+          jsonDecode(File(yamnetMoodConfigAsset).readAsStringSync())
+              as Map<String, Object?> {
+    edit(_config);
+  }
+
+  final Map<String, Object?> _config;
+
+  @override
+  Future<ByteData> load(String key) async =>
+      ByteData.sublistView(utf8.encode(jsonEncode(_config)));
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -17,6 +36,28 @@ void main() {
         'angry',
         'sad',
       });
+    });
+
+    test('rejects a config of another version', () {
+      expect(
+        loadYamnetMoodModel(bundle: _ConfigBundle((c) => c['version'] = 2)),
+        throwsFormatException,
+      );
+    });
+
+    test("rejects a config exported for other framing than the engine's", () {
+      expect(
+        loadYamnetMoodModel(
+          bundle: _ConfigBundle(
+            (c) => (c['input']! as Map<String, Object?>)['hopSamples'] = 8000,
+          ),
+        ),
+        throwsFormatException,
+      );
+      expect(
+        loadYamnetMoodModel(bundle: _ConfigBundle((c) => c.remove('input'))),
+        throwsFormatException,
+      );
     });
 
     test('the model file is bundled', () async {

@@ -32,10 +32,15 @@ void main() {
     for (final track in tracks) {
       final expected = track['expected']! as Map<String, Object?>;
 
-      test('${track['track']} → ${expected['primaryMood']}', () {
+      test('${track['track']} → ${expected['primaryMood'] ?? 'no mood'}', () {
         final mood = model.interpret(scoresFrom(track));
 
-        expect(mood.primaryMood, expected['primaryMood']);
+        if (expected['primaryMood'] == null) {
+          expect(mood, isNull);
+          expect(model.tags(scoresFrom(track)), expected['tags']);
+          return;
+        }
+        expect(mood!.primaryMood, expected['primaryMood']);
         expect(mood.tags, expected['tags']);
         final probabilities = expected['probabilities']! as Map;
         for (final MapEntry(:key, :value) in probabilities.entries) {
@@ -48,18 +53,40 @@ void main() {
       });
 
       test('${track['track']} tags with a cutoff', () {
-        final mood = model
+        final tags = model
             .withTagThreshold(golden['threshold']! as double)
-            .interpret(scoresFrom(track));
+            .tags(scoresFrom(track));
 
-        expect(mood.tags, track['expectedTagsAtThreshold']);
+        expect(tags, track['expectedTagsAtThreshold']);
       });
     }
+
+    test('the cutoff both keeps and drops tags', () {
+      final cut = [
+        for (final t in tracks)
+          (
+            all: (t['expected']! as Map<String, Object?>)['tags']! as List,
+            kept: t['expectedTagsAtThreshold']! as List,
+          ),
+      ];
+      expect(cut.any((t) => t.kept.isNotEmpty), isTrue);
+      expect(cut.any((t) => t.kept.length < t.all.length), isTrue);
+    });
+
+    test('includes a track with no mood', () {
+      expect(
+        tracks.any(
+          (t) =>
+              (t['expected']! as Map<String, Object?>)['primaryMood'] == null,
+        ),
+        isTrue,
+      );
+    });
 
     test('covers every mood label', () {
       final labels = {
         for (final t in tracks)
-          (t['expected']! as Map<String, Object?>)['primaryMood'],
+          ?(t['expected']! as Map<String, Object?>)['primaryMood'],
       };
       expect(labels, {'happy', 'energetic', 'calm', 'angry', 'sad'});
     });
@@ -74,6 +101,7 @@ void main() {
           ],
           logScoreMeans: const {'happy': 0, 'sad': 0},
           epsilon: 1e-9,
+          minScore: 1e-3,
           tagClasses: const [
             (index: 2, tag: 'vocals'),
             (index: 3, tag: 'vocals'),
@@ -94,7 +122,7 @@ void main() {
         scores([0.2, 0.6, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]),
       );
 
-      expect(mood.primaryMood, 'sad');
+      expect(mood!.primaryMood, 'sad');
       expect(mood.probabilities['sad'], closeTo(0.75, 1e-6));
       expect(mood.probabilities['happy'], closeTo(0.25, 1e-6));
     });
@@ -104,7 +132,7 @@ void main() {
         scores([0.5, 0.5, 0.1, 0.9, 0.5, 0.3], [0.5, 0.5, 0.1, 0.9, 0.5, 0.3]),
       );
 
-      expect(mood.tags, ['vocals', 'piano', 'drums']);
+      expect(mood!.tags, ['vocals', 'piano', 'drums']);
     });
 
     test('drops tags below the threshold', () {
@@ -112,7 +140,7 @@ void main() {
         scores([0.5, 0.5, 0, 0, 0.5, 0.3], [0.5, 0.5, 0, 0, 0.5, 0.3]),
       );
 
-      expect(mood.tags, ['piano']);
+      expect(mood!.tags, ['piano']);
     });
 
     test('breaks score ties by allowlist order', () {
@@ -120,14 +148,30 @@ void main() {
         scores([0.5, 0.5, 0, 0, 0.4, 0.4], [0.5, 0.5, 0, 0, 0.4, 0.4]),
       );
 
-      expect(mood.tags, ['piano', 'drums']);
+      expect(mood!.tags, ['piano', 'drums']);
     });
 
-    test('survives zero scores', () {
+    test('calls no mood when every mood score is below minScore', () {
+      final model = tiny();
+
+      expect(
+        model.interpret(scores(List.filled(6, 0), List.filled(6, 0))),
+        isNull,
+      );
+      expect(
+        model.interpret(
+          scores([0.0009, 0.0009, 0, 0, 0, 0], List.filled(6, 0)),
+        ),
+        isNull,
+      );
+    });
+
+    test('a single mood score at minScore is enough', () {
       final mood = tiny().interpret(
-        scores(List.filled(6, 0), List.filled(6, 0)),
+        scores([0.001, 0, 0, 0, 0, 0], List.filled(6, 0)),
       );
 
+      expect(mood!.primaryMood, 'happy');
       expect(mood.probabilities.values.every((p) => p.isFinite), isTrue);
     });
 
@@ -151,8 +195,33 @@ void main() {
       );
     });
 
+    test("rejects a config missing a mood label's log-score mean", () {
+      expect(
+        () => YamnetMoodModel.fromJson(const {
+          'mood': {
+            'classes': [
+              {'index': 0, 'label': 'happy'},
+              {'index': 1, 'label': 'sad'},
+            ],
+            'logScoreMeans': {'happy': -7.0},
+            'epsilon': 1e-9,
+            'minScore': 5e-4,
+          },
+          'tags': {'classes': <Object?>[], 'threshold': null, 'max': 3},
+        }),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('sad'),
+          ),
+        ),
+      );
+    });
+
     test('loads the shipped config', () {
       expect(model.moodClasses, hasLength(5));
+      expect(model.minScore, 5e-4);
       expect(model.tagClasses, hasLength(61));
       expect(model.tagThreshold, isNull);
       expect(model.maxTags, 3);

@@ -17,8 +17,9 @@ import 'package:moodtune_app/features/on_device_mood/domain/on_device_mood.dart'
 class YamnetEngine implements AudioClassifierEngine {
   YamnetEngine({this.assetPath = 'assets/models/yamnet.tflite'});
 
-  /// YAMNet's fixed input size and the hop it uses on long clips, as in
-  /// `spikes/clap/yamnet.py`.
+  /// YAMNet's input rate, fixed input size and the hop it uses on long
+  /// clips, as in `spikes/clap/yamnet.py`.
+  static const sampleRate = 16000;
   static const frameSamples = 15600;
   static const hopSamples = 7680;
 
@@ -28,6 +29,15 @@ class YamnetEngine implements AudioClassifierEngine {
 
   @override
   Future<ClassScores> score(DecodedAudio audio) {
+    if (audio.sampleRate != sampleRate) {
+      return Future.error(
+        ArgumentError.value(
+          audio.sampleRate,
+          'audio.sampleRate',
+          'YAMNet needs $sampleRate Hz',
+        ),
+      );
+    }
     final run = _queue.then((_) => _score(audio));
     _queue = run.then<void>((_) {}, onError: (_) {});
     return run;

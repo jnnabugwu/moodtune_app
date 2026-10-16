@@ -31,15 +31,19 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   final expected = jsonDecode(yamnetSignalExpectedJson) as Map<String, Object?>;
+  final want = expected['expected']! as Map<String, Object?>;
+  late Directory dir;
   late String path;
 
   setUpAll(() async {
-    final dir = await Directory.systemTemp.createTemp('yamnet');
+    dir = await Directory.systemTemp.createTemp('yamnet');
     path = '${dir.path}/signal.wav';
     await File(
       path,
     ).writeAsBytes(_wav(_signal(expected), _sampleRate(expected)));
   });
+
+  tearDownAll(() => dir.delete(recursive: true));
 
   testWidgets('decodes the signal into three 10 s windows at 16 kHz', (
     tester,
@@ -80,11 +84,13 @@ void main() {
         reason: 'peak ${c['class']}',
       );
     }
+    expect((await loadYamnetMoodModel()).tags(scores), want['tags']);
   });
 
-  testWidgets('the classifier reproduces the Python mood and tags', (
-    tester,
-  ) async {
+  // A chord isn't music YAMNet hears a mood in: every mood class scores 0,
+  // so this checks the "no mood" fallback. Mood-class indices and labels
+  // are checked on real tracks by test/.../yamnet_mood_model_test.dart.
+  testWidgets('the classifier reproduces the Python mood', (tester) async {
     final classifier = OnDeviceMoodClassifier(
       decoder: AudioDecodeChannel(),
       engine: YamnetEngine(),
@@ -93,10 +99,7 @@ void main() {
 
     final mood = await classifier.classify(path);
 
-    final want = expected['expected']! as Map<String, Object?>;
-    expect(mood, isNotNull);
-    expect(mood!.primaryMood, want['primaryMood']);
-    expect(mood.tags, want['tags']);
+    expect(mood?.primaryMood, want['primaryMood']);
   });
 
   testWidgets('an unreadable file falls back to null', (tester) async {
