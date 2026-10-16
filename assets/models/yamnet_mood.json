@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "source": "moodtune/spikes/clap/04_export_app_assets.py",
+  "source": "spikes/clap/04_export_app_assets.py",
   "input": {
     "sampleRate": 16000,
     "frameSamples": 15600,
