@@ -10,6 +10,10 @@ import 'package:moodtune_app/features/catalog/domain/usecases/search_catalog.dar
 import 'package:moodtune_app/features/catalog/presentation/bloc/catalog_bloc.dart';
 import 'package:moodtune_app/features/narration/data/mood_narration_channel.dart';
 import 'package:moodtune_app/features/narration/presentation/mood_narrator.dart';
+import 'package:moodtune_app/features/on_device_mood/data/audio_decode_channel.dart';
+import 'package:moodtune_app/features/on_device_mood/data/yamnet_assets.dart';
+import 'package:moodtune_app/features/on_device_mood/data/yamnet_engine.dart';
+import 'package:moodtune_app/features/on_device_mood/presentation/on_device_mood_classifier.dart';
 import 'package:moodtune_app/features/spotify/data/data.dart';
 import 'package:moodtune_app/features/spotify/domain/repositories/spotify_repository.dart';
 import 'package:moodtune_app/features/spotify/domain/usecases/usecases.dart';
@@ -50,6 +54,13 @@ Future<void> configureDependencies({
       ),
     )
     ..registerLazySingleton(() => MoodNarrator(engine: MoodNarrationChannel()))
+    ..registerLazySingleton(
+      () => OnDeviceMoodClassifier(
+        decoder: AudioDecodeChannel(),
+        engine: YamnetEngine(),
+        loadModel: loadYamnetMoodModel,
+      ),
+    )
     // Catalog use cases
     ..registerLazySingleton(() => SearchCatalog(getIt()))
     // Catalog BLoC — factory so each screen gets a fresh instance

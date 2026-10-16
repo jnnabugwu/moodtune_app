@@ -17,6 +17,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1
+  flutter_litert: ^3.9.3
   flutter_localizations:
     sdk: flutter
   get_it: ^7.6.4
@@ -37,6 +38,8 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.4
   flutter_test:
     sdk: flutter
+  integration_test:
+    sdk: flutter
   mocktail: ^1.0.4
   sentry_dart_plugin: ^3.2.1
   very_good_analysis: ^11.0.0
@@ -47,6 +50,7 @@ flutter:
 
   assets:
     - assets/icons/
+    - assets/models/
 
 sentry:
   upload_debug_symbols: true

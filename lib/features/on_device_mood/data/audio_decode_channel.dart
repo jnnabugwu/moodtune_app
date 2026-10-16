@@ -29,15 +29,12 @@ class AudioDecodeChannel implements AudioWindowDecoder {
     _checkWindowSpec();
     final Map<String, Object?>? reply;
     try {
-      reply = await _channel.invokeMapMethod<String, Object?>(
-        'decodeWindows',
-        {
-          'path': path,
-          'positions': positions,
-          'windowSeconds': windowSeconds,
-          'sampleRate': sampleRate,
-        },
-      );
+      reply = await _channel.invokeMapMethod<String, Object?>('decodeWindows', {
+        'path': path,
+        'positions': positions,
+        'windowSeconds': windowSeconds,
+        'sampleRate': sampleRate,
+      });
     } on MissingPluginException {
       throw const AudioDecodeException(
         'unavailable',

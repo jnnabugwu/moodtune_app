@@ -5,6 +5,7 @@ import 'package:bloc/bloc.dart';
 import 'package:flutter/widgets.dart';
 import 'package:moodtune_app/core/logging/talker.dart';
 import 'package:moodtune_app/di/injector.dart';
+import 'package:moodtune_app/features/on_device_mood/data/yamnet_assets.dart';
 import 'package:moodtune_app/features/spotify/data/repositories/spotify_repository_impl.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -36,6 +37,7 @@ Future<void> bootstrap(FutureOr<Widget> Function() builder) async {
   };
 
   Bloc.observer = const AppBlocObserver();
+  registerYamnetLicense();
 
   const apiBaseEnv = String.fromEnvironment(
     'API_BASE_URL',

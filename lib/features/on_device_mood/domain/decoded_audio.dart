@@ -45,7 +45,6 @@ class DecodedAudio extends Equatable {
 ///
 /// Throws `AudioDecodeException` on any failure; callers fall back to the
 /// backend's analysis.
-// ignore: one_member_abstracts
 abstract interface class AudioWindowDecoder {
   Future<DecodedAudio> decodeWindows(String path);
 }
