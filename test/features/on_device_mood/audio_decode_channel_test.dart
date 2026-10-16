@@ -30,9 +30,8 @@ void main() {
     'channelCount': 2,
   };
 
-  Matcher throwsDecodeError(String code) => throwsA(
-    isA<AudioDecodeException>().having((e) => e.code, 'code', code),
-  );
+  Matcher throwsDecodeError(String code) =>
+      throwsA(isA<AudioDecodeException>().having((e) => e.code, 'code', code));
 
   group('AudioDecodeChannel', () {
     test('parses the native reply into DecodedAudio', () async {
