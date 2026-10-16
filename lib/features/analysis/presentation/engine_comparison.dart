@@ -18,15 +18,22 @@ class EngineComparisonPreference {
   /// Current value; listen to rebuild when it changes.
   final ValueNotifier<bool> enabled = ValueNotifier(false);
 
+  /// Bumped by [setEnabled], so a load that started before a tap doesn't
+  /// overwrite it when the stored value arrives.
+  int _changes = 0;
+
   Future<void> load() async {
+    final changesAtStart = _changes;
     try {
-      enabled.value = (await _prefs()).getBool(_key) ?? false;
+      final stored = (await _prefs()).getBool(_key) ?? false;
+      if (_changes == changesAtStart) enabled.value = stored;
     } on Object catch (e) {
       talker.warning('Engine comparison setting unavailable: $e');
     }
   }
 
   Future<void> setEnabled({required bool value}) async {
+    _changes++;
     enabled.value = value;
     try {
       await (await _prefs()).setBool(_key, value);

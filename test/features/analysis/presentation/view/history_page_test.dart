@@ -343,7 +343,7 @@ void main() {
             findsOneWidget,
           );
           expect(
-            find.text('On-device SERENE · Backend UPBEAT · 👍'),
+            find.text('On-device SERENE · Backend UPBEAT · 👍 on-device'),
             findsOneWidget,
           );
           expect(preference.enabled.value, isTrue);

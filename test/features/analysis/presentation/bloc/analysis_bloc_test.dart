@@ -108,7 +108,11 @@ void main() {
           bloc.add(const AnalysisHistoryRequested(limit: 10, offset: 5)),
       expect: () => [
         const AnalysisState(historyLoading: true, historyMoodFilter: 'happy'),
-        AnalysisState(history: tHistory, filteredHistory: tHistory),
+        AnalysisState(
+          history: tHistory,
+          filteredHistory: tHistory,
+          historyLoaded: true,
+        ),
       ],
     );
 
@@ -414,7 +418,7 @@ void main() {
         const AnalysisState(),
         isNot(const AnalysisState(catalogError: 'x')),
       );
-      expect(const AnalysisState().props, hasLength(17));
+      expect(const AnalysisState().props, hasLength(18));
     });
   });
 
@@ -572,7 +576,33 @@ void main() {
         ).thenAnswer((_) async => Right(tHistory));
       },
       build: buildBloc,
-      seed: () => AnalysisState(history: tHistory),
+      seed: () => AnalysisState(history: tHistory, historyLoaded: true),
+      act: (bloc) =>
+          bloc.add(const AudioUploadRequested(bytes: [1], filename: 'a.mp3')),
+      wait: const Duration(milliseconds: 10),
+      verify: (_) => verify(
+        () => repository.getHistory(
+          limit: any(named: 'limit'),
+          offset: any(named: 'offset'),
+        ),
+      ).called(1),
+    );
+
+    blocTest<AnalysisBloc, AnalysisState>(
+      'reloads history that loaded empty, so the first row shows up',
+      setUp: () {
+        when(
+          () => repository.saveResultToHistory(any()),
+        ).thenAnswer((_) async => const Right(true));
+        when(
+          () => repository.getHistory(
+            limit: any(named: 'limit'),
+            offset: any(named: 'offset'),
+          ),
+        ).thenAnswer((_) async => const Right([]));
+      },
+      build: buildBloc,
+      seed: () => const AnalysisState(historyLoaded: true),
       act: (bloc) =>
           bloc.add(const AudioUploadRequested(bytes: [1], filename: 'a.mp3')),
       wait: const Duration(milliseconds: 10),
@@ -613,12 +643,17 @@ void main() {
           'uploadStatus',
           UploadStatus.uploading,
         ),
-        isA<AnalysisState>().having(
-          (s) => s.uploadStatus,
-          'uploadStatus',
-          UploadStatus.success,
-        ),
+        isA<AnalysisState>()
+            .having((s) => s.uploadStatus, 'uploadStatus', UploadStatus.success)
+            .having((s) => s.currentUploadAnalysis, 'result', tUpload)
+            .having((s) => s.uploadError, 'uploadError', isNull),
       ],
+      verify: (bloc) {
+        verify(() => repository.saveResultToHistory(any())).called(1);
+        // Nothing is emitted after the failed save.
+        expect(bloc.state.currentUploadAnalysis, tUpload);
+        expect(bloc.state.uploadError, isNull);
+      },
     );
   });
 

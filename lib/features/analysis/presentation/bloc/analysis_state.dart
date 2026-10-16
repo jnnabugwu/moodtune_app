@@ -17,6 +17,7 @@ class AnalysisState extends Equatable {
     this.currentUploadAnalysis,
     this.error,
     this.historyLoading = false,
+    this.historyLoaded = false,
     this.historyError,
     this.uploadStatus = UploadStatus.initial,
     this.uploadError,
@@ -44,6 +45,9 @@ class AnalysisState extends Equatable {
   final AudioUploadAnalysis? currentUploadAnalysis;
   final String? error;
   final bool historyLoading;
+
+  /// True once history has loaded successfully, even if it came back empty.
+  final bool historyLoaded;
   final String? historyError;
   final UploadStatus uploadStatus;
   final String? uploadError;
@@ -72,6 +76,7 @@ class AnalysisState extends Equatable {
     AudioUploadAnalysis? currentUploadAnalysis,
     String? error,
     bool? historyLoading,
+    bool? historyLoaded,
     String? historyError,
     UploadStatus? uploadStatus,
     String? uploadError,
@@ -94,6 +99,7 @@ class AnalysisState extends Equatable {
           currentUploadAnalysis ?? this.currentUploadAnalysis,
       error: error,
       historyLoading: historyLoading ?? this.historyLoading,
+      historyLoaded: historyLoaded ?? this.historyLoaded,
       historyError: historyError,
       uploadStatus: uploadStatus ?? this.uploadStatus,
       uploadError: uploadError,
@@ -121,6 +127,7 @@ class AnalysisState extends Equatable {
     currentUploadAnalysis,
     error,
     historyLoading,
+    historyLoaded,
     historyError,
     uploadStatus,
     uploadError,

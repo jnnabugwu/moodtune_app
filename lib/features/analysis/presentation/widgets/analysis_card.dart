@@ -66,9 +66,10 @@ class AnalysisCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 if (confidencePct != null) _Tag(confidencePct),
+                // Keeps the type tag on the right with or without confidence.
+                const Spacer(),
                 _Tag(typeLabel),
               ],
             ),

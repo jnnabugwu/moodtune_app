@@ -154,10 +154,37 @@ void main() {
         );
 
         expect(
-          find.text('On-device SERENE · Backend UPBEAT · 👎'),
+          find.text('On-device SERENE · Backend UPBEAT · 👎 on-device'),
           findsOneWidget,
         );
         expect(_markLabelled('Engines disagree'), findsOneWidget);
+      });
+
+      testWidgets('names the picked mood and the backend when it was shown', (
+        tester,
+      ) async {
+        await tester.pumpWidgetInShell(
+          HistoryRowItem(
+            item: buildHistoryEntry(
+              comparison: const EngineComparison(
+                backendMood: 'happy',
+                onDeviceMood: 'calm',
+                displayedSource: MoodSource.backend,
+                agrees: false,
+                userMood: 'reflective',
+              ),
+            ),
+            onTap: () {},
+            showComparison: true,
+          ),
+        );
+
+        expect(
+          find.text(
+            'On-device SERENE · Backend UPBEAT · 👎 backend, picked REFLECTIVE',
+          ),
+          findsOneWidget,
+        );
       });
 
       testWidgets('marks a match at the bucket level', (tester) async {

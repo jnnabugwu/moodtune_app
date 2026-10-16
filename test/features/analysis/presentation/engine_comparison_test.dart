@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moodtune_app/app/theme/mood_theme.dart';
 import 'package:moodtune_app/features/analysis/data/models/models.dart';
@@ -94,6 +96,28 @@ void main() {
       await reloaded.load();
 
       expect(reloaded.enabled.value, isTrue);
+    });
+  });
+
+  group('EngineComparisonPreference load race', () {
+    test('a tap during a pending load wins over the stored value', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      // Like the first SharedPreferences.getInstance(): one pending future
+      // that both the load and the tap wait on. The load resumes first and
+      // reads the old stored value (false) before the tap's write lands.
+      final firstRead = Completer<SharedPreferences>();
+      final preference = EngineComparisonPreference(
+        prefs: () => firstRead.future,
+      );
+
+      final loading = preference.load();
+      final tapping = preference.setEnabled(value: true);
+      firstRead.complete(prefs);
+      await Future.wait([loading, tapping]);
+
+      expect(preference.enabled.value, isTrue);
+      expect(prefs.getBool('history.showEngineComparison'), isTrue);
     });
   });
 

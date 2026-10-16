@@ -87,6 +87,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
       (analyses) => emit(
         state.copyWith(
           historyLoading: false,
+          historyLoaded: true,
           history: analyses,
           // Reset filtered view to full list on fresh load
           filteredHistory: analyses,
@@ -322,8 +323,8 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
   );
 
   /// Saves [record] to history without holding up the results screen.
-  /// Guests are skipped by the repository. Reloads history if it's already
-  /// been loaded, so the new row shows up.
+  /// Guests are skipped by the repository. Reloads history if it has been
+  /// loaded (even empty), so the new row shows up.
   void _saveToHistory(ResultHistoryRecord record) {
     unawaited(
       _repository
@@ -334,7 +335,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
                 'Result not saved to history: ${failure.message}',
               ),
               (saved) {
-                if (saved && state.history.isNotEmpty && !isClosed) {
+                if (saved && state.historyLoaded && !isClosed) {
                   add(const AnalysisHistoryRequested());
                 }
               },

@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:moodtune_app/app/theme/mood_theme.dart';
-import 'package:moodtune_app/features/analysis/domain/entities/history_entry.dart';
+import 'package:moodtune_app/features/analysis/domain/entities/entities.dart';
 
 /// A tappable row that represents a single history entry (playlist or song).
 ///
@@ -117,7 +117,8 @@ class HistoryRowItem extends StatelessWidget {
   }
 }
 
-/// "On-device SERENE · Backend UPBEAT", a match mark, and the user's answer.
+/// "On-device SERENE · Backend UPBEAT", a match mark, and the user's answer
+/// with the engine it's about: "· 👎 on-device, picked REFLECTIVE".
 class _ComparisonLine extends StatelessWidget {
   const _ComparisonLine(this.comparison);
 
@@ -128,9 +129,18 @@ class _ComparisonLine extends StatelessWidget {
     final onDevice = comparison.onDeviceMood;
     final backend = MoodTheme.fromString(comparison.backendMood);
     final match = onDevice != null && MoodTheme.fromString(onDevice) == backend;
+    // Name the engine the answer is about (the one that was shown) and, on
+    // a thumbs-down, the mood the user picked instead.
+    final shown = comparison.displayedSource == MoodSource.onDevice
+        ? 'on-device'
+        : 'backend';
+    final userMood = comparison.userMood;
+    final picked = userMood == null
+        ? ''
+        : ', picked ${MoodTheme.shortLabel(MoodTheme.fromString(userMood))}';
     final answer = switch (comparison.agrees) {
-      true => ' · 👍',
-      false => ' · 👎',
+      true => ' · 👍 $shown',
+      false => ' · 👎 $shown$picked',
       null => '',
     };
     final text = onDevice == null
@@ -162,7 +172,7 @@ class _ComparisonLine extends StatelessWidget {
                 fontSize: 11,
                 color: CupertinoColors.secondaryLabel,
               ),
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ),

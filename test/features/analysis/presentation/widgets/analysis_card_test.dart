@@ -78,5 +78,20 @@ void main() {
 
       expect(taps, 1);
     });
+
+    testWidgets('keeps the type tag on the right without confidence', (
+      tester,
+    ) async {
+      await tester.pumpWidgetInShell(
+        AnalysisCard(entry: buildHistoryEntry(confidence: null)),
+      );
+      final withoutConfidence = tester.getTopRight(find.text('Playlist')).dx;
+
+      await tester.pumpWidgetInShell(AnalysisCard(entry: buildHistoryEntry()));
+      final withConfidence = tester.getTopRight(find.text('Playlist')).dx;
+
+      expect(find.textContaining('confidence'), findsOneWidget);
+      expect(withoutConfidence, withConfidence);
+    });
   });
 }
