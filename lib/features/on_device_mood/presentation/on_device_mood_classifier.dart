@@ -32,18 +32,27 @@ class OnDeviceMoodClassifier {
   final Duration timeout;
   Future<YamnetMoodModel>? _model;
 
-  Future<OnDeviceMood?> classify(String path) async {
+  Future<OnDeviceMood?> classify(String path) async =>
+      (await attempt(path)).mood;
+
+  /// Like [classify], but also reports how long it took and why it failed.
+  Future<OnDeviceMoodAttempt> attempt(String path) async {
+    final stopwatch = Stopwatch()..start();
     try {
-      return await _classify(path).timeout(timeout);
+      final mood = await _classify(path).timeout(timeout);
+      return OnDeviceMoodAttempt(mood: mood, elapsed: stopwatch.elapsed);
     } on TimeoutException {
       talker.warning(
         'On-device mood timed out after ${timeout.inMilliseconds}ms; '
         'keeping backend mood',
       );
-      return null;
+      return OnDeviceMoodAttempt(
+        elapsed: stopwatch.elapsed,
+        failure: 'timeout',
+      );
     } on Object catch (error) {
       talker.warning('On-device mood failed ($error); keeping backend mood');
-      return null;
+      return OnDeviceMoodAttempt(elapsed: stopwatch.elapsed, failure: '$error');
     }
   }
 

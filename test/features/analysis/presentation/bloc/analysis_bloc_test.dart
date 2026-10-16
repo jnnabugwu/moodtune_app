@@ -7,9 +7,12 @@ import 'package:mocktail/mocktail.dart';
 import 'package:moodtune_app/core/error/failures.dart';
 import 'package:moodtune_app/features/analysis/domain/domain.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
+import 'package:moodtune_app/features/on_device_mood/presentation/mood_switchover.dart';
 
 import '../../../../helpers/helpers.dart';
 import '../../../blocs_fixtures.dart';
+
+class MockMoodSwitchover extends Mock implements MoodSwitchover {}
 
 void main() {
   late MockAnalysisRepository repository;
@@ -393,7 +396,7 @@ void main() {
         const AnalysisState(),
         isNot(const AnalysisState(catalogError: 'x')),
       );
-      expect(const AnalysisState().props, hasLength(15));
+      expect(const AnalysisState().props, hasLength(16));
     });
   });
 
@@ -425,7 +428,163 @@ void main() {
         null,
         null,
         null,
+        null,
       ]);
     });
+  });
+
+  group('on-device switchover', () {
+    late MockMoodSwitchover switchover;
+    const onDeviceMood = OnDeviceMood(
+      primaryMood: 'sad',
+      probabilities: {'sad': 0.9, 'energetic': 0.1},
+      tags: ['piano'],
+    );
+    const attempt = OnDeviceMoodAttempt(
+      mood: onDeviceMood,
+      elapsed: Duration(milliseconds: 80),
+    );
+    const upload = AudioUploadRequested(
+      bytes: [1],
+      filename: 'song.mp3',
+      path: '/tmp/song.mp3',
+    );
+    const catalog = CatalogTrackAnalyzeRequested(
+      audioUrl: 'https://audio',
+      trackId: 'j1',
+      trackName: 'Track',
+      artistName: 'Artist',
+      jamendoPageUrl: 'https://jamendo.com/track/1',
+    );
+
+    setUp(() {
+      switchover = MockMoodSwitchover();
+      when(
+        () => repository.analyzeUploadedAudio(
+          bytes: any(named: 'bytes'),
+          filename: any(named: 'filename'),
+          title: any(named: 'title'),
+          artist: any(named: 'artist'),
+          album: any(named: 'album'),
+        ),
+      ).thenAnswer((_) async => Right(tUpload));
+      when(
+        () => repository.analyzeCatalogTrack(
+          audioUrl: any(named: 'audioUrl'),
+          trackId: any(named: 'trackId'),
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          jamendoPageUrl: any(named: 'jamendoPageUrl'),
+        ),
+      ).thenAnswer((_) async => Right(tCatalog));
+    });
+
+    AnalysisBloc buildWithSwitchover({
+      Duration grace = const Duration(seconds: 3),
+    }) => AnalysisBloc(
+      repository: repository,
+      switchover: switchover,
+      onDeviceGrace: grace,
+    );
+
+    blocTest<AnalysisBloc, AnalysisState>(
+      'shows the on-device mood for an upload with a file path',
+      setUp: () => when(
+        () => switchover.classifyFile('/tmp/song.mp3'),
+      ).thenAnswer((_) async => attempt),
+      build: buildWithSwitchover,
+      act: (bloc) => bloc.add(upload),
+      skip: 1,
+      expect: () => [
+        AnalysisState(
+          uploadStatus: UploadStatus.success,
+          currentUploadAnalysis: MoodSwitchover.apply(tUpload, attempt),
+          onDeviceAttempt: attempt,
+        ),
+      ],
+      verify: (bloc) {
+        final mood = bloc.state.currentUploadAnalysis!.mood;
+        expect(mood.primaryMood, 'sad');
+        expect(mood.backendPrimaryMood, tUpload.mood.primaryMood);
+      },
+    );
+
+    blocTest<AnalysisBloc, AnalysisState>(
+      'keeps the backend mood when the upload has no file path',
+      build: buildWithSwitchover,
+      act: (bloc) => bloc.add(
+        const AudioUploadRequested(bytes: [1], filename: 'song.mp3'),
+      ),
+      skip: 1,
+      expect: () => [
+        AnalysisState(
+          uploadStatus: UploadStatus.success,
+          currentUploadAnalysis: tUpload,
+        ),
+      ],
+      verify: (_) => verifyNever(() => switchover.classifyFile(any())),
+    );
+
+    blocTest<AnalysisBloc, AnalysisState>(
+      "shows the backend mood when on-device isn't ready in time",
+      setUp: () => when(() => switchover.classifyFile(any())).thenAnswer(
+        (_) => Future.delayed(const Duration(milliseconds: 200), () => attempt),
+      ),
+      build: () => buildWithSwitchover(grace: const Duration(milliseconds: 10)),
+      act: (bloc) => bloc.add(upload),
+      wait: const Duration(milliseconds: 50),
+      skip: 1,
+      expect: () => [
+        AnalysisState(
+          uploadStatus: UploadStatus.success,
+          currentUploadAnalysis: tUpload,
+          onDeviceAttempt: const OnDeviceMoodAttempt(
+            elapsed: Duration(milliseconds: 10),
+            failure: 'late',
+          ),
+        ),
+      ],
+    );
+
+    blocTest<AnalysisBloc, AnalysisState>(
+      'shows the on-device mood for a catalog track',
+      setUp: () => when(
+        () => switchover.classifyUrl('https://audio'),
+      ).thenAnswer((_) async => attempt),
+      build: buildWithSwitchover,
+      act: (bloc) => bloc.add(catalog),
+      skip: 1,
+      expect: () => [
+        AnalysisState(
+          catalogStatus: CatalogAnalysisStatus.success,
+          currentCatalogAnalysis: MoodSwitchover.apply(tCatalog, attempt),
+          onDeviceAttempt: attempt,
+        ),
+      ],
+    );
+
+    blocTest<AnalysisBloc, AnalysisState>(
+      'still reports a backend failure as an error',
+      setUp: () {
+        when(
+          () => switchover.classifyFile(any()),
+        ).thenAnswer((_) async => attempt);
+        when(
+          () => repository.analyzeUploadedAudio(
+            bytes: any(named: 'bytes'),
+            filename: any(named: 'filename'),
+            title: any(named: 'title'),
+            artist: any(named: 'artist'),
+            album: any(named: 'album'),
+          ),
+        ).thenAnswer((_) async => const Left(ServerFailure('down')));
+      },
+      build: buildWithSwitchover,
+      act: (bloc) => bloc.add(upload),
+      skip: 1,
+      expect: () => const [
+        AnalysisState(uploadStatus: UploadStatus.error, uploadError: 'down'),
+      ],
+    );
   });
 }

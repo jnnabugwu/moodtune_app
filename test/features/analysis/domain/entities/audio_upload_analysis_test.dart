@@ -130,6 +130,9 @@ void main() {
         'because',
         _features(),
         ['upbeat'],
+        MoodSource.backend,
+        <String>[],
+        null,
       ]);
       for (final v in [
         _mood(primaryMood: 'x'),
@@ -138,6 +141,9 @@ void main() {
         _mood(reasoning: 'x'),
         _mood(audioFeatures: _features(tempo: 1)),
         _mood(descriptors: ['x']),
+        _mood().copyWith(source: MoodSource.onDevice),
+        _mood().copyWith(soundTags: ['piano']),
+        _mood().copyWith(backendPrimaryMood: 'calm'),
       ]) {
         expect(v, isNot(_mood()));
       }
@@ -199,6 +205,25 @@ void main() {
       ]) {
         expect(v, isNot(_analysis()));
       }
+    });
+  });
+
+  group('copyWith', () {
+    test('changes only the given fields', () {
+      final mood = _mood().copyWith(
+        primaryMood: 'sad',
+        source: MoodSource.onDevice,
+        soundTags: ['vocals'],
+        backendPrimaryMood: 'Happy',
+      );
+
+      expect(mood.primaryMood, 'sad');
+      expect(mood.source, MoodSource.onDevice);
+      expect(mood.soundTags, ['vocals']);
+      expect(mood.backendPrimaryMood, 'Happy');
+      expect(mood.confidence, _mood().confidence);
+      expect(mood.audioFeatures, _mood().audioFeatures);
+      expect(_mood().copyWith(), _mood());
     });
   });
 }

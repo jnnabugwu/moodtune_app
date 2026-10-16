@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moodtune_app/app/theme/mood_theme.dart';
+import 'package:moodtune_app/features/analysis/domain/entities/audio_upload_analysis.dart';
 import 'package:moodtune_app/shared/widgets/confidence_ring.dart';
 import 'package:moodtune_app/shared/widgets/mood_hero_card.dart';
 
@@ -126,5 +127,21 @@ void main() {
       expect(find.text('85%'), findsOneWidget);
       expect(find.text('Strong match'), findsOneWidget);
     });
+  });
+
+  testWidgets('hides the confidence ring for on-device moods', (tester) async {
+    final backend = buildAudioUploadAnalysis();
+    final onDevice = backend.copyWith(
+      mood: backend.mood.copyWith(source: MoodSource.onDevice),
+    );
+
+    await tester.pumpWidgetInShell(
+      SingleChildScrollView(child: MoodHeroCard(analysis: onDevice)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ConfidenceRing), findsNothing);
+    expect(find.text('85%'), findsNothing);
+    expect(find.text('UPBEAT'), findsOneWidget);
   });
 }

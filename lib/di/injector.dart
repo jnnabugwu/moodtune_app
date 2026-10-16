@@ -11,8 +11,10 @@ import 'package:moodtune_app/features/catalog/presentation/bloc/catalog_bloc.dar
 import 'package:moodtune_app/features/narration/data/mood_narration_channel.dart';
 import 'package:moodtune_app/features/narration/presentation/mood_narrator.dart';
 import 'package:moodtune_app/features/on_device_mood/data/audio_decode_channel.dart';
+import 'package:moodtune_app/features/on_device_mood/data/dio_audio_downloader.dart';
 import 'package:moodtune_app/features/on_device_mood/data/yamnet_assets.dart';
 import 'package:moodtune_app/features/on_device_mood/data/yamnet_engine.dart';
+import 'package:moodtune_app/features/on_device_mood/presentation/mood_switchover.dart';
 import 'package:moodtune_app/features/on_device_mood/presentation/on_device_mood_classifier.dart';
 import 'package:moodtune_app/features/spotify/data/data.dart';
 import 'package:moodtune_app/features/spotify/domain/repositories/spotify_repository.dart';
@@ -59,6 +61,14 @@ Future<void> configureDependencies({
         decoder: AudioDecodeChannel(),
         engine: YamnetEngine(),
         loadModel: loadYamnetMoodModel,
+      ),
+    )
+    ..registerLazySingleton(
+      () => MoodSwitchover(
+        classifier: getIt(),
+        downloader: DioAudioDownloader(),
+        // TODO(od-4): read the remote kill switch (GET /api/v1/config).
+        isEnabled: () async => true,
       ),
     )
     // Catalog use cases

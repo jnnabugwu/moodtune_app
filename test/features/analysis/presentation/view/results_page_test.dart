@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/di/injector.dart';
+import 'package:moodtune_app/features/analysis/domain/entities/audio_upload_analysis.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/analysis/presentation/view/analysis_loading_page.dart';
 import 'package:moodtune_app/features/analysis/presentation/view/results_page.dart';
@@ -155,6 +156,27 @@ void main() {
         expect(find.text('Bright (0.71)'), findsOneWidget);
         expect(find.text('Texture'), findsOneWidget);
         expect(find.text('Smooth (0.40)'), findsOneWidget);
+      });
+
+      testWidgets('on-device results show sound tags as pills', (tester) async {
+        final backend = testUploadAnalysis();
+        await pumpResults(
+          tester,
+          analysisState: AnalysisState(
+            currentUploadAnalysis: backend.copyWith(
+              mood: backend.mood.copyWith(
+                source: MoodSource.onDevice,
+                soundTags: const ['vocals', 'piano'],
+                descriptors: const [],
+              ),
+            ),
+          ),
+        );
+
+        final pills = tester.widget<MoodDescriptorTags>(
+          find.byType(MoodDescriptorTags),
+        );
+        expect(pills.tags, ['vocals', 'piano']);
       });
 
       testWidgets('hides descriptors and reasoning when empty', (tester) async {

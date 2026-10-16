@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/di/injector.dart';
+import 'package:moodtune_app/features/analysis/domain/entities/audio_upload_analysis.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/analysis/presentation/view/analysis_loading_page.dart';
 import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
@@ -187,16 +188,16 @@ class _ResultsPageState extends State<ResultsPage>
                         child: MoodHeroCard(analysis: analysis),
                       ),
 
-                      // Descriptor tags — wireframe neutral pill style
-                      if (analysis.mood.descriptors.isNotEmpty)
+                      // Descriptor tags — wireframe neutral pill style.
+                      // On-device results show what YAMNet heard instead.
+                      if (_pillsFor(analysis.mood) case final pills
+                          when pills.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 8,
                           ),
-                          child: MoodDescriptorTags(
-                            tags: analysis.mood.descriptors,
-                          ),
+                          child: MoodDescriptorTags(tags: pills),
                         ),
 
                       // Reasoning — wireframe secondary warm-gray. Always
@@ -419,3 +420,9 @@ class _JamendoAttribution extends StatelessWidget {
     );
   }
 }
+
+/// Pills under the hero card: the backend's mood descriptors, or for
+/// on-device results the sound tags (the backend's descriptors described
+/// the backend's mood, which may differ).
+List<String> _pillsFor(UploadMoodResult mood) =>
+    mood.source == MoodSource.onDevice ? mood.soundTags : mood.descriptors;

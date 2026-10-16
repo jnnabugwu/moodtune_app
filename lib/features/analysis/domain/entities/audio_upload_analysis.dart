@@ -54,6 +54,9 @@ class UploadAudioFeatures extends Equatable {
   ];
 }
 
+/// Which engine produced a result's mood.
+enum MoodSource { backend, onDevice }
+
 class UploadMoodResult extends Equatable {
   const UploadMoodResult({
     required this.primaryMood,
@@ -62,6 +65,9 @@ class UploadMoodResult extends Equatable {
     required this.reasoning,
     required this.audioFeatures,
     required this.descriptors,
+    this.source = MoodSource.backend,
+    this.soundTags = const [],
+    this.backendPrimaryMood,
   });
 
   final String primaryMood;
@@ -74,6 +80,38 @@ class UploadMoodResult extends Equatable {
   /// e.g. ["upbeat", "danceable", "bright"]
   final List<String> descriptors;
 
+  /// Where [primaryMood] came from. On-device results keep the backend's
+  /// [audioFeatures] (tempo, energy...) but not its [confidence], which
+  /// belonged to the backend's label.
+  final MoodSource source;
+
+  /// What YAMNet heard, e.g. ["vocals", "piano"]. Only on-device results
+  /// have them.
+  final List<String> soundTags;
+
+  /// The backend's own label when [source] is on-device, kept so the two
+  /// engines can be compared.
+  final String? backendPrimaryMood;
+
+  UploadMoodResult copyWith({
+    String? primaryMood,
+    String? reasoning,
+    List<String>? descriptors,
+    MoodSource? source,
+    List<String>? soundTags,
+    String? backendPrimaryMood,
+  }) => UploadMoodResult(
+    primaryMood: primaryMood ?? this.primaryMood,
+    moodScores: moodScores,
+    confidence: confidence,
+    reasoning: reasoning ?? this.reasoning,
+    audioFeatures: audioFeatures,
+    descriptors: descriptors ?? this.descriptors,
+    source: source ?? this.source,
+    soundTags: soundTags ?? this.soundTags,
+    backendPrimaryMood: backendPrimaryMood ?? this.backendPrimaryMood,
+  );
+
   @override
   List<Object?> get props => [
     primaryMood,
@@ -82,6 +120,9 @@ class UploadMoodResult extends Equatable {
     reasoning,
     audioFeatures,
     descriptors,
+    source,
+    soundTags,
+    backendPrimaryMood,
   ];
 }
 
@@ -116,6 +157,21 @@ class AudioUploadAnalysis extends Equatable {
   /// Set when the analysis originated from a Jamendo catalog track.
   /// Used for the attribution row on the Results screen.
   final String? jamendoTrackUrl;
+
+  AudioUploadAnalysis copyWith({UploadMoodResult? mood}) => AudioUploadAnalysis(
+    id: id,
+    filename: filename,
+    fileSizeBytes: fileSizeBytes,
+    durationSeconds: durationSeconds,
+    mood: mood ?? this.mood,
+    analysisMethod: analysisMethod,
+    processedAt: processedAt,
+    processingTimeSeconds: processingTimeSeconds,
+    title: title,
+    artist: artist,
+    album: album,
+    jamendoTrackUrl: jamendoTrackUrl,
+  );
 
   @override
   List<Object?> get props => [

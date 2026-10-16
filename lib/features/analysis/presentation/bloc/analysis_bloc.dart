@@ -1,15 +1,22 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:moodtune_app/core/logging/talker.dart';
 import 'package:moodtune_app/features/analysis/domain/domain.dart';
+import 'package:moodtune_app/features/on_device_mood/presentation/mood_switchover.dart';
 
 part 'analysis_event.dart';
 part 'analysis_state.dart';
 
 class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
-  AnalysisBloc({required AnalysisRepository repository})
-    : _repository = repository,
-      super(const AnalysisState()) {
+  AnalysisBloc({
+    required AnalysisRepository repository,
+    MoodSwitchover? switchover,
+    this.onDeviceGrace = const Duration(seconds: 3),
+  }) : _repository = repository,
+       _switchover = switchover,
+       super(const AnalysisState()) {
     on<AnalyzePlaylistRequested>(_onAnalyzeRequested);
     on<AnalysisHistoryRequested>(_onHistoryRequested);
     on<AnalysisHistoryFilterChanged>(_onHistoryFilterChanged);
@@ -21,6 +28,14 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
   }
 
   final AnalysisRepository _repository;
+
+  /// Shows the on-device mood instead of the backend's for uploads and
+  /// catalog tracks. Null (tests, platforms without it) keeps the backend's.
+  final MoodSwitchover? _switchover;
+
+  /// How long to keep waiting for on-device classification once the backend
+  /// has answered, so a slow phone or download never holds the result back.
+  final Duration onDeviceGrace;
 
   Future<void> _onAnalyzeRequested(
     AnalyzePlaylistRequested event,
@@ -141,6 +156,13 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
       ),
     );
 
+    final path = event.path;
+    final switchover = _switchover;
+    // Started before the backend call so the two run side by side.
+    final onDevice = path == null || switchover == null
+        ? null
+        : switchover.classifyFile(path);
+
     final result = await _repository.analyzeUploadedAudio(
       bytes: Uint8List.fromList(event.bytes),
       filename: event.filename,
@@ -148,6 +170,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
       artist: event.artist,
       album: event.album,
     );
+    final attempt = await _settle(onDevice);
 
     result.fold(
       (failure) => emit(
@@ -160,8 +183,9 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
       (analysis) => emit(
         state.copyWith(
           uploadStatus: UploadStatus.success,
-          currentUploadAnalysis: analysis,
+          currentUploadAnalysis: MoodSwitchover.apply(analysis, attempt),
           uploadError: null,
+          onDeviceAttempt: attempt,
         ),
       ),
     );
@@ -186,6 +210,8 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
       ),
     );
 
+    final onDevice = _switchover?.classifyUrl(event.audioUrl);
+
     final result = await _repository.analyzeCatalogTrack(
       audioUrl: event.audioUrl,
       trackId: event.trackId,
@@ -193,6 +219,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
       artistName: event.artistName,
       jamendoPageUrl: event.jamendoPageUrl,
     );
+    final attempt = await _settle(onDevice);
 
     result.fold(
       (failure) => emit(
@@ -204,9 +231,27 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
       (analysis) => emit(
         state.copyWith(
           catalogStatus: CatalogAnalysisStatus.success,
-          currentCatalogAnalysis: analysis,
+          currentCatalogAnalysis: MoodSwitchover.apply(analysis, attempt),
+          onDeviceAttempt: attempt,
         ),
       ),
     );
+  }
+
+  /// Waits up to [onDeviceGrace] for on-device classification that is
+  /// still running when the backend answers.
+  Future<OnDeviceMoodAttempt?> _settle(
+    Future<OnDeviceMoodAttempt>? pending,
+  ) async {
+    if (pending == null) return null;
+    try {
+      return await pending.timeout(onDeviceGrace);
+    } on TimeoutException {
+      talker.warning(
+        'On-device mood not ready ${onDeviceGrace.inMilliseconds}ms after '
+        'the backend; showing backend mood',
+      );
+      return OnDeviceMoodAttempt(elapsed: onDeviceGrace, failure: 'late');
+    }
   }
 }

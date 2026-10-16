@@ -23,6 +23,7 @@ class AnalysisState extends Equatable {
     this.catalogStatus = CatalogAnalysisStatus.initial,
     this.currentCatalogAnalysis,
     this.catalogError,
+    this.onDeviceAttempt,
   });
 
   final AnalysisStatus status;
@@ -51,6 +52,10 @@ class AnalysisState extends Equatable {
   final AudioUploadAnalysis? currentCatalogAnalysis;
   final String? catalogError;
 
+  /// The on-device classification behind the latest upload or catalog
+  /// result, kept to compare engines (ROADMAP OD-4). Null when it didn't run.
+  final OnDeviceMoodAttempt? onDeviceAttempt;
+
   AnalysisState copyWith({
     AnalysisStatus? status,
     List<HistoryEntry>? history,
@@ -68,6 +73,7 @@ class AnalysisState extends Equatable {
     CatalogAnalysisStatus? catalogStatus,
     AudioUploadAnalysis? currentCatalogAnalysis,
     String? catalogError,
+    Object? onDeviceAttempt = _keep,
   }) {
     return AnalysisState(
       status: status ?? this.status,
@@ -89,6 +95,9 @@ class AnalysisState extends Equatable {
       currentCatalogAnalysis:
           currentCatalogAnalysis ?? this.currentCatalogAnalysis,
       catalogError: catalogError,
+      onDeviceAttempt: onDeviceAttempt == _keep
+          ? this.onDeviceAttempt
+          : onDeviceAttempt as OnDeviceMoodAttempt?,
     );
   }
 
@@ -109,6 +118,7 @@ class AnalysisState extends Equatable {
     catalogStatus,
     currentCatalogAnalysis,
     catalogError,
+    onDeviceAttempt,
   ];
 }
 

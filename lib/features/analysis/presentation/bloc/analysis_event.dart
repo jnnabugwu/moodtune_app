@@ -93,6 +93,7 @@ class AudioUploadRequested extends AnalysisEvent {
   const AudioUploadRequested({
     required this.bytes,
     required this.filename,
+    this.path,
     this.title,
     this.artist,
     this.album,
@@ -100,10 +101,14 @@ class AudioUploadRequested extends AnalysisEvent {
 
   final List<int> bytes;
   final String filename;
+
+  /// Where the picked file lives on the phone, for on-device
+  /// classification. Null when the picker only provided bytes.
+  final String? path;
   final String? title;
   final String? artist;
   final String? album;
 
   @override
-  List<Object?> get props => [bytes, filename, title, artist, album];
+  List<Object?> get props => [bytes, filename, path, title, artist, album];
 }

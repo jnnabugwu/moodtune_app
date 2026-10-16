@@ -6,6 +6,7 @@ import 'package:moodtune_app/di/injector.dart';
 import 'package:moodtune_app/features/analysis/domain/repositories/analysis_repository.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:moodtune_app/features/on_device_mood/presentation/mood_switchover.dart';
 import 'package:moodtune_app/features/spotify/domain/repositories/spotify_repository.dart';
 import 'package:moodtune_app/features/spotify/domain/usecases/usecases.dart';
 import 'package:moodtune_app/features/spotify/presentation/presentation.dart';
@@ -41,8 +42,10 @@ class App extends StatelessWidget {
             ),
           ),
           BlocProvider(
-            create: (context) =>
-                AnalysisBloc(repository: context.read<AnalysisRepository>()),
+            create: (context) => AnalysisBloc(
+              repository: context.read<AnalysisRepository>(),
+              switchover: getIt<MoodSwitchover>(),
+            ),
           ),
         ],
         child: ShadApp.custom(

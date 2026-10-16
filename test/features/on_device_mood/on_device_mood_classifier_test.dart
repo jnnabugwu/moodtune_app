@@ -138,5 +138,40 @@ void main() {
       expect((await classifier.classify('/a.mp3'))?.primaryMood, 'sad');
       expect(loads, 2);
     });
+
+    test('attempt reports a timeout as the failure', () async {
+      final classifier = OnDeviceMoodClassifier(
+        decoder: FakeDecoder(),
+        engine: FakeEngine(delay: const Duration(milliseconds: 50)),
+        loadModel: () async => _model,
+        timeout: const Duration(milliseconds: 10),
+      );
+
+      final attempt = await classifier.attempt('/song.mp3');
+
+      expect(attempt.mood, isNull);
+      expect(attempt.failure, 'timeout');
+      expect(attempt.elapsed, greaterThanOrEqualTo(Duration.zero));
+    });
+
+    test('attempt reports the error and keeps the mood on success', () async {
+      final failing = OnDeviceMoodClassifier(
+        decoder: FakeDecoder(
+          error: const AudioDecodeException('unreadable', 'nope'),
+        ),
+        engine: FakeEngine(),
+        loadModel: () async => _model,
+      );
+      final working = OnDeviceMoodClassifier(
+        decoder: FakeDecoder(),
+        engine: FakeEngine(),
+        loadModel: () async => _model,
+      );
+
+      expect((await failing.attempt('/a')).failure, contains('unreadable'));
+      final ok = await working.attempt('/a');
+      expect(ok.mood?.primaryMood, 'sad');
+      expect(ok.failure, isNull);
+    });
   });
 }

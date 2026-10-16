@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:equatable/equatable.dart';
@@ -42,4 +43,28 @@ class OnDeviceMood extends Equatable {
 
   @override
   List<Object?> get props => [primaryMood, probabilities, tags];
+}
+
+/// The outcome of one on-device classification, kept for comparison with
+/// the backend (ROADMAP OD-4) whether or not it succeeded.
+class OnDeviceMoodAttempt extends Equatable {
+  const OnDeviceMoodAttempt({required this.elapsed, this.mood, this.failure});
+
+  /// Null when the attempt failed or was skipped.
+  final OnDeviceMood? mood;
+
+  /// Time spent classifying (decode + model), excluding any download.
+  final Duration elapsed;
+
+  /// Why there's no [mood]: `disabled`, `timeout`, or the error.
+  final String? failure;
+
+  @override
+  List<Object?> get props => [mood, elapsed, failure];
+}
+
+/// Fetches a remote track to a local file the native decoder can open.
+abstract interface class AudioDownloader {
+  /// Callers delete the file when done.
+  Future<File> download(String url);
 }
