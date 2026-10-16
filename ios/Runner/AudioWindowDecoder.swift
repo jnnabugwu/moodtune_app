@@ -82,8 +82,10 @@ struct AudioWindowDecoder {
     // Capped at the file length before converting so a huge window can't
     // overflow Int64; anything that long is the whole file anyway.
     let windowFrames = AVAudioFramePosition(min(windowSeconds * sourceRate, Double(length)))
-    guard windowFrames > 0 else {
-      throw DecodeError.badArgs("windowSeconds \(windowSeconds) is shorter than one sample")
+    guard windowFrames > 0,
+          windowFrames <= AVAudioFramePosition(AVAudioFrameCount.max)
+    else {
+      throw DecodeError.badArgs("windowSeconds \(windowSeconds) cannot fit in one audio buffer")
     }
     let ranges = Self.windowRanges(length: length, windowFrames: windowFrames, positions: positions)
 
