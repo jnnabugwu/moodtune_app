@@ -142,6 +142,49 @@ void main() {
       );
     });
 
+    group('rejects an invalid window spec without calling native', () {
+      final invalid = <String, AudioDecodeChannel Function()>{
+        'zero sampleRate': () => AudioDecodeChannel(sampleRate: 0),
+        'negative sampleRate': () => AudioDecodeChannel(sampleRate: -16000),
+        'zero windowSeconds': () => AudioDecodeChannel(windowSeconds: 0),
+        'negative windowSeconds': () => AudioDecodeChannel(windowSeconds: -10),
+        'NaN windowSeconds': () =>
+            AudioDecodeChannel(windowSeconds: double.nan),
+        'infinite windowSeconds': () =>
+            AudioDecodeChannel(windowSeconds: double.infinity),
+        'no positions': () => AudioDecodeChannel(positions: const []),
+        'position above 1': () => AudioDecodeChannel(positions: const [1.5]),
+        'negative position': () => AudioDecodeChannel(positions: const [-0.1]),
+        'NaN position': () => AudioDecodeChannel(positions: const [double.nan]),
+      };
+
+      for (final MapEntry(key: name, value: build) in invalid.entries) {
+        test(name, () async {
+          var called = false;
+          reply((_) {
+            called = true;
+            return nativeReply();
+          });
+
+          await expectLater(
+            build().decodeWindows('/song.mp3'),
+            throwsDecodeError('bad_args'),
+          );
+          expect(called, isFalse);
+        });
+      }
+    });
+
+    test('accepts boundary positions 0 and 1', () async {
+      reply((_) => nativeReply(windows: 2));
+
+      final decoded = await AudioDecodeChannel(
+        positions: const [0, 1],
+      ).decodeWindows('/song.mp3');
+
+      expect(decoded.windows, hasLength(2));
+    });
+
     test('is an AudioWindowDecoder', () {
       expect(AudioDecodeChannel(), isA<AudioWindowDecoder>());
     });

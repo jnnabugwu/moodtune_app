@@ -28,12 +28,14 @@ struct AudioWindowDecoder {
     case unreadable(String)
     case empty
     case conversionFailed(String)
+    case badArgs(String)
 
     var code: String {
       switch self {
       case .unreadable: return "unreadable"
       case .empty: return "empty"
       case .conversionFailed: return "decode_failed"
+      case .badArgs: return "bad_args"
       }
     }
 
@@ -42,13 +44,29 @@ struct AudioWindowDecoder {
       case .unreadable(let detail): return "Can't open audio file: \(detail)"
       case .empty: return "Audio file has no samples"
       case .conversionFailed(let detail): return "Couldn't convert audio: \(detail)"
+      case .badArgs(let detail): return "Invalid decode arguments: \(detail)"
       }
     }
   }
 
+  /// Highest common PCM rate; also keeps `resample`'s output count in range.
+  static let maxSampleRate: Double = 384_000
+
   let targetSampleRate: Double
 
   func decode(url: URL, positions: [Double], windowSeconds: Double) throws -> Decoded {
+    // Checked before any frame-count conversion: Int64/UInt32 initialisers
+    // trap on NaN, infinity, negatives and overflow, which would kill the app.
+    guard targetSampleRate.isFinite, targetSampleRate > 0, targetSampleRate <= Self.maxSampleRate else {
+      throw DecodeError.badArgs("sampleRate must be in (0, \(Int(Self.maxSampleRate))], got \(targetSampleRate)")
+    }
+    guard windowSeconds.isFinite, windowSeconds > 0 else {
+      throw DecodeError.badArgs("windowSeconds must be positive and finite, got \(windowSeconds)")
+    }
+    guard !positions.isEmpty, positions.allSatisfy({ $0.isFinite && (0...1).contains($0) }) else {
+      throw DecodeError.badArgs("positions must be fractions in [0, 1], got \(positions)")
+    }
+
     let file: AVAudioFile
     do {
       file = try AVAudioFile(forReading: url)
@@ -61,7 +79,12 @@ struct AudioWindowDecoder {
     let length = file.length
     guard length > 0 else { throw DecodeError.empty }
 
-    let windowFrames = AVAudioFramePosition(windowSeconds * sourceRate)
+    // Capped at the file length before converting so a huge window can't
+    // overflow Int64; anything that long is the whole file anyway.
+    let windowFrames = AVAudioFramePosition(min(windowSeconds * sourceRate, Double(length)))
+    guard windowFrames > 0 else {
+      throw DecodeError.badArgs("windowSeconds \(windowSeconds) is shorter than one sample")
+    }
     let ranges = Self.windowRanges(length: length, windowFrames: windowFrames, positions: positions)
 
     var windows: [[Float]] = []
