@@ -7,18 +7,16 @@ import 'package:moodtune_app/features/catalog/data/models/jamendo_track_model.da
 /// Client ID is injected at construction time from the JAMENDO_CLIENT_ID
 /// env var (passed via --dart-define-from-file=.env).
 class JamendoRemoteDataSource {
-  JamendoRemoteDataSource({
-    required this.clientId,
-    Dio? dio,
-  }) : _dio =
-           dio ??
-           Dio(
-             BaseOptions(
-               baseUrl: 'https://api.jamendo.com/v3.0',
-               connectTimeout: const Duration(seconds: 10),
-               receiveTimeout: const Duration(seconds: 15),
-             ),
-           );
+  JamendoRemoteDataSource({required this.clientId, Dio? dio})
+    : _dio =
+          dio ??
+          Dio(
+            BaseOptions(
+              baseUrl: 'https://api.jamendo.com/v3.0',
+              connectTimeout: const Duration(seconds: 10),
+              receiveTimeout: const Duration(seconds: 15),
+            ),
+          );
 
   static const _limit = 20;
 

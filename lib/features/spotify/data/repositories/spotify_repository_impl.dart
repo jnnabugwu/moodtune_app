@@ -43,11 +43,7 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
   Future<Options> _options() async {
     final token = await _tokenProvider();
     return Options(
-      headers: token != null
-          ? {
-              'Authorization': 'Bearer $token',
-            }
-          : null,
+      headers: token != null ? {'Authorization': 'Bearer $token'} : null,
     );
   }
 
@@ -87,10 +83,7 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
       );
 
       return Right(
-        SpotifyConnection(
-          isConnected: true,
-          connectedAt: DateTime.now(),
-        ),
+        SpotifyConnection(isConnected: true, connectedAt: DateTime.now()),
       );
     } on DioException catch (e) {
       return Left(_mapDioError(e));
@@ -119,10 +112,7 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
   @override
   ResultFuture<void> disconnect() async {
     try {
-      await _dio.post<void>(
-        '/spotify/disconnect',
-        options: await _options(),
-      );
+      await _dio.post<void>('/spotify/disconnect', options: await _options());
       return const Right(null);
     } on DioException catch (e) {
       return Left(_mapDioError(e));
@@ -157,10 +147,7 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         '/spotify/playlists',
-        queryParameters: {
-          'limit': limit,
-          'offset': offset,
-        },
+        queryParameters: {'limit': limit, 'offset': offset},
         options: await _options(),
       );
       final data = response.data ?? <String, dynamic>{};
@@ -186,9 +173,7 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         '/song/playlist/$playlistId/tracks',
-        queryParameters: {
-          'limit': limit,
-        },
+        queryParameters: {'limit': limit},
         options: await _options(),
       );
       final data = response.data ?? <String, dynamic>{};

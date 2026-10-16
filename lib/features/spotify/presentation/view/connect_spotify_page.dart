@@ -65,15 +65,15 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
     super.initState();
     _appLinks = AppLinks();
     context.read<SpotifyBloc>().add(const SpotifyStarted());
-    _initDeepLinks();
-    _log('H1', 'initState', {});
+    unawaited(_initDeepLinks());
+    unawaited(_log('H1', 'initState', {}));
   }
 
   @override
   void dispose() {
     _codeController.dispose();
-    _linkSub?.cancel();
-    _log('H1', 'dispose', {});
+    unawaited(_linkSub?.cancel());
+    unawaited(_log('H1', 'dispose', {}));
     super.dispose();
   }
 
@@ -88,7 +88,7 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
 
     // Listen for subsequent deep links.
     _linkSub = _appLinks.uriLinkStream.listen(
-      (uri) async => _handleIncomingUri(uri),
+      _handleIncomingUri,
       onError: (_) {},
     );
   }
@@ -142,11 +142,13 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
         final isBusy =
             state.status == SpotifyStatus.loading ||
             state.status == SpotifyStatus.connecting;
-        _log('H3', 'build', {
-          'status': state.status.toString(),
-          'isBusy': isBusy,
-          'hasError': state.error != null,
-        });
+        unawaited(
+          _log('H3', 'build', {
+            'status': state.status.toString(),
+            'isBusy': isBusy,
+            'hasError': state.error != null,
+          }),
+        );
 
         return CupertinoPageScaffold(
           navigationBar: const CupertinoNavigationBar(
@@ -170,10 +172,7 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
                     Text(
                       'Connect your Spotify account',
                       style: cupertinoTheme.textTheme.navTitleTextStyle
-                          .copyWith(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                          ),
+                          .copyWith(fontSize: 22, fontWeight: FontWeight.w700),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
@@ -190,9 +189,11 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
                       onPressed: isBusy
                           ? null
                           : () {
-                              _log('H1', 'tap connect button', {
-                                'status': state.status.toString(),
-                              });
+                              unawaited(
+                                _log('H1', 'tap connect button', {
+                                  'status': state.status.toString(),
+                                }),
+                              );
                               context.read<SpotifyBloc>().add(
                                 const SpotifyAuthorizeRequested(),
                               );
@@ -280,9 +281,7 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
                               child: Text(
                                 state.error ?? 'Something went wrong',
                                 style: cupertinoTheme.textTheme.textStyle
-                                    .copyWith(
-                                      color: CupertinoColors.systemRed,
-                                    ),
+                                    .copyWith(color: CupertinoColors.systemRed),
                               ),
                             ),
                             CupertinoButton(

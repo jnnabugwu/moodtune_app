@@ -49,10 +49,7 @@ void main() {
 
     test('different subtypes with the same message are not equal', () {
       expect(const ServerFailure('x'), isNot(const NetworkFailure('x')));
-      expect(
-        const SpotifyAuthFailure('x'),
-        isNot(const CacheFailure('x')),
-      );
+      expect(const SpotifyAuthFailure('x'), isNot(const CacheFailure('x')));
     });
   });
 }

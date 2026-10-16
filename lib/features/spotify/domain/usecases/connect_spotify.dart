@@ -9,7 +9,7 @@ class ConnectSpotify {
   final SpotifyRepository _repository;
 
   /// Connects to Spotify using the provided authorization code
-  ResultFuture<SpotifyConnection> call(String authCode) async {
+  ResultFuture<SpotifyConnection> call(String authCode) {
     return _repository.connectSpotify(authCode);
   }
 }

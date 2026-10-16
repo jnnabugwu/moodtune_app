@@ -28,18 +28,9 @@ class AppRouter {
         builder: (context, state) => const SplashPage(),
       ),
       // ── Legacy redirects ──────────────────────────────────────────────
-      GoRoute(
-        path: RouteNames.login,
-        redirect: (_, _) => RouteNames.signIn,
-      ),
-      GoRoute(
-        path: RouteNames.signup,
-        redirect: (_, _) => RouteNames.signIn,
-      ),
-      GoRoute(
-        path: RouteNames.guest,
-        redirect: (_, _) => RouteNames.landing,
-      ),
+      GoRoute(path: RouteNames.login, redirect: (_, _) => RouteNames.signIn),
+      GoRoute(path: RouteNames.signup, redirect: (_, _) => RouteNames.signIn),
+      GoRoute(path: RouteNames.guest, redirect: (_, _) => RouteNames.landing),
 
       // ── Guest / auth ──────────────────────────────────────────────────
       GoRoute(
@@ -56,9 +47,8 @@ class AppRouter {
       ),
       GoRoute(
         path: RouteNames.forgotPassword,
-        builder: (context, state) => ForgotPasswordPage(
-          prefillEmail: state.extra as String? ?? '',
-        ),
+        builder: (context, state) =>
+            ForgotPasswordPage(prefillEmail: state.extra as String? ?? ''),
       ),
 
       // ── Authenticated home ────────────────────────────────────────────
@@ -170,10 +160,7 @@ class AppRouter {
         builder: (context, state) {
           final trackId = state.pathParameters['trackId']!;
           final track = state.extra as SpotifyTrack?;
-          return SongAnalyzingPage(
-            trackId: trackId,
-            track: track,
-          );
+          return SongAnalyzingPage(trackId: trackId, track: track);
         },
       ),
       GoRoute(
@@ -215,8 +202,6 @@ class NotFoundPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Page not found'),
-    );
+    return const Center(child: Text('Page not found'));
   }
 }

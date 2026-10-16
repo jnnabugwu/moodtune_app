@@ -34,9 +34,7 @@ void main() {
         stub(const AuthException('auth broke'))();
         expect(
           await call(),
-          const Left<Failure, Object?>(
-            ServerFailure('auth broke'),
-          ),
+          const Left<Failure, Object?>(ServerFailure('auth broke')),
         );
       });
 
@@ -141,9 +139,8 @@ void main() {
   failureMapping(
     name: 'resendVerificationEmail',
     stub: (e) =>
-        () => when(
-          () => datasource.resendVerificationEmail(email),
-        ).thenThrow(e),
+        () =>
+            when(() => datasource.resendVerificationEmail(email)).thenThrow(e),
     call: () => repository.resendVerificationEmail(email),
   );
 
@@ -161,9 +158,7 @@ void main() {
   failureMapping(
     name: 'sendPasswordResetEmail',
     stub: (e) =>
-        () => when(
-          () => datasource.sendPasswordResetEmail(email),
-        ).thenThrow(e),
+        () => when(() => datasource.sendPasswordResetEmail(email)).thenThrow(e),
     call: () => repository.sendPasswordResetEmail(email),
   );
 }

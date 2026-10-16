@@ -191,10 +191,7 @@ void main() {
 
         expect(adapter.lastRequest.method, 'GET');
         expect(adapter.lastRequest.path, '/song/history');
-        expect(adapter.lastRequest.queryParameters, {
-          'limit': 50,
-          'offset': 0,
-        });
+        expect(adapter.lastRequest.queryParameters, {'limit': 50, 'offset': 0});
         expect(result.map((e) => e['id']), ['sh-1', 'sh-2']);
       });
 

@@ -22,9 +22,7 @@ Future<void> configureDependencies({
 }) async {
   // Repositories
   getIt
-    ..registerLazySingleton<AuthRepository>(
-      AuthRepositoryImpl.new,
-    )
+    ..registerLazySingleton<AuthRepository>(AuthRepositoryImpl.new)
     ..registerLazySingleton<SpotifyRepository>(
       () => SpotifyRepositoryImpl(
         baseUrl: apiBaseUrl,
@@ -51,9 +49,7 @@ Future<void> configureDependencies({
         ),
       ),
     )
-    ..registerLazySingleton(
-      () => MoodNarrator(engine: MoodNarrationChannel()),
-    )
+    ..registerLazySingleton(() => MoodNarrator(engine: MoodNarrationChannel()))
     // Catalog use cases
     ..registerLazySingleton(() => SearchCatalog(getIt()))
     // Catalog BLoC — factory so each screen gets a fresh instance

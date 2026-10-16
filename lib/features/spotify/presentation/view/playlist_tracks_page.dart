@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -7,10 +8,7 @@ import 'package:moodtune_app/features/spotify/domain/entities/entities.dart';
 import 'package:moodtune_app/features/spotify/presentation/bloc/spotify_bloc.dart';
 
 class PlaylistTracksPage extends StatefulWidget {
-  const PlaylistTracksPage({
-    required this.playlist,
-    super.key,
-  });
+  const PlaylistTracksPage({required this.playlist, super.key});
 
   final SpotifyPlaylist playlist;
 
@@ -23,10 +21,7 @@ class _PlaylistTracksPageState extends State<PlaylistTracksPage> {
   void initState() {
     super.initState();
     context.read<SpotifyBloc>().add(
-      SpotifyPlaylistTracksRequested(
-        playlistId: widget.playlist.id,
-        limit: 50,
-      ),
+      SpotifyPlaylistTracksRequested(playlistId: widget.playlist.id, limit: 50),
     );
   }
 
@@ -48,9 +43,7 @@ class _PlaylistTracksPageState extends State<PlaylistTracksPage> {
           child: const Icon(CupertinoIcons.back),
         ),
       ),
-      child: SafeArea(
-        child: _buildBody(theme),
-      ),
+      child: SafeArea(child: _buildBody(theme)),
     );
   }
 
@@ -94,10 +87,7 @@ class _PlaylistTracksPageState extends State<PlaylistTracksPage> {
         final tracks = state.playlistTracks ?? [];
         if (tracks.isEmpty) {
           return Center(
-            child: Text(
-              'No tracks found',
-              style: theme.textTheme.textStyle,
-            ),
+            child: Text('No tracks found', style: theme.textTheme.textStyle),
           );
         }
 
@@ -114,9 +104,11 @@ class _PlaylistTracksPageState extends State<PlaylistTracksPage> {
                       context.read<AnalysisBloc>().add(
                         AnalyzeSongRequested(track.id),
                       );
-                      context.push(
-                        RouteNames.songAnalyzingFor(track.id),
-                        extra: track,
+                      unawaited(
+                        context.push(
+                          RouteNames.songAnalyzingFor(track.id),
+                          extra: track,
+                        ),
                       );
                     }
                   : null,
@@ -131,10 +123,7 @@ class _PlaylistTracksPageState extends State<PlaylistTracksPage> {
 }
 
 class _TrackCard extends StatelessWidget {
-  const _TrackCard({
-    required this.track,
-    this.onTap,
-  });
+  const _TrackCard({required this.track, this.onTap});
 
   final SpotifyTrack track;
   final VoidCallback? onTap;

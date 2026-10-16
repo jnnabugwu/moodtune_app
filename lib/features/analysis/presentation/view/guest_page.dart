@@ -12,9 +12,7 @@ class GuestPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const CupertinoPageScaffold(
-      child: _Body(),
-    );
+    return const CupertinoPageScaffold(child: _Body());
   }
 }
 

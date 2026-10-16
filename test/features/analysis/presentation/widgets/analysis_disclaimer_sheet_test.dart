@@ -31,6 +31,8 @@ void main() {
     );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
+    // The sheet is still open; callers await this once they close it.
+    // ignore: async_return_with_no_await
     return result;
   }
 

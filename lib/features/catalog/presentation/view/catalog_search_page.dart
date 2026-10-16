@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -33,11 +34,7 @@ class _CatalogSearchPageState extends State<CatalogSearchPage> {
     (label: 'Upbeat', identity: MoodIdentity.upbeat, tag: 'upbeat'),
     (label: 'Serene', identity: MoodIdentity.serene, tag: 'serene'),
     (label: 'Charged', identity: MoodIdentity.charged, tag: 'charged'),
-    (
-      label: 'Reflective',
-      identity: MoodIdentity.reflective,
-      tag: 'reflective',
-    ),
+    (label: 'Reflective', identity: MoodIdentity.reflective, tag: 'reflective'),
   ];
 
   @override
@@ -68,28 +65,32 @@ class _CatalogSearchPageState extends State<CatalogSearchPage> {
     final analysisBloc = context.read<AnalysisBloc>();
     final router = GoRouter.of(context);
 
-    showCupertinoModalPopup<void>(
-      context: context,
-      builder: (_) => CatalogConfirmSheet(
-        track: track,
-        onConfirm: () {
-          analysisBloc.add(
-            CatalogTrackAnalyzeRequested(
-              audioUrl: track.audioUrl,
-              trackId: track.id,
-              trackName: track.name,
-              artistName: track.artistName,
-              jamendoPageUrl: track.jamendoPageUrl,
-            ),
-          );
-          router.push(
-            RouteNames.analysisLoading,
-            extra: AnalysisLoadingArgs(
-              source: AnalysisSource.catalog,
-              trackDurationSeconds: track.duration.inSeconds,
-            ),
-          );
-        },
+    unawaited(
+      showCupertinoModalPopup<void>(
+        context: context,
+        builder: (_) => CatalogConfirmSheet(
+          track: track,
+          onConfirm: () {
+            analysisBloc.add(
+              CatalogTrackAnalyzeRequested(
+                audioUrl: track.audioUrl,
+                trackId: track.id,
+                trackName: track.name,
+                artistName: track.artistName,
+                jamendoPageUrl: track.jamendoPageUrl,
+              ),
+            );
+            unawaited(
+              router.push(
+                RouteNames.analysisLoading,
+                extra: AnalysisLoadingArgs(
+                  source: AnalysisSource.catalog,
+                  trackDurationSeconds: track.duration.inSeconds,
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -216,10 +217,7 @@ class _EmptyPrompt extends StatelessWidget {
         child: Text(
           'Search for a track or pick a mood to explore.',
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 15,
-            color: CupertinoColors.secondaryLabel,
-          ),
+          style: TextStyle(fontSize: 15, color: CupertinoColors.secondaryLabel),
         ),
       ),
     );

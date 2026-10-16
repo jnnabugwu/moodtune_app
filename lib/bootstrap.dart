@@ -29,7 +29,9 @@ class AppBlocObserver extends BlocObserver {
 
 Future<void> bootstrap(FutureOr<Widget> Function() builder) async {
   FlutterError.onError = (details) {
-    Sentry.captureException(details.exception, stackTrace: details.stack);
+    unawaited(
+      Sentry.captureException(details.exception, stackTrace: details.stack),
+    );
     log(details.exceptionAsString(), stackTrace: details.stack);
   };
 

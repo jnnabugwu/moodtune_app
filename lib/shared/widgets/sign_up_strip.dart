@@ -5,10 +5,7 @@ import 'package:flutter/cupertino.dart';
 /// Shows "Save this & see your history" copy alongside a pill Sign Up button.
 /// Typically pinned below [SafeArea] on guest-variant screens (Results, etc.).
 class SignUpStrip extends StatelessWidget {
-  const SignUpStrip({
-    required this.onSignUp,
-    super.key,
-  });
+  const SignUpStrip({required this.onSignUp, super.key});
 
   final VoidCallback onSignUp;
 
@@ -19,10 +16,7 @@ class SignUpStrip extends StatelessWidget {
       decoration: const BoxDecoration(
         color: CupertinoColors.systemBackground,
         border: Border(
-          top: BorderSide(
-            color: CupertinoColors.separator,
-            width: 0.5,
-          ),
+          top: BorderSide(color: CupertinoColors.separator, width: 0.5),
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16),

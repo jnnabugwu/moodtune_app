@@ -45,9 +45,7 @@ void main() {
       expect(find.byType(ErrorBanner), findsNothing);
     });
 
-    testWidgets('shows validation error when fields are empty', (
-      tester,
-    ) async {
+    testWidgets('shows validation error when fields are empty', (tester) async {
       await tester.pumpApp(const SignInPage(), authBloc: authBloc);
 
       await tester.tap(submitButton('Sign in'));
@@ -227,10 +225,7 @@ void main() {
       await tester.tap(find.text('Forgot password?'));
       await tester.pumpAndSettle();
 
-      expect(
-        find.text(navigatedTo(RouteNames.forgotPassword)),
-        findsOneWidget,
-      );
+      expect(find.text(navigatedTo(RouteNames.forgotPassword)), findsOneWidget);
       expect(find.text(extraText(testEmail)), findsOneWidget);
     });
 

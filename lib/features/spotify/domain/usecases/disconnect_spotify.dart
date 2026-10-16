@@ -8,7 +8,7 @@ class DisconnectSpotify {
   final SpotifyRepository _repository;
 
   /// Disconnects the user's Spotify account
-  ResultFuture<void> call() async {
+  ResultFuture<void> call() {
     return _repository.disconnect();
   }
 }

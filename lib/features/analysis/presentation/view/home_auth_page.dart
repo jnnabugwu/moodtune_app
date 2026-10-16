@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -93,10 +94,7 @@ class _HomeTabState extends State<_HomeTab> {
           ),
           child: SafeArea(
             child: ListView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               children: [
                 // Upload card
                 _ActionCard(
@@ -149,10 +147,7 @@ class _HomeTabState extends State<_HomeTab> {
                     return Column(
                       children: [
                         for (final item in recent)
-                          HistoryRowItem(
-                            item: item,
-                            onTap: () {},
-                          ),
+                          HistoryRowItem(item: item, onTap: () {}),
                         const SizedBox(height: 8),
                         GestureDetector(
                           onTap: () {
@@ -160,12 +155,10 @@ class _HomeTabState extends State<_HomeTab> {
                             // CupertinoTabScaffold doesn't expose a
                             // controller from BuildContext, so navigate
                             // via route instead.
-                            context.push(RouteNames.history);
+                            unawaited(context.push(RouteNames.history));
                           },
                           child: const Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: 8,
-                            ),
+                            padding: EdgeInsets.symmetric(vertical: 8),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
@@ -211,22 +204,24 @@ class _HomeTabState extends State<_HomeTab> {
   }
 
   void _showSignOutSheet(BuildContext context) {
-    showCupertinoModalPopup<void>(
-      context: context,
-      builder: (_) => CupertinoActionSheet(
-        actions: [
-          CupertinoActionSheetAction(
-            isDestructiveAction: true,
-            onPressed: () {
-              context.pop();
-              context.read<AuthBloc>().add(const AuthSignOutRequested());
-            },
-            child: const Text('Sign out'),
+    unawaited(
+      showCupertinoModalPopup<void>(
+        context: context,
+        builder: (_) => CupertinoActionSheet(
+          actions: [
+            CupertinoActionSheetAction(
+              isDestructiveAction: true,
+              onPressed: () {
+                context.pop();
+                context.read<AuthBloc>().add(const AuthSignOutRequested());
+              },
+              child: const Text('Sign out'),
+            ),
+          ],
+          cancelButton: CupertinoActionSheetAction(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
           ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
         ),
       ),
     );
@@ -262,9 +257,7 @@ class _ActionCard extends StatelessWidget {
               : CupertinoColors.tertiarySystemFill,
           borderRadius: BorderRadius.circular(16),
           border: isPrimary
-              ? Border.all(
-                  color: CupertinoColors.activeBlue.withAlpha(60),
-                )
+              ? Border.all(color: CupertinoColors.activeBlue.withAlpha(60))
               : null,
         ),
         child: Row(
@@ -358,17 +351,11 @@ class _EmptyHistoryState extends StatelessWidget {
           CupertinoButton(
             color: CupertinoColors.tertiarySystemFill,
             borderRadius: BorderRadius.circular(12),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 10,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             onPressed: onAnalyze,
             child: const Text(
               'Analyze your first song →',
-              style: TextStyle(
-                fontSize: 14,
-                color: CupertinoColors.label,
-              ),
+              style: TextStyle(fontSize: 14, color: CupertinoColors.label),
             ),
           ),
         ],

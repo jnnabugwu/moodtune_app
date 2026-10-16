@@ -2,10 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:moodtune_app/features/analysis/domain/entities/entities.dart';
 
 class MoodDistributionChart extends StatelessWidget {
-  const MoodDistributionChart({
-    required this.distribution,
-    super.key,
-  });
+  const MoodDistributionChart({required this.distribution, super.key});
 
   final MoodDistribution distribution;
 
@@ -33,10 +30,7 @@ class MoodDistributionChart extends StatelessWidget {
 }
 
 class _MoodBar extends StatelessWidget {
-  const _MoodBar({
-    required this.label,
-    required this.percent,
-  });
+  const _MoodBar({required this.label, required this.percent});
 
   final String label;
   final double percent;

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moodtune_app/shared/widgets/bottom_sheet_base.dart';
@@ -114,10 +115,12 @@ void main() {
     testWidgets('non-dismissible sheet ignores barrier taps', (tester) async {
       await tester.pumpWidgetInShell(
         launcher((context) {
-          showMoodTuneBottomSheet<void>(
-            context: context,
-            isDismissible: false,
-            child: const Text('content'),
+          unawaited(
+            showMoodTuneBottomSheet<void>(
+              context: context,
+              isDismissible: false,
+              child: const Text('content'),
+            ),
           );
         }),
       );

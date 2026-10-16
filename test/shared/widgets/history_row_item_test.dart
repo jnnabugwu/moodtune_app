@@ -25,10 +25,7 @@ void main() {
       expect(find.text('88%'), findsOneWidget);
 
       final pct = tester.widget<Text>(find.text('88%'));
-      expect(
-        pct.style?.color,
-        MoodTheme.colorsFor(MoodIdentity.upbeat).accent,
-      );
+      expect(pct.style?.color, MoodTheme.colorsFor(MoodIdentity.upbeat).accent);
     });
 
     testWidgets('song entry shows artist subtitle and date on its own line', (
@@ -70,9 +67,7 @@ void main() {
       expect(find.text('An Extremely Long Playlist Title Here'), findsNothing);
     });
 
-    testWidgets('keeps titles of exactly 24 characters intact', (
-      tester,
-    ) async {
+    testWidgets('keeps titles of exactly 24 characters intact', (tester) async {
       const title = 'ABCDEFGHIJKLMNOPQRSTUVWX';
       expect(title.length, 24);
       await tester.pumpWidgetInShell(
@@ -90,9 +85,7 @@ void main() {
       'angry': 'CHARGED',
       'unknown-mood': 'REFLECTIVE',
     }.entries) {
-      testWidgets('maps "${entry.key}" to ${entry.value} chip', (
-        tester,
-      ) async {
+      testWidgets('maps "${entry.key}" to ${entry.value} chip', (tester) async {
         await tester.pumpWidgetInShell(
           HistoryRowItem(
             item: buildHistoryEntry(primaryMood: entry.key),

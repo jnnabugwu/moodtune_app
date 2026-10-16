@@ -82,10 +82,7 @@ class _ResultBody extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            analysis.playlistName,
-            style: theme.textTheme.navTitleTextStyle,
-          ),
+          Text(analysis.playlistName, style: theme.textTheme.navTitleTextStyle),
           Text(
             '${moodResult.trackCount} tracks analyzed',
             style: theme.textTheme.textStyle.copyWith(
@@ -181,10 +178,7 @@ class _ResultBody extends StatelessWidget {
                   label: 'Valence',
                   value: moodResult.averages.valence,
                 ),
-                _AverageRow(
-                  label: 'Energy',
-                  value: moodResult.averages.energy,
-                ),
+                _AverageRow(label: 'Energy', value: moodResult.averages.energy),
                 _AverageRow(
                   label: 'Danceability',
                   value: moodResult.averages.danceability,

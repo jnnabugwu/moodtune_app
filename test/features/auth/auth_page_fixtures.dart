@@ -48,10 +48,7 @@ GoRoute stubRoute(String path) => GoRoute(
     child: Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(navigatedTo(path)),
-          Text(extraText(state.extra)),
-        ],
+        children: [Text(navigatedTo(path)), Text(extraText(state.extra))],
       ),
     ),
   ),

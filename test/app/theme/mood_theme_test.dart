@@ -70,10 +70,7 @@ void main() {
 
   group('MoodTheme labels', () {
     test('quadrantLabel', () {
-      expect(
-        MoodTheme.quadrantLabel(MoodIdentity.upbeat),
-        'Happy & Energetic',
-      );
+      expect(MoodTheme.quadrantLabel(MoodIdentity.upbeat), 'Happy & Energetic');
       expect(MoodTheme.quadrantLabel(MoodIdentity.serene), 'Calm & Positive');
       expect(
         MoodTheme.quadrantLabel(MoodIdentity.charged),

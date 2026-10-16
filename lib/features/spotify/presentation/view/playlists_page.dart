@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -65,9 +66,11 @@ class _SpotifyPlaylistsPageState extends State<SpotifyPlaylistsPage> {
                 return PlaylistCard(
                   playlist: playlist,
                   onTap: () {
-                    context.push(
-                      RouteNames.playlistTracksFor(playlist.id),
-                      extra: playlist,
+                    unawaited(
+                      context.push(
+                        RouteNames.playlistTracksFor(playlist.id),
+                        extra: playlist,
+                      ),
                     );
                   },
                 );

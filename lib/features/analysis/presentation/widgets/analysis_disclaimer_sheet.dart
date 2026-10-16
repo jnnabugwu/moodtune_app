@@ -19,9 +19,9 @@ Future<bool?> showAnalysisDisclaimerSheet(
           const SizedBox(height: 12),
           Text(
             'Requirements',
-            style: CupertinoTheme.of(ctx).textTheme.textStyle.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: CupertinoTheme.of(
+              ctx,
+            ).textTheme.textStyle.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
           Text('• Playlist must have at least $minTracks tracks.'),

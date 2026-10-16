@@ -50,17 +50,17 @@ class SpotifyBloc extends Bloc<SpotifyEvent, SpotifyState> {
     Emitter<SpotifyState> emit,
   ) async {
     // #region agent log
+    final payload = {
+      'sessionId': 'debug-session',
+      'runId': 'prefix-connect',
+      'hypothesisId': 'H-start',
+      'location': 'spotify_bloc.dart:_onStarted',
+      'message': 'SpotifyStarted received',
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+    };
+    // Debug trace for the Spotify connect flow.
     // ignore: avoid_print
-    print(
-      'AGENTLOG ${{
-        'sessionId': 'debug-session',
-        'runId': 'prefix-connect',
-        'hypothesisId': 'H-start',
-        'location': 'spotify_bloc.dart:_onStarted',
-        'message': 'SpotifyStarted received',
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
-      }}',
-    );
+    print('AGENTLOG $payload');
     // #endregion
     emit(state.copyWith(status: SpotifyStatus.loading, error: null));
     final result = await _checkSpotifyConnection();
@@ -91,25 +91,15 @@ class SpotifyBloc extends Bloc<SpotifyEvent, SpotifyState> {
     SpotifyAuthorizeRequested event,
     Emitter<SpotifyState> emit,
   ) async {
-    emit(
-      state.copyWith(
-        status: SpotifyStatus.launching,
-      ),
-    );
+    emit(state.copyWith(status: SpotifyStatus.launching));
 
     final result = await _getAuthorizeUrl();
     result.fold(
       (failure) => emit(
-        state.copyWith(
-          status: SpotifyStatus.error,
-          error: failure.message,
-        ),
+        state.copyWith(status: SpotifyStatus.error, error: failure.message),
       ),
       (url) => emit(
-        state.copyWith(
-          status: SpotifyStatus.awaitingCode,
-          authorizeUrl: url,
-        ),
+        state.copyWith(status: SpotifyStatus.awaitingCode, authorizeUrl: url),
       ),
     );
   }
@@ -118,12 +108,7 @@ class SpotifyBloc extends Bloc<SpotifyEvent, SpotifyState> {
     SpotifyAuthCodeReceived event,
     Emitter<SpotifyState> emit,
   ) async {
-    emit(
-      state.copyWith(
-        status: SpotifyStatus.connecting,
-        error: null,
-      ),
-    );
+    emit(state.copyWith(status: SpotifyStatus.connecting, error: null));
 
     final result = await _connectSpotify(event.code);
     await result.fold(
@@ -154,10 +139,7 @@ class SpotifyBloc extends Bloc<SpotifyEvent, SpotifyState> {
     final result = await _disconnectSpotify();
     result.fold(
       (failure) => emit(
-        state.copyWith(
-          status: SpotifyStatus.error,
-          error: failure.message,
-        ),
+        state.copyWith(status: SpotifyStatus.error, error: failure.message),
       ),
       (_) => emit(
         state.copyWith(
@@ -178,12 +160,7 @@ class SpotifyBloc extends Bloc<SpotifyEvent, SpotifyState> {
   }
 
   Future<void> _loadProfile(Emitter<SpotifyState> emit) async {
-    emit(
-      state.copyWith(
-        status: SpotifyStatus.loading,
-        error: null,
-      ),
-    );
+    emit(state.copyWith(status: SpotifyStatus.loading, error: null));
 
     final result = await _getSpotifyProfile();
     result.fold(
@@ -215,16 +192,8 @@ class SpotifyBloc extends Bloc<SpotifyEvent, SpotifyState> {
       offset: event.offset,
     );
     result.fold(
-      (failure) => emit(
-        state.copyWith(
-          error: failure.message,
-        ),
-      ),
-      (playlists) => emit(
-        state.copyWith(
-          playlists: playlists,
-        ),
-      ),
+      (failure) => emit(state.copyWith(error: failure.message)),
+      (playlists) => emit(state.copyWith(playlists: playlists)),
     );
   }
 
@@ -233,10 +202,7 @@ class SpotifyBloc extends Bloc<SpotifyEvent, SpotifyState> {
     Emitter<SpotifyState> emit,
   ) async {
     emit(
-      state.copyWith(
-        playlistTracksLoading: true,
-        playlistTracksError: null,
-      ),
+      state.copyWith(playlistTracksLoading: true, playlistTracksError: null),
     );
 
     final result = await _repository.getPlaylistTracks(
@@ -252,10 +218,7 @@ class SpotifyBloc extends Bloc<SpotifyEvent, SpotifyState> {
         ),
       ),
       (tracks) => emit(
-        state.copyWith(
-          playlistTracksLoading: false,
-          playlistTracks: tracks,
-        ),
+        state.copyWith(playlistTracksLoading: false, playlistTracks: tracks),
       ),
     );
   }

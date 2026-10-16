@@ -8,11 +8,7 @@ import 'package:moodtune_app/features/analysis/domain/entities/history_entry.dar
 /// Displays the mood chip, title (truncated to 24 chars), artist name for
 /// song entries, analysis date, and confidence percentage.
 class HistoryRowItem extends StatelessWidget {
-  const HistoryRowItem({
-    required this.item,
-    required this.onTap,
-    super.key,
-  });
+  const HistoryRowItem({required this.item, required this.onTap, super.key});
 
   final HistoryEntry item;
   final VoidCallback onTap;

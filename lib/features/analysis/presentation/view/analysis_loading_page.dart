@@ -16,10 +16,7 @@ enum AnalysisSource { upload, catalog }
 ///
 /// Pass this as `extra` when pushing [RouteNames.analysisLoading].
 class AnalysisLoadingArgs {
-  const AnalysisLoadingArgs({
-    required this.source,
-    this.trackDurationSeconds,
-  });
+  const AnalysisLoadingArgs({required this.source, this.trackDurationSeconds});
 
   final AnalysisSource source;
 
@@ -112,30 +109,26 @@ class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
     _phaseTimer?.cancel();
     _timeoutTimer?.cancel();
 
-    _phaseTimer = Timer.periodic(
-      const Duration(seconds: _phaseIntervalSecs),
-      (_) {
-        if (!mounted) return;
-        setState(() {
-          _elapsedSecs += _phaseIntervalSecs;
-          if (_currentPhase < _phases.length - 1) _currentPhase++;
-          if (_elapsedSecs >= _blurRevealSecs) _blurVisible = true;
-        });
-      },
-    );
+    _phaseTimer = Timer.periodic(const Duration(seconds: _phaseIntervalSecs), (
+      _,
+    ) {
+      if (!mounted) return;
+      setState(() {
+        _elapsedSecs += _phaseIntervalSecs;
+        if (_currentPhase < _phases.length - 1) _currentPhase++;
+        if (_elapsedSecs >= _blurRevealSecs) _blurVisible = true;
+      });
+    });
 
     // For tracks longer than 4 min, skip the timeout UI entirely.
     // The BLoC error state handles genuine backend failures, and Dio's own
     // receive timeout (90 s) acts as the hard ceiling.
     if (!_isLongTrack) {
-      _timeoutTimer = Timer(
-        const Duration(seconds: _timeoutSecs),
-        () {
-          if (!mounted) return;
-          _phaseTimer?.cancel();
-          setState(() => _timedOut = true);
-        },
-      );
+      _timeoutTimer = Timer(const Duration(seconds: _timeoutSecs), () {
+        if (!mounted) return;
+        _phaseTimer?.cancel();
+        setState(() => _timedOut = true);
+      });
     }
   }
 
@@ -439,10 +432,7 @@ class _TimeoutState extends StatelessWidget {
               child: const Text('Try again'),
             ),
             const SizedBox(width: 16),
-            CupertinoButton(
-              onPressed: onCancel,
-              child: const Text('Cancel'),
-            ),
+            CupertinoButton(onPressed: onCancel, child: const Text('Cancel')),
           ],
         ),
       ],
@@ -485,10 +475,7 @@ class _ErrorState extends StatelessWidget {
         ),
         const SizedBox(height: 32),
         if (isRateLimit)
-          CupertinoButton.filled(
-            onPressed: onCancel,
-            child: const Text('OK'),
-          )
+          CupertinoButton.filled(onPressed: onCancel, child: const Text('OK'))
         else
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -498,10 +485,7 @@ class _ErrorState extends StatelessWidget {
                 child: const Text('Try again'),
               ),
               const SizedBox(width: 16),
-              CupertinoButton(
-                onPressed: onCancel,
-                child: const Text('Cancel'),
-              ),
+              CupertinoButton(onPressed: onCancel, child: const Text('Cancel')),
             ],
           ),
       ],

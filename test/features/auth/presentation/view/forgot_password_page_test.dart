@@ -84,9 +84,7 @@ void main() {
       ).called(1);
     });
 
-    testWidgets('submitting the keyboard sends the reset link', (
-      tester,
-    ) async {
+    testWidgets('submitting the keyboard sends the reset link', (tester) async {
       final bloc = mockAuthBloc(idle);
       await tester.pumpApp(
         const ForgotPasswordPage(prefillEmail: testEmail),

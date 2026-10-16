@@ -266,10 +266,7 @@ void main() {
       final source = platform.loadArgs.single['audioSource'] as Map;
       expect(source['type'], 'clipping');
       expect(source['end'], const Duration(seconds: 30).inMicroseconds);
-      expect(
-        (source['child'] as Map)['uri'],
-        'https://example.com/audio.mp3',
-      );
+      expect((source['child'] as Map)['uri'], 'https://example.com/audio.mp3');
       expect(platform.calls, isNot(contains('play')));
 
       // Finish loading -> playback starts.

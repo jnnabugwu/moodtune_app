@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
@@ -115,11 +116,13 @@ class _UploadMusicPageState extends State<UploadMusicPage> {
         album: _albumCtrl.text.trim(),
       ),
     );
-    context.push(
-      RouteNames.analysisLoading,
-      extra: AnalysisLoadingArgs(
-        source: AnalysisSource.upload,
-        trackDurationSeconds: estimatedDurationSeconds,
+    unawaited(
+      context.push(
+        RouteNames.analysisLoading,
+        extra: AnalysisLoadingArgs(
+          source: AnalysisSource.upload,
+          trackDurationSeconds: estimatedDurationSeconds,
+        ),
       ),
     );
   }
@@ -392,10 +395,7 @@ class _SelectedState extends StatelessWidget {
           CupertinoButton(
             padding: EdgeInsets.zero,
             onPressed: onChangeTap,
-            child: const Text(
-              'Change file',
-              style: TextStyle(fontSize: 13),
-            ),
+            child: const Text('Change file', style: TextStyle(fontSize: 13)),
           ),
         ],
       ),
@@ -404,10 +404,7 @@ class _SelectedState extends StatelessWidget {
 }
 
 class _ErrorState extends StatelessWidget {
-  const _ErrorState({
-    required this.error,
-    required this.onChangeTap,
-  });
+  const _ErrorState({required this.error, required this.onChangeTap});
 
   final _FileError error;
   final VoidCallback onChangeTap;
@@ -491,10 +488,7 @@ class _DashedBorderPainter extends CustomPainter {
       var distance = 0.0;
       while (distance < metric.length) {
         final end = math.min(distance + dashLength, metric.length);
-        dashedPath.addPath(
-          metric.extractPath(distance, end),
-          Offset.zero,
-        );
+        dashedPath.addPath(metric.extractPath(distance, end), Offset.zero);
         distance += dashLength + gapLength;
       }
     }

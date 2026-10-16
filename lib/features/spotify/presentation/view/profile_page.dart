@@ -204,9 +204,7 @@ class _RecentAnalyses extends StatelessWidget {
                   // Playlist entries navigate to the result page (fetched by
                   // ID). Song entries have no detail page yet.
                   onTap: entry.type == HistoryEntryType.playlist
-                      ? () => context.go(
-                          RouteNames.analysisResultFor(entry.id),
-                        )
+                      ? () => context.go(RouteNames.analysisResultFor(entry.id))
                       : null,
                 ),
               ),

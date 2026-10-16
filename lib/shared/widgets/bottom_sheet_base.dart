@@ -40,10 +40,7 @@ class MoodTuneBottomSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Padding(
-              padding: contentPadding,
-              child: child,
-            ),
+            Padding(padding: contentPadding, child: child),
           ],
         ),
       ),

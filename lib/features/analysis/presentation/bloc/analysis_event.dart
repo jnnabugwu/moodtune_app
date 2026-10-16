@@ -8,10 +8,7 @@ abstract class AnalysisEvent extends Equatable {
 }
 
 class AnalyzePlaylistRequested extends AnalysisEvent {
-  const AnalyzePlaylistRequested({
-    required this.playlistId,
-    this.limit = 50,
-  });
+  const AnalyzePlaylistRequested({required this.playlistId, this.limit = 50});
 
   final String playlistId;
   final int limit;

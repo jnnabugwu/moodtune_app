@@ -63,10 +63,7 @@ void main() {
 
     final result = await repository.searchTracks();
 
-    expect(
-      result.fold((f) => f, (_) => null),
-      ServerFailure(error.toString()),
-    );
+    expect(result.fold((f) => f, (_) => null), ServerFailure(error.toString()));
   });
 
   test('returns empty Right when nothing is downloadable', () async {

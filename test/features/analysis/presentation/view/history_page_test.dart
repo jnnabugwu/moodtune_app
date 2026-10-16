@@ -129,9 +129,7 @@ void main() {
         tester,
       ) async {
         // History loaded but the filtered view is empty.
-        final bloc = mockAnalysisBloc(
-          AnalysisState(history: testHistory(3)),
-        );
+        final bloc = mockAnalysisBloc(AnalysisState(history: testHistory(3)));
 
         await tester.pumpApp(const HistoryPage(), analysisBloc: bloc);
         await tester.pumpAndSettle();

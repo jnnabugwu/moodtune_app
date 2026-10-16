@@ -169,9 +169,7 @@ void main() {
         await _dispose(tester);
       });
 
-      testWidgets('Cancel on timeout returns to upload screen', (
-        tester,
-      ) async {
+      testWidgets('Cancel on timeout returns to upload screen', (tester) async {
         await _pumpLoading(tester);
         await _advance(tester, 35);
 
@@ -208,9 +206,7 @@ void main() {
     });
 
     group('cancel', () {
-      testWidgets('returns to upload screen for upload source', (
-        tester,
-      ) async {
+      testWidgets('returns to upload screen for upload source', (tester) async {
         await _pumpLoading(tester);
 
         await tester.tap(find.text('Cancel'));

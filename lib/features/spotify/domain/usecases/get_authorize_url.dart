@@ -8,7 +8,7 @@ class GetAuthorizeUrl {
   final SpotifyRepository _repository;
 
   /// Fetches the authorization URL used to start the OAuth flow.
-  ResultFuture<String> call() async {
+  ResultFuture<String> call() {
     return _repository.getAuthorizeUrl();
   }
 }

@@ -155,9 +155,7 @@ void main() {
 
   group('NarrationInput', () {
     test('uses the on-screen mood name, not the backend label', () {
-      final input = narrationInputFor(
-        buildAnalysis(primaryMood: 'calm').mood,
-      );
+      final input = narrationInputFor(buildAnalysis(primaryMood: 'calm').mood);
 
       expect(input.mood, 'serene');
       expect(input.moodSummary, 'calm and positive');

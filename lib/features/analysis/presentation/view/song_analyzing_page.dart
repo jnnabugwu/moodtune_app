@@ -6,11 +6,7 @@ import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.d
 import 'package:moodtune_app/features/spotify/domain/entities/spotify_track.dart';
 
 class SongAnalyzingPage extends StatelessWidget {
-  const SongAnalyzingPage({
-    required this.trackId,
-    this.track,
-    super.key,
-  });
+  const SongAnalyzingPage({required this.trackId, this.track, super.key});
 
   final String trackId;
   final SpotifyTrack? track;
@@ -25,10 +21,7 @@ class SongAnalyzingPage extends StatelessWidget {
         if (state.status == AnalysisStatus.success &&
             state.currentSongAnalysis != null) {
           final analysis = state.currentSongAnalysis!;
-          context.go(
-            RouteNames.songResult,
-            extra: analysis,
-          );
+          context.go(RouteNames.songResult, extra: analysis);
         }
       },
       child: CupertinoPageScaffold(

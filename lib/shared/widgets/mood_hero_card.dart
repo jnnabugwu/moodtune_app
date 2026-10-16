@@ -16,10 +16,7 @@ import 'package:moodtune_app/shared/widgets/confidence_ring.dart';
 /// When [MediaQueryData.disableAnimations] is true all elements appear
 /// instantly at full opacity.
 class MoodHeroCard extends StatefulWidget {
-  const MoodHeroCard({
-    required this.analysis,
-    super.key,
-  });
+  const MoodHeroCard({required this.analysis, super.key});
 
   final AudioUploadAnalysis analysis;
 
@@ -166,10 +163,7 @@ class _MoodHeroCardState extends State<MoodHeroCard>
             // Confidence ring — mounts and self-animates when revealed
             FadeTransition(
               opacity: _ringOpacity,
-              child: ConfidenceRing(
-                value: confidence,
-                color: colors.text,
-              ),
+              child: ConfidenceRing(value: confidence, color: colors.text),
             ),
           ],
         ),

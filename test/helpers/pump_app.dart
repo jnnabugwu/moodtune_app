@@ -41,10 +41,7 @@ extension PumpApp on WidgetTester {
       initialLocation: testRoutePath,
       initialExtra: extra,
       routes: [
-        GoRoute(
-          path: testRoutePath,
-          builder: (_, _) => widget,
-        ),
+        GoRoute(path: testRoutePath, builder: (_, _) => widget),
         ...extraRoutes,
       ],
       errorBuilder: (_, state) => CupertinoPageScaffold(

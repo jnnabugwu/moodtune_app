@@ -8,10 +8,7 @@ import 'package:flutter/cupertino.dart';
 /// Uses the wireframe neutral palette — warm cream background with dark-brown
 /// text — so the pills read cleanly on any page background.
 class MoodDescriptorTags extends StatelessWidget {
-  const MoodDescriptorTags({
-    required this.tags,
-    super.key,
-  });
+  const MoodDescriptorTags({required this.tags, super.key});
 
   final List<String> tags;
 

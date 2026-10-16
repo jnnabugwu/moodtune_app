@@ -48,9 +48,7 @@ MockSpotifyBloc mockSpotifyBloc([SpotifyState state = const SpotifyState()]) {
   return bloc;
 }
 
-MockCatalogBloc mockCatalogBloc([
-  CatalogState state = const CatalogInitial(),
-]) {
+MockCatalogBloc mockCatalogBloc([CatalogState state = const CatalogInitial()]) {
   final bloc = MockCatalogBloc();
   when(() => bloc.state).thenReturn(state);
   return bloc;

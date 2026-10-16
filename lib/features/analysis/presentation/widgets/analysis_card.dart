@@ -2,11 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:moodtune_app/features/analysis/domain/entities/history_entry.dart';
 
 class AnalysisCard extends StatelessWidget {
-  const AnalysisCard({
-    required this.entry,
-    this.onTap,
-    super.key,
-  });
+  const AnalysisCard({required this.entry, this.onTap, super.key});
 
   final HistoryEntry entry;
   final VoidCallback? onTap;
@@ -68,10 +64,7 @@ class AnalysisCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _Tag(confidencePct),
-                _Tag(typeLabel),
-              ],
+              children: [_Tag(confidencePct), _Tag(typeLabel)],
             ),
           ],
         ),
@@ -94,9 +87,9 @@ class _Tag extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(
-          fontSize: 12,
-        ),
+        style: CupertinoTheme.of(
+          context,
+        ).textTheme.textStyle.copyWith(fontSize: 12),
       ),
     );
   }

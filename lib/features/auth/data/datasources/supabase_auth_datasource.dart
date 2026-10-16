@@ -49,10 +49,7 @@ class SupabaseAuthDatasource {
   }
 
   Future<void> resendVerificationEmail(String email) async {
-    await _client.auth.resend(
-      type: OtpType.signup,
-      email: email,
-    );
+    await _client.auth.resend(type: OtpType.signup, email: email);
   }
 
   Future<void> sendPasswordResetEmail(String email) async {

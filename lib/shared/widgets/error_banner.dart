@@ -5,10 +5,7 @@ import 'package:flutter/cupertino.dart';
 /// Designed to sit directly above or below a form field or CTA — not as a
 /// full-screen overlay.
 class ErrorBanner extends StatelessWidget {
-  const ErrorBanner({
-    required this.message,
-    super.key,
-  });
+  const ErrorBanner({required this.message, super.key});
 
   final String message;
 
