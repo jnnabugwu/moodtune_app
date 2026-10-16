@@ -114,14 +114,8 @@ const yamnetSignalExpectedJson = '''
     }
   ],
   "expected": {
-    "primaryMood": "angry",
-    "probabilities": {
-      "happy": 7.76536551332546e-05,
-      "energetic": 4.9500828070423975e-05,
-      "calm": 0.0001830998161416279,
-      "angry": 0.9468551362571362,
-      "sad": 0.05283460944351858
-    },
+    "primaryMood": null,
+    "probabilities": null,
     "tags": [
       "synths",
       "singing bowl",

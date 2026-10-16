@@ -2,8 +2,22 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moodtune_app/features/on_device_mood/data/yamnet_engine.dart';
+import 'package:moodtune_app/features/on_device_mood/domain/decoded_audio.dart';
 
 void main() {
+  test('YamnetEngine rejects audio that is not 16 kHz', () {
+    final audio = DecodedAudio(
+      windows: [Float32List(4)],
+      startSeconds: const [0],
+      durationSeconds: 1,
+      sampleRate: 44100,
+      sourceSampleRate: 44100,
+      channelCount: 1,
+    );
+
+    expect(YamnetEngine().score(audio), throwsArgumentError);
+  });
+
   group('YamnetEngine.poolFrames', () {
     const frame = YamnetEngine.frameSamples;
     const hop = YamnetEngine.hopSamples;

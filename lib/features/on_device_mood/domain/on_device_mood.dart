@@ -62,7 +62,9 @@ class OnDeviceMoodAttempt extends Equatable {
   /// * `unsupported`: no native decoder on this platform (Android).
   /// * `download: <reason>`: fetching a catalog track failed, e.g.
   ///   `download: receiveTimeout`.
+  /// * `busy`: a timed-out attempt is still running on the device.
   /// * `timeout`: classification ran past its deadline.
+  /// * `no_mood`: no mood class scored high enough (silence, test tones).
   /// * `late`: the backend answered and the grace period ran out first.
   /// * `decode: <code>`: the native decoder's error code, e.g.
   ///   `decode: unreadable`.

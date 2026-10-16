@@ -9,6 +9,7 @@
   "mood": {
     "pooling": "mean",
     "epsilon": 1e-09,
+    "minScore": 0.0005,
     "logScoreMeans": {
       "happy": -7.265740394592285,
       "energetic": -6.815471172332764,

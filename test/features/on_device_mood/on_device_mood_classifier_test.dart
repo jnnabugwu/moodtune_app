@@ -20,6 +20,7 @@ const _model = YamnetMoodModel(
   moodClasses: [(index: 0, label: 'happy'), (index: 1, label: 'sad')],
   logScoreMeans: {'happy': 0, 'sad': 0},
   epsilon: 1e-9,
+  minScore: 1e-3,
   tagClasses: [(index: 2, tag: 'piano')],
   tagThreshold: null,
   maxTags: 3,
@@ -40,18 +41,25 @@ class FakeDecoder implements AudioWindowDecoder {
 }
 
 class FakeEngine implements AudioClassifierEngine {
-  FakeEngine({this.error, this.delay = Duration.zero});
+  FakeEngine({
+    this.error,
+    this.delay = Duration.zero,
+    this.scores = const [0.1, 0.4, 0.2],
+  });
 
   final Exception? error;
   final Duration delay;
+  final List<double> scores;
+  final received = <DecodedAudio>[];
 
   @override
   Future<ClassScores> score(DecodedAudio audio) async {
+    received.add(audio);
     await Future<void>.delayed(delay);
     if (error != null) throw error!;
     return ClassScores(
-      mean: Float32List.fromList([0.1, 0.4, 0.2]),
-      peak: Float32List.fromList([0.1, 0.4, 0.2]),
+      mean: Float32List.fromList(scores),
+      peak: Float32List.fromList(scores),
     );
   }
 }
@@ -60,15 +68,18 @@ void main() {
   group('OnDeviceMoodClassifier', () {
     test('decodes, scores and interprets the file', () async {
       final decoder = FakeDecoder();
+      final engine = FakeEngine();
       final classifier = OnDeviceMoodClassifier(
         decoder: decoder,
-        engine: FakeEngine(),
+        engine: engine,
         loadModel: () async => _model,
       );
 
       final mood = await classifier.classify('/song.mp3');
 
       expect(decoder.paths, ['/song.mp3']);
+      expect(engine.received, hasLength(1));
+      expect(engine.received.single, same(_audio));
       expect(mood?.primaryMood, 'sad');
       expect(mood?.tags, ['piano']);
     });
@@ -104,6 +115,35 @@ void main() {
       );
 
       expect(await classifier.classify('/song.mp3'), isNull);
+    });
+
+    test('skips new attempts until timed-out work finishes', () async {
+      final decoder = FakeDecoder();
+      final classifier = OnDeviceMoodClassifier(
+        decoder: decoder,
+        engine: FakeEngine(delay: const Duration(milliseconds: 50)),
+        loadModel: () async => _model,
+        timeout: const Duration(milliseconds: 10),
+      );
+
+      expect((await classifier.attempt('/a.mp3')).failure, 'timeout');
+      expect((await classifier.attempt('/b.mp3')).failure, 'busy');
+      expect(decoder.paths, ['/a.mp3']);
+
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+      await classifier.classify('/c.mp3');
+      expect(decoder.paths, ['/a.mp3', '/c.mp3']);
+    });
+
+    test('returns null when the audio has no mood', () async {
+      final classifier = OnDeviceMoodClassifier(
+        decoder: FakeDecoder(),
+        engine: FakeEngine(scores: const [0, 0, 0.2]),
+        loadModel: () async => _model,
+      );
+
+      expect(await classifier.classify('/tone.wav'), isNull);
+      expect((await classifier.attempt('/tone.wav')).failure, 'no_mood');
     });
 
     test('loads the config once and reuses it', () async {
