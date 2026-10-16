@@ -1,12 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:moodtune_app/app/theme/mood_theme.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/di/injector.dart';
 import 'package:moodtune_app/features/analysis/domain/entities/audio_upload_analysis.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/analysis/presentation/view/analysis_loading_page.dart';
 import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:moodtune_app/features/mood_feedback/mood_feedback.dart';
+import 'package:moodtune_app/features/mood_feedback/presentation/mood_observation_recorder.dart';
 import 'package:moodtune_app/features/narration/presentation/mood_narration_text.dart';
 import 'package:moodtune_app/shared/widgets/analysis_source_sheet.dart';
 import 'package:moodtune_app/shared/widgets/collapsible_section.dart';
@@ -216,6 +221,35 @@ class _ResultsPageState extends State<ResultsPage>
                           height: 1.5,
                         ),
                       ),
+
+                      // "Does this feel right?" — feeds the comparison of the
+                      // backend and on-device moods (ROADMAP OD-4).
+                      if (state.observationId case final id?)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          child: MoodFeedbackPrompt(
+                            key: ValueKey(id),
+                            displayedMood: MoodTheme.fromString(
+                              analysis.mood.primaryMood,
+                            ),
+                            onAgree: () => unawaited(
+                              getIt<MoodObservationRecorder>().sendFeedback(
+                                id,
+                                agrees: true,
+                              ),
+                            ),
+                            onDisagree: (mood) => unawaited(
+                              getIt<MoodObservationRecorder>().sendFeedback(
+                                id,
+                                agrees: false,
+                                userMood: mood,
+                              ),
+                            ),
+                          ),
+                        ),
 
                       // Audio details collapsible
                       Padding(

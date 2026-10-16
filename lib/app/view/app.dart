@@ -6,6 +6,7 @@ import 'package:moodtune_app/di/injector.dart';
 import 'package:moodtune_app/features/analysis/domain/repositories/analysis_repository.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:moodtune_app/features/mood_feedback/presentation/mood_observation_recorder.dart';
 import 'package:moodtune_app/features/on_device_mood/presentation/mood_switchover.dart';
 import 'package:moodtune_app/features/spotify/domain/repositories/spotify_repository.dart';
 import 'package:moodtune_app/features/spotify/domain/usecases/usecases.dart';
@@ -45,6 +46,7 @@ class App extends StatelessWidget {
             create: (context) => AnalysisBloc(
               repository: context.read<AnalysisRepository>(),
               switchover: getIt<MoodSwitchover>(),
+              recorder: getIt<MoodObservationRecorder>(),
             ),
           ),
         ],

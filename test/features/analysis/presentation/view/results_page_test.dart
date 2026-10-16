@@ -2,6 +2,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/di/injector.dart';
 import 'package:moodtune_app/features/analysis/domain/entities/audio_upload_analysis.dart';
@@ -10,6 +11,8 @@ import 'package:moodtune_app/features/analysis/presentation/view/analysis_loadin
 import 'package:moodtune_app/features/analysis/presentation/view/results_page.dart';
 import 'package:moodtune_app/features/auth/domain/entities/app_user.dart';
 import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:moodtune_app/features/mood_feedback/mood_feedback.dart';
+import 'package:moodtune_app/features/mood_feedback/presentation/mood_observation_recorder.dart';
 import 'package:moodtune_app/features/narration/presentation/mood_narrator.dart';
 import 'package:moodtune_app/shared/widgets/mood_descriptor_tags.dart';
 import 'package:moodtune_app/shared/widgets/mood_hero_card.dart';
@@ -25,6 +28,8 @@ const _authenticated = AuthState(
 );
 
 const _urlLauncherChannel = MethodChannel('plugins.flutter.io/url_launcher');
+
+class MockObservationRecorder extends Mock implements MoodObservationRecorder {}
 
 void main() {
   // ResultsPage resolves MoodNarrator from getIt. An unavailable engine makes
@@ -177,6 +182,50 @@ void main() {
           find.byType(MoodDescriptorTags),
         );
         expect(pills.tags, ['vocals', 'piano']);
+      });
+
+      testWidgets('asks "Does this feel right?" and sends the answer', (
+        tester,
+      ) async {
+        final recorder = MockObservationRecorder();
+        when(
+          () => recorder.sendFeedback(
+            any(),
+            agrees: any(named: 'agrees'),
+            userMood: any(named: 'userMood'),
+          ),
+        ).thenAnswer((_) async {});
+        getIt.registerSingleton<MoodObservationRecorder>(recorder);
+        addTearDown(() => getIt.unregister<MoodObservationRecorder>());
+
+        await pumpResults(
+          tester,
+          analysisState: AnalysisState(
+            currentUploadAnalysis: testUploadAnalysis(),
+            observationId: 'obs-1',
+          ),
+        );
+        await tester.scrollUntilVisible(
+          find.text('Does this feel right?'),
+          200,
+        );
+        await tester.tap(find.bySemanticsLabel('Yes, this feels right'));
+        await tester.pumpAndSettle();
+
+        verify(() => recorder.sendFeedback('obs-1', agrees: true)).called(1);
+      });
+
+      testWidgets('shows no feedback prompt without an observation', (
+        tester,
+      ) async {
+        await pumpResults(
+          tester,
+          analysisState: AnalysisState(
+            currentUploadAnalysis: testUploadAnalysis(),
+          ),
+        );
+
+        expect(find.byType(MoodFeedbackPrompt), findsNothing);
       });
 
       testWidgets('hides descriptors and reasoning when empty', (tester) async {

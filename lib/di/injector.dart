@@ -8,6 +8,8 @@ import 'package:moodtune_app/features/catalog/data/repositories/catalog_reposito
 import 'package:moodtune_app/features/catalog/domain/repositories/catalog_repository.dart';
 import 'package:moodtune_app/features/catalog/domain/usecases/search_catalog.dart';
 import 'package:moodtune_app/features/catalog/presentation/bloc/catalog_bloc.dart';
+import 'package:moodtune_app/features/mood_feedback/mood_feedback.dart';
+import 'package:moodtune_app/features/mood_feedback/presentation/mood_observation_recorder.dart';
 import 'package:moodtune_app/features/narration/data/mood_narration_channel.dart';
 import 'package:moodtune_app/features/narration/presentation/mood_narrator.dart';
 import 'package:moodtune_app/features/on_device_mood/data/audio_decode_channel.dart';
@@ -67,10 +69,26 @@ Future<void> configureDependencies({
       () => MoodSwitchover(
         classifier: getIt(),
         downloader: DioAudioDownloader(),
-        // TODO(od-4): read the remote kill switch (GET /api/v1/config).
-        isEnabled: () async => true,
+        // Remote kill switch: GET /api/v1/config (ON_DEVICE_MOOD_ENABLED).
+        isEnabled: () async =>
+            (await getIt<AppConfigRepository>().load()).onDeviceMood,
       ),
     )
+    // Mood observations + "Does this feel right?" feedback (ROADMAP OD-4)
+    ..registerLazySingleton<AppConfigRepository>(
+      () => AppConfigRepositoryImpl(
+        remoteDataSource: AppConfigRemoteDataSource(baseUrl: apiBaseUrl),
+      ),
+    )
+    ..registerLazySingleton<MoodObservationRepository>(
+      () => MoodObservationRepositoryImpl(
+        remoteDataSource: MoodObservationRemoteDataSource(
+          baseUrl: apiBaseUrl,
+          tokenProvider: tokenProvider,
+        ),
+      ),
+    )
+    ..registerLazySingleton(() => MoodObservationRecorder(repository: getIt()))
     // Catalog use cases
     ..registerLazySingleton(() => SearchCatalog(getIt()))
     // Catalog BLoC — factory so each screen gets a fresh instance

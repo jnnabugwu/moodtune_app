@@ -7,12 +7,16 @@ import 'package:mocktail/mocktail.dart';
 import 'package:moodtune_app/core/error/failures.dart';
 import 'package:moodtune_app/features/analysis/domain/domain.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
+import 'package:moodtune_app/features/mood_feedback/mood_feedback.dart';
+import 'package:moodtune_app/features/mood_feedback/presentation/mood_observation_recorder.dart';
 import 'package:moodtune_app/features/on_device_mood/presentation/mood_switchover.dart';
 
 import '../../../../helpers/helpers.dart';
 import '../../../blocs_fixtures.dart';
 
 class MockMoodSwitchover extends Mock implements MoodSwitchover {}
+
+class MockRecorder extends Mock implements MoodObservationRecorder {}
 
 void main() {
   late MockAnalysisRepository repository;
@@ -396,7 +400,7 @@ void main() {
         const AnalysisState(),
         isNot(const AnalysisState(catalogError: 'x')),
       );
-      expect(const AnalysisState().props, hasLength(16));
+      expect(const AnalysisState().props, hasLength(17));
     });
   });
 
@@ -559,6 +563,41 @@ void main() {
           catalogStatus: CatalogAnalysisStatus.success,
           currentCatalogAnalysis: MoodSwitchover.apply(tCatalog, attempt),
           onDeviceAttempt: attempt,
+        ),
+      ],
+    );
+
+    blocTest<AnalysisBloc, AnalysisState>(
+      'records the result and exposes the observation id',
+      setUp: () {
+        when(
+          () => switchover.classifyFile(any()),
+        ).thenAnswer((_) async => attempt);
+      },
+      build: () {
+        final recorder = MockRecorder();
+        when(
+          () => recorder.record(
+            source: MoodObservationSource.upload,
+            backendMood: tUpload.mood.primaryMood,
+            displayed: MoodSwitchover.apply(tUpload, attempt),
+            attempt: attempt,
+          ),
+        ).thenReturn('obs-1');
+        return AnalysisBloc(
+          repository: repository,
+          switchover: switchover,
+          recorder: recorder,
+        );
+      },
+      act: (bloc) => bloc.add(upload),
+      skip: 1,
+      expect: () => [
+        AnalysisState(
+          uploadStatus: UploadStatus.success,
+          currentUploadAnalysis: MoodSwitchover.apply(tUpload, attempt),
+          onDeviceAttempt: attempt,
+          observationId: 'obs-1',
         ),
       ],
     );
