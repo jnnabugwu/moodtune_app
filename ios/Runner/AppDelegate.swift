@@ -18,6 +18,62 @@ import FoundationModels
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "MoodNarration") {
       MoodNarrationChannel.register(with: registrar.messenger())
     }
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "AudioDecode") {
+      AudioDecodeChannel.register(with: registrar.messenger())
+    }
+  }
+}
+
+/// Bridges Dart's `moodtune/audio_decode` channel to [AudioWindowDecoder].
+/// Decoding runs off the main thread; windows go back as Float32List.
+enum AudioDecodeChannel {
+  static func register(with messenger: FlutterBinaryMessenger) {
+    let channel = FlutterMethodChannel(name: "moodtune/audio_decode", binaryMessenger: messenger)
+    channel.setMethodCallHandler { call, result in
+      guard call.method == "decodeWindows" else {
+        result(FlutterMethodNotImplemented)
+        return
+      }
+      guard
+        let args = call.arguments as? [String: Any],
+        let path = args["path"] as? String,
+        let positions = (args["positions"] as? [NSNumber])?.map(\.doubleValue),
+        let windowSeconds = (args["windowSeconds"] as? NSNumber)?.doubleValue,
+        let sampleRate = (args["sampleRate"] as? NSNumber)?.doubleValue
+      else {
+        result(FlutterError(
+          code: "bad_args",
+          message: "Expected path, positions, windowSeconds and sampleRate",
+          details: nil
+        ))
+        return
+      }
+
+      DispatchQueue.global(qos: .userInitiated).async {
+        let reply: Any
+        do {
+          let decoded = try AudioWindowDecoder(targetSampleRate: sampleRate).decode(
+            url: URL(fileURLWithPath: path),
+            positions: positions,
+            windowSeconds: windowSeconds
+          )
+          reply = [
+            "windows": decoded.windows.map { window in
+              FlutterStandardTypedData(float32: window.withUnsafeBufferPointer { Data(buffer: $0) })
+            },
+            "startSeconds": decoded.startSeconds,
+            "durationSeconds": decoded.durationSeconds,
+            "sourceSampleRate": decoded.sourceSampleRate,
+            "channelCount": decoded.channelCount,
+          ] as [String: Any]
+        } catch let error as AudioWindowDecoder.DecodeError {
+          reply = FlutterError(code: error.code, message: error.message, details: nil)
+        } catch {
+          reply = FlutterError(code: "decode_failed", message: error.localizedDescription, details: nil)
+        }
+        DispatchQueue.main.async { result(reply) }
+      }
+    }
   }
 }
 
