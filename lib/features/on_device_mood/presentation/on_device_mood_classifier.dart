@@ -48,10 +48,10 @@ class OnDeviceMoodClassifier {
   }
 
   Future<OnDeviceMood> _classify(String path) async {
-    final stopwatch = Stopwatch()..start();
     final model = await _modelOnce();
+    final decodeStopwatch = Stopwatch()..start();
     final audio = await _decoder.decodeWindows(path);
-    final decodeMs = stopwatch.elapsedMilliseconds;
+    final decodeMs = decodeStopwatch.elapsedMilliseconds;
     final mood = model.interpret(await _engine.score(audio));
     final p = mood.probabilities[mood.primaryMood]!;
     talker.info(
