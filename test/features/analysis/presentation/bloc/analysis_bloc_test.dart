@@ -24,10 +24,23 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(Uint8List(0));
+    registerFallbackValue(
+      const ResultHistoryRecord(
+        source: ResultHistorySource.upload,
+        title: 'fallback',
+        displayedMood: 'happy',
+        displayedSource: MoodSource.backend,
+        backendMood: 'happy',
+      ),
+    );
   });
 
   setUp(() {
     repository = MockAnalysisRepository();
+    // Guests by default: nothing saved, so history isn't reloaded.
+    when(
+      () => repository.saveResultToHistory(any()),
+    ).thenAnswer((_) async => const Right(false));
   });
 
   AnalysisBloc buildBloc() => AnalysisBloc(repository: repository);
@@ -95,7 +108,11 @@ void main() {
           bloc.add(const AnalysisHistoryRequested(limit: 10, offset: 5)),
       expect: () => [
         const AnalysisState(historyLoading: true, historyMoodFilter: 'happy'),
-        AnalysisState(history: tHistory, filteredHistory: tHistory),
+        AnalysisState(
+          history: tHistory,
+          filteredHistory: tHistory,
+          historyLoaded: true,
+        ),
       ],
     );
 
@@ -401,7 +418,7 @@ void main() {
         const AnalysisState(),
         isNot(const AnalysisState(catalogError: 'x')),
       );
-      expect(const AnalysisState().props, hasLength(17));
+      expect(const AnalysisState().props, hasLength(18));
     });
   });
 
@@ -436,6 +453,208 @@ void main() {
         null,
       ]);
     });
+  });
+
+  group('result history', () {
+    const onDeviceAttempt = OnDeviceMoodAttempt(
+      mood: OnDeviceMood(
+        primaryMood: 'sad',
+        probabilities: {'sad': 0.9},
+        tags: [],
+      ),
+      elapsed: Duration(milliseconds: 80),
+    );
+    late MockMoodSwitchover switchover;
+
+    setUp(() {
+      switchover = MockMoodSwitchover();
+      when(
+        () => repository.analyzeUploadedAudio(
+          bytes: any(named: 'bytes'),
+          filename: any(named: 'filename'),
+          title: any(named: 'title'),
+          artist: any(named: 'artist'),
+          album: any(named: 'album'),
+        ),
+      ).thenAnswer((_) async => Right(tUpload));
+      when(
+        () => repository.analyzeCatalogTrack(
+          audioUrl: any(named: 'audioUrl'),
+          trackId: any(named: 'trackId'),
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          jamendoPageUrl: any(named: 'jamendoPageUrl'),
+        ),
+      ).thenAnswer((_) async => Right(tCatalog));
+    });
+
+    ResultHistoryRecord saved() =>
+        verify(
+              () => repository.saveResultToHistory(captureAny()),
+            ).captured.single
+            as ResultHistoryRecord;
+
+    blocTest<AnalysisBloc, AnalysisState>(
+      'saves an upload with both moods, titled by its filename',
+      setUp: () => when(
+        () => switchover.classifyFile('/tmp/Inside Outside.mp3'),
+      ).thenAnswer((_) async => onDeviceAttempt),
+      build: () => AnalysisBloc(repository: repository, switchover: switchover),
+      act: (bloc) => bloc.add(
+        const AudioUploadRequested(
+          bytes: [1],
+          filename: 'Inside Outside.mp3',
+          path: '/tmp/Inside Outside.mp3',
+        ),
+      ),
+      verify: (_) => expect(
+        saved(),
+        const ResultHistoryRecord(
+          source: ResultHistorySource.upload,
+          title: 'Inside Outside',
+          displayedMood: 'sad',
+          displayedSource: MoodSource.onDevice,
+          backendMood: 'energetic',
+          onDeviceMood: 'sad',
+        ),
+      ),
+    );
+
+    blocTest<AnalysisBloc, AnalysisState>(
+      'keeps the backend confidence when the backend mood is shown',
+      build: buildBloc,
+      act: (bloc) => bloc.add(
+        const AudioUploadRequested(
+          bytes: [1],
+          filename: 'a.mp3',
+          title: '  My Song  ',
+          artist: 'Me',
+        ),
+      ),
+      verify: (_) {
+        final record = saved();
+        expect(record.title, 'My Song');
+        expect(record.artist, 'Me');
+        expect(record.displayedSource, MoodSource.backend);
+        expect(record.onDeviceMood, isNull);
+        expect(record.confidence, 0.8);
+      },
+    );
+
+    blocTest<AnalysisBloc, AnalysisState>(
+      'saves a catalog track with its name, artist and id',
+      build: buildBloc,
+      act: (bloc) => bloc.add(
+        const CatalogTrackAnalyzeRequested(
+          audioUrl: 'https://audio',
+          trackId: 'j1',
+          trackName: 'Planet 21',
+          artistName: 'Someone',
+          jamendoPageUrl: 'https://jamendo.com/track/1',
+        ),
+      ),
+      verify: (_) {
+        final record = saved();
+        expect(record.source, ResultHistorySource.catalog);
+        expect(record.title, 'Planet 21');
+        expect(record.artist, 'Someone');
+        expect(record.trackId, 'j1');
+      },
+    );
+
+    blocTest<AnalysisBloc, AnalysisState>(
+      'reloads loaded history once the result is saved',
+      setUp: () {
+        when(
+          () => repository.saveResultToHistory(any()),
+        ).thenAnswer((_) async => const Right(true));
+        when(
+          () => repository.getHistory(
+            limit: any(named: 'limit'),
+            offset: any(named: 'offset'),
+          ),
+        ).thenAnswer((_) async => Right(tHistory));
+      },
+      build: buildBloc,
+      seed: () => AnalysisState(history: tHistory, historyLoaded: true),
+      act: (bloc) =>
+          bloc.add(const AudioUploadRequested(bytes: [1], filename: 'a.mp3')),
+      wait: const Duration(milliseconds: 10),
+      verify: (_) => verify(
+        () => repository.getHistory(
+          limit: any(named: 'limit'),
+          offset: any(named: 'offset'),
+        ),
+      ).called(1),
+    );
+
+    blocTest<AnalysisBloc, AnalysisState>(
+      'reloads history that loaded empty, so the first row shows up',
+      setUp: () {
+        when(
+          () => repository.saveResultToHistory(any()),
+        ).thenAnswer((_) async => const Right(true));
+        when(
+          () => repository.getHistory(
+            limit: any(named: 'limit'),
+            offset: any(named: 'offset'),
+          ),
+        ).thenAnswer((_) async => const Right([]));
+      },
+      build: buildBloc,
+      seed: () => const AnalysisState(historyLoaded: true),
+      act: (bloc) =>
+          bloc.add(const AudioUploadRequested(bytes: [1], filename: 'a.mp3')),
+      wait: const Duration(milliseconds: 10),
+      verify: (_) => verify(
+        () => repository.getHistory(
+          limit: any(named: 'limit'),
+          offset: any(named: 'offset'),
+        ),
+      ).called(1),
+    );
+
+    blocTest<AnalysisBloc, AnalysisState>(
+      'does not reload history for guests or before it is loaded',
+      build: buildBloc,
+      act: (bloc) =>
+          bloc.add(const AudioUploadRequested(bytes: [1], filename: 'a.mp3')),
+      wait: const Duration(milliseconds: 10),
+      verify: (_) => verifyNever(
+        () => repository.getHistory(
+          limit: any(named: 'limit'),
+          offset: any(named: 'offset'),
+        ),
+      ),
+    );
+
+    blocTest<AnalysisBloc, AnalysisState>(
+      'a failed save does not change the result',
+      setUp: () => when(
+        () => repository.saveResultToHistory(any()),
+      ).thenAnswer((_) async => const Left(ServerFailure('down'))),
+      build: buildBloc,
+      act: (bloc) =>
+          bloc.add(const AudioUploadRequested(bytes: [1], filename: 'a.mp3')),
+      wait: const Duration(milliseconds: 10),
+      expect: () => [
+        isA<AnalysisState>().having(
+          (s) => s.uploadStatus,
+          'uploadStatus',
+          UploadStatus.uploading,
+        ),
+        isA<AnalysisState>()
+            .having((s) => s.uploadStatus, 'uploadStatus', UploadStatus.success)
+            .having((s) => s.currentUploadAnalysis, 'result', tUpload)
+            .having((s) => s.uploadError, 'uploadError', isNull),
+      ],
+      verify: (bloc) {
+        verify(() => repository.saveResultToHistory(any())).called(1);
+        // Nothing is emitted after the failed save.
+        expect(bloc.state.currentUploadAnalysis, tUpload);
+        expect(bloc.state.uploadError, isNull);
+      },
+    );
   });
 
   group('on-device switchover', () {

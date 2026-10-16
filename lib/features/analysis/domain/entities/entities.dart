@@ -4,5 +4,6 @@ export 'history_entry.dart';
 export 'mood_distribution.dart';
 export 'mood_result.dart';
 export 'playlist_analysis.dart';
+export 'result_history_record.dart';
 export 'song_analysis_result.dart';
 export 'track_analysis.dart';

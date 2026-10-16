@@ -87,6 +87,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
       (analyses) => emit(
         state.copyWith(
           historyLoading: false,
+          historyLoaded: true,
           history: analyses,
           // Reset filtered view to full list on fresh load
           filteredHistory: analyses,
@@ -191,18 +192,30 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
       ),
       (analysis) {
         final displayed = MoodSwitchover.apply(analysis, attempt);
+        final observationId = _record(
+          MoodObservationSource.upload,
+          analysis,
+          displayed,
+          attempt,
+        );
         emit(
           state.copyWith(
             uploadStatus: UploadStatus.success,
             currentUploadAnalysis: displayed,
             uploadError: null,
             onDeviceAttempt: attempt,
-            observationId: _record(
-              MoodObservationSource.upload,
-              analysis,
-              displayed,
-              attempt,
-            ),
+            observationId: observationId,
+          ),
+        );
+        _saveToHistory(
+          ResultHistoryRecord.fromResult(
+            source: ResultHistorySource.upload,
+            title: _uploadTitle(event),
+            artist: event.artist,
+            backend: analysis,
+            displayed: displayed,
+            onDeviceMood: attempt?.mood?.primaryMood,
+            observationId: observationId,
           ),
         );
       },
@@ -248,17 +261,30 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
       ),
       (analysis) {
         final displayed = MoodSwitchover.apply(analysis, attempt);
+        final observationId = _record(
+          MoodObservationSource.catalog,
+          analysis,
+          displayed,
+          attempt,
+        );
         emit(
           state.copyWith(
             catalogStatus: CatalogAnalysisStatus.success,
             currentCatalogAnalysis: displayed,
             onDeviceAttempt: attempt,
-            observationId: _record(
-              MoodObservationSource.catalog,
-              analysis,
-              displayed,
-              attempt,
-            ),
+            observationId: observationId,
+          ),
+        );
+        _saveToHistory(
+          ResultHistoryRecord.fromResult(
+            source: ResultHistorySource.catalog,
+            title: event.trackName,
+            artist: event.artistName,
+            trackId: event.trackId,
+            backend: analysis,
+            displayed: displayed,
+            onDeviceMood: attempt?.mood?.primaryMood,
+            observationId: observationId,
           ),
         );
       },
@@ -295,4 +321,35 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
     displayed: displayed,
     attempt: attempt,
   );
+
+  /// Saves [record] to history without holding up the results screen.
+  /// Guests are skipped by the repository. Reloads history if it has been
+  /// loaded (even empty), so the new row shows up.
+  void _saveToHistory(ResultHistoryRecord record) {
+    unawaited(
+      _repository
+          .saveResultToHistory(record)
+          .then(
+            (result) => result.fold(
+              (failure) => talker.warning(
+                'Result not saved to history: ${failure.message}',
+              ),
+              (saved) {
+                if (saved && state.historyLoaded && !isClosed) {
+                  add(const AnalysisHistoryRequested());
+                }
+              },
+            ),
+          ),
+    );
+  }
+
+  /// The upload's title, else its filename without the extension.
+  static String _uploadTitle(AudioUploadRequested event) {
+    final title = event.title?.trim();
+    if (title != null && title.isNotEmpty) return title;
+    final name = event.filename;
+    final dot = name.lastIndexOf('.');
+    return dot > 0 ? name.substring(0, dot) : name;
+  }
 }
