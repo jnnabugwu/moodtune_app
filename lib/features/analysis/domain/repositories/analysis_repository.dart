@@ -31,4 +31,8 @@ abstract class AnalysisRepository {
     required String artistName,
     required String jamendoPageUrl,
   });
+
+  /// Saves a finished result to the signed-in user's history. Right(false)
+  /// when there's no signed-in user, so nothing was saved.
+  ResultFuture<bool> saveResultToHistory(ResultHistoryRecord record);
 }

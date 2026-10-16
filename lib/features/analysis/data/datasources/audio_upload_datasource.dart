@@ -54,6 +54,9 @@ class AudioUploadRemoteDataSource {
         'track_name': trackName,
         'artist_name': artistName,
         'jamendo_page_url': jamendoPageUrl,
+        // The app saves the finished result itself, with both engines'
+        // moods (POST /song/history).
+        'save_to_history': false,
       },
       options: await _options(),
     );

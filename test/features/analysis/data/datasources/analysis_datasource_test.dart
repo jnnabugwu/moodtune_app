@@ -181,6 +181,27 @@ void main() {
       });
     });
 
+    group('saveResultToHistory', () {
+      test('POSTs the body to /song/history with the bearer token', () async {
+        final saved = await build(
+          token: 'tok',
+        ).saveResultToHistory({'title': 'Song'});
+
+        expect(saved, isTrue);
+        expect(adapter.lastRequest.method, 'POST');
+        expect(adapter.lastRequest.path, '/song/history');
+        expect(adapter.lastRequest.headers['Authorization'], 'Bearer tok');
+        expect(adapter.lastRequest.data, {'title': 'Song'});
+      });
+
+      test('skips the request for guests', () async {
+        final saved = await build().saveResultToHistory({'title': 'Song'});
+
+        expect(saved, isFalse);
+        expect(adapter.requests, isEmpty);
+      });
+    });
+
     group('getSongHistory', () {
       test('GETs /song/history with default paging', () async {
         adapter.body = <String, dynamic>{

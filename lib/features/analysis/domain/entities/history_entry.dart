@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:moodtune_app/features/analysis/domain/entities/audio_upload_analysis.dart';
 
 enum HistoryEntryType { playlist, song }
 
@@ -14,6 +15,7 @@ class HistoryEntry extends Equatable {
     required this.createdAt,
     required this.type,
     this.subtitle,
+    this.comparison,
   });
 
   final String id;
@@ -24,10 +26,18 @@ class HistoryEntry extends Equatable {
   /// Artist name for song entries; null for playlist entries.
   final String? subtitle;
 
+  /// The mood the results screen showed.
   final String primaryMood;
-  final double confidence;
+
+  /// Null for on-device results: their probabilities are overconfident and
+  /// never shown until recalibrated (ROADMAP OD-5).
+  final double? confidence;
   final DateTime createdAt;
   final HistoryEntryType type;
+
+  /// Both engines' moods, for upload and catalog results saved with them.
+  /// Null for playlists and older rows.
+  final EngineComparison? comparison;
 
   @override
   List<Object?> get props => [
@@ -38,5 +48,42 @@ class HistoryEntry extends Equatable {
     confidence,
     createdAt,
     type,
+    comparison,
+  ];
+}
+
+/// The backend's and the on-device mood for one result, plus the user's
+/// "Does this feel right?" answer about the mood that was shown.
+class EngineComparison extends Equatable {
+  const EngineComparison({
+    required this.backendMood,
+    required this.displayedSource,
+    this.onDeviceMood,
+    this.agrees,
+    this.userMood,
+  });
+
+  /// Backend label (`happy`, `energetic`, `calm`, `angry` or `sad`).
+  final String backendMood;
+
+  /// On-device label (same vocabulary), or null when it didn't run.
+  final String? onDeviceMood;
+
+  /// Which engine's mood was shown, and so which one [agrees] is about.
+  final MoodSource displayedSource;
+
+  /// Null until the user answers.
+  final bool? agrees;
+
+  /// The display bucket the user picked on a thumbs-down, if any.
+  final String? userMood;
+
+  @override
+  List<Object?> get props => [
+    backendMood,
+    onDeviceMood,
+    displayedSource,
+    agrees,
+    userMood,
   ];
 }

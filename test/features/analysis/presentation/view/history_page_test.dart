@@ -2,10 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
+import 'package:moodtune_app/features/analysis/domain/entities/entities.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
+import 'package:moodtune_app/features/analysis/presentation/engine_comparison.dart';
 import 'package:moodtune_app/features/analysis/presentation/view/history_page.dart';
 import 'package:moodtune_app/shared/widgets/history_row_item.dart';
 import 'package:moodtune_app/shared/widgets/mood_chip.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../helpers/helpers.dart';
 import 'results_fixtures.dart';
@@ -290,6 +293,82 @@ void main() {
 
         expect(find.text(footnote), findsOneWidget);
         expect(find.text('Entry 49'), findsOneWidget);
+      });
+
+      group('engine comparison', () {
+        final compared = HistoryEntry(
+          id: 'c1',
+          title: 'Inside Outside',
+          primaryMood: 'calm',
+          confidence: null,
+          createdAt: DateTime.utc(2026, 10, 16),
+          type: HistoryEntryType.song,
+          comparison: const EngineComparison(
+            backendMood: 'happy',
+            onDeviceMood: 'calm',
+            displayedSource: MoodSource.onDevice,
+            agrees: true,
+          ),
+        );
+
+        testWidgets('is off by default and toggles from the nav bar', (
+          tester,
+        ) async {
+          SharedPreferences.setMockInitialValues({});
+          final preference = EngineComparisonPreference();
+          final bloc = mockAnalysisBloc(
+            AnalysisState(history: [compared], filteredHistory: [compared]),
+          );
+
+          await tester.pumpApp(
+            HistoryPage(comparisonPreference: preference),
+            analysisBloc: bloc,
+          );
+          await tester.pumpAndSettle();
+
+          expect(find.textContaining('agreed on'), findsNothing);
+          expect(find.textContaining('On-device SERENE'), findsNothing);
+
+          await tester.tap(find.bySemanticsLabel('Compare engines'));
+          await tester.pumpAndSettle();
+
+          expect(
+            find.text('On-device and backend agreed on 0 of 1'),
+            findsOneWidget,
+          );
+          expect(
+            find.text(
+              'Your answers: on-device right 1, backend right 0 (of 1)',
+            ),
+            findsOneWidget,
+          );
+          expect(
+            find.text('On-device SERENE · Backend UPBEAT · 👍'),
+            findsOneWidget,
+          );
+          expect(preference.enabled.value, isTrue);
+        });
+
+        testWidgets('starts on when it was left on', (tester) async {
+          SharedPreferences.setMockInitialValues({
+            'history.showEngineComparison': true,
+          });
+          final bloc = mockAnalysisBloc(
+            AnalysisState(history: [compared], filteredHistory: [compared]),
+          );
+
+          await tester.pumpApp(
+            HistoryPage(comparisonPreference: EngineComparisonPreference()),
+            analysisBloc: bloc,
+          );
+          await tester.pumpAndSettle();
+
+          expect(
+            find.bySemanticsLabel('Hide engine comparison'),
+            findsOneWidget,
+          );
+          expect(find.textContaining('agreed on'), findsOneWidget);
+        });
       });
     });
   });

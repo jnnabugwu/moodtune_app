@@ -59,6 +59,7 @@ void main() {
         0.5,
         _date,
         HistoryEntryType.song,
+        null,
       ]);
     });
 

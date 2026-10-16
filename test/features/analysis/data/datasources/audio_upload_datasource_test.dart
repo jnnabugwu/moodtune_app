@@ -69,6 +69,8 @@ void main() {
           'track_name': 'Name',
           'artist_name': 'Artist',
           'jamendo_page_url': 'https://jamendo/j1',
+          // The app saves the finished result itself (POST /song/history).
+          'save_to_history': false,
         });
         expect(result['id'], 'up-1');
       });

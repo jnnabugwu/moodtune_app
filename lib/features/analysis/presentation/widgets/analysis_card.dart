@@ -11,8 +11,11 @@ class AnalysisCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = CupertinoTheme.of(context);
     final isSong = entry.type == HistoryEntryType.song;
-    final confidencePct =
-        '${(entry.confidence * 100).toStringAsFixed(0)}% confidence';
+    final confidence = entry.confidence;
+    // On-device results have no confidence to show (see HistoryEntry).
+    final confidencePct = confidence == null
+        ? null
+        : '${(confidence * 100).toStringAsFixed(0)}% confidence';
     final typeLabel = isSong ? 'Song' : 'Playlist';
 
     return GestureDetector(
@@ -64,7 +67,10 @@ class AnalysisCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [_Tag(confidencePct), _Tag(typeLabel)],
+              children: [
+                if (confidencePct != null) _Tag(confidencePct),
+                _Tag(typeLabel),
+              ],
             ),
           ],
         ),

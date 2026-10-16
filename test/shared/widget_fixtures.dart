@@ -8,9 +8,10 @@ HistoryEntry buildHistoryEntry({
   String title = 'Morning Mix',
   String? subtitle,
   String primaryMood = 'happy',
-  double confidence = 0.87,
+  double? confidence = 0.87,
   DateTime? createdAt,
   HistoryEntryType type = HistoryEntryType.playlist,
+  EngineComparison? comparison,
 }) {
   return HistoryEntry(
     id: id,
@@ -20,6 +21,7 @@ HistoryEntry buildHistoryEntry({
     confidence: confidence,
     createdAt: createdAt ?? DateTime(2025, 3, 14),
     type: type,
+    comparison: comparison,
   );
 }
 

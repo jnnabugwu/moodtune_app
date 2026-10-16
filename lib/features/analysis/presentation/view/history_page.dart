@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moodtune_app/app/theme/mood_theme.dart';
+import 'package:moodtune_app/di/injector.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
+import 'package:moodtune_app/features/analysis/presentation/engine_comparison.dart';
 import 'package:moodtune_app/shared/widgets/analysis_source_sheet.dart';
 import 'package:moodtune_app/shared/widgets/history_row_item.dart';
 import 'package:moodtune_app/shared/widgets/mood_chip.dart';
@@ -13,9 +17,16 @@ import 'package:moodtune_app/shared/widgets/mood_chip.dart';
 /// navigation bar back button is hidden and history is loaded via the
 /// ambient [AnalysisBloc]; when false the page is a standalone push route.
 class HistoryPage extends StatefulWidget {
-  const HistoryPage({super.key, this.isEmbedded = false});
+  const HistoryPage({
+    super.key,
+    this.isEmbedded = false,
+    this.comparisonPreference,
+  });
 
   final bool isEmbedded;
+
+  /// Defaults to the app-wide instance from GetIt.
+  final EngineComparisonPreference? comparisonPreference;
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
@@ -38,9 +49,16 @@ class _HistoryPageState extends State<HistoryPage> {
     ),
   ];
 
+  late final EngineComparisonPreference _comparison =
+      widget.comparisonPreference ??
+      (getIt.isRegistered<EngineComparisonPreference>()
+          ? getIt<EngineComparisonPreference>()
+          : EngineComparisonPreference());
+
   @override
   void initState() {
     super.initState();
+    unawaited(_comparison.load());
     // Only fetch if not already loaded (embedded tab shares AnalysisBloc
     // with HomeTab which may have already triggered a load).
     final bloc = context.read<AnalysisBloc>();
@@ -61,88 +79,124 @@ class _HistoryPageState extends State<HistoryPage> {
         middle: const Text('My History'),
         // Hide the automatic back button when embedded in a tab scaffold.
         leading: widget.isEmbedded ? const SizedBox.shrink() : null,
+        trailing: ValueListenableBuilder<bool>(
+          valueListenable: _comparison.enabled,
+          builder: (context, enabled, _) => CupertinoButton(
+            padding: EdgeInsets.zero,
+            onPressed: () => _comparison.setEnabled(value: !enabled),
+            child: Icon(
+              enabled
+                  ? CupertinoIcons.arrow_right_arrow_left_circle_fill
+                  : CupertinoIcons.arrow_right_arrow_left_circle,
+              semanticLabel: enabled
+                  ? 'Hide engine comparison'
+                  : 'Compare engines',
+            ),
+          ),
+        ),
       ),
       child: SafeArea(
-        child: BlocBuilder<AnalysisBloc, AnalysisState>(
-          builder: (context, state) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Mood chip filter row
-                SizedBox(
-                  height: 52,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
-                    itemCount: _moodFilters.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 8),
-                    itemBuilder: (context, i) {
-                      final filter = _moodFilters[i];
-                      final isAll = filter.value == null;
-                      final isSelected = isAll
-                          ? _selectedMood == null
-                          : _selectedMood == filter.value;
-
-                      // "All" chip uses a neutral style.
-                      if (isAll) {
-                        return GestureDetector(
-                          onTap: () => _applyFilter(null),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 150),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 7,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? CupertinoColors.activeBlue
-                                  : CupertinoColors.tertiarySystemFill,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: isSelected
-                                    ? CupertinoColors.activeBlue
-                                    : CupertinoColors.separator,
-                              ),
-                            ),
-                            child: Text(
-                              filter.label,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: isSelected
-                                    ? CupertinoColors.white
-                                    : CupertinoColors.label,
-                              ),
-                            ),
+        child: ValueListenableBuilder<bool>(
+          valueListenable: _comparison.enabled,
+          builder: (context, showComparison, _) =>
+              BlocBuilder<AnalysisBloc, AnalysisState>(
+                builder: (context, state) {
+                  final summary = showComparison
+                      ? EngineComparisonSummary.from(state.history)
+                      : null;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Mood chip filter row
+                      SizedBox(
+                        height: 52,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
                           ),
-                        );
-                      }
+                          itemCount: _moodFilters.length,
+                          separatorBuilder: (_, _) => const SizedBox(width: 8),
+                          itemBuilder: (context, i) {
+                            final filter = _moodFilters[i];
+                            final isAll = filter.value == null;
+                            final isSelected = isAll
+                                ? _selectedMood == null
+                                : _selectedMood == filter.value;
 
-                      return MoodChip(
-                        label: filter.label,
-                        mood: filter.identity,
-                        isSelected: isSelected,
-                        onTap: () =>
-                            _applyFilter(isSelected ? null : filter.value),
-                      );
-                    },
-                  ),
-                ),
+                            // "All" chip uses a neutral style.
+                            if (isAll) {
+                              return GestureDetector(
+                                onTap: () => _applyFilter(null),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 150),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 7,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? CupertinoColors.activeBlue
+                                        : CupertinoColors.tertiarySystemFill,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? CupertinoColors.activeBlue
+                                          : CupertinoColors.separator,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    filter.label,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: isSelected
+                                          ? CupertinoColors.white
+                                          : CupertinoColors.label,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
 
-                // List / empty / loading states
-                Expanded(child: _buildBody(context, state)),
-              ],
-            );
-          },
+                            return MoodChip(
+                              label: filter.label,
+                              mood: filter.identity,
+                              isSelected: isSelected,
+                              onTap: () => _applyFilter(
+                                isSelected ? null : filter.value,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+                      if (summary != null && summary.compared > 0)
+                        _ComparisonSummaryCard(summary),
+
+                      // List / empty / loading states
+                      Expanded(
+                        child: _buildBody(
+                          context,
+                          state,
+                          showComparison: showComparison,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
         ),
       ),
     );
   }
 
-  Widget _buildBody(BuildContext context, AnalysisState state) {
+  Widget _buildBody(
+    BuildContext context,
+    AnalysisState state, {
+    required bool showComparison,
+  }) {
     if (state.historyLoading) {
       return const Center(child: CupertinoActivityIndicator());
     }
@@ -209,8 +263,58 @@ class _HistoryPageState extends State<HistoryPage> {
           );
         }
 
-        return HistoryRowItem(item: items[index], onTap: () {});
+        return HistoryRowItem(
+          item: items[index],
+          onTap: () {},
+          showComparison: showComparison,
+        );
       },
+    );
+  }
+}
+
+// ── Engine comparison summary ───────────────────────────────────────
+
+class _ComparisonSummaryCard extends StatelessWidget {
+  const _ComparisonSummaryCard(this.summary);
+
+  final EngineComparisonSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = summary;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: CupertinoColors.tertiarySystemFill,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'On-device and backend agreed on ${s.enginesAgreed} of '
+            '${s.compared}',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: CupertinoColors.label,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            s.judged == 0
+                ? 'Answer "Does this feel right?" to see which one is right.'
+                : 'Your answers: on-device right ${s.onDeviceRight}, '
+                      'backend right ${s.backendRight} (of ${s.judged})',
+            style: const TextStyle(
+              fontSize: 12,
+              color: CupertinoColors.secondaryLabel,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

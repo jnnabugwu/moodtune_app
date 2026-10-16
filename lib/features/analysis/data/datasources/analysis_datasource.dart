@@ -93,4 +93,17 @@ class AnalysisRemoteDataSource {
     return (data['analyses'] as List<dynamic>? ?? [])
         .cast<Map<String, dynamic>>();
   }
+
+  /// POST /song/history. Returns false without calling the backend when
+  /// there's no signed-in user (the endpoint requires auth).
+  Future<bool> saveResultToHistory(Map<String, dynamic> body) async {
+    final token = await _tokenProvider();
+    if (token == null) return false;
+    await _dio.post<Map<String, dynamic>>(
+      '/song/history',
+      data: body,
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+    return true;
+  }
 }

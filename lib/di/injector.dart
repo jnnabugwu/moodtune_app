@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:moodtune_app/features/analysis/data/data.dart';
 import 'package:moodtune_app/features/analysis/domain/repositories/analysis_repository.dart';
+import 'package:moodtune_app/features/analysis/presentation/engine_comparison.dart';
 import 'package:moodtune_app/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:moodtune_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:moodtune_app/features/catalog/data/datasources/jamendo_remote_datasource.dart';
@@ -59,6 +60,7 @@ Future<void> configureDependencies({
       ),
     )
     ..registerLazySingleton(() => MoodNarrator(engine: MoodNarrationChannel()))
+    ..registerLazySingleton(EngineComparisonPreference.new)
     ..registerLazySingleton(
       () => OnDeviceMoodClassifier(
         decoder: AudioDecodeChannel(),

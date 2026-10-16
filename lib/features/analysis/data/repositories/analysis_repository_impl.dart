@@ -56,6 +56,17 @@ class AnalysisRepositoryImpl implements AnalysisRepository {
   }
 
   @override
+  ResultFuture<bool> saveResultToHistory(ResultHistoryRecord record) async {
+    try {
+      return Right(await _remote.saveResultToHistory(record.toJson()));
+    } on DioException catch (e) {
+      return Left(_mapDioError(e));
+    } on Exception catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   ResultFuture<PlaylistAnalysis> getAnalysisById(String analysisId) async {
     try {
       final json = await _remote.getAnalysisById(analysisId);
