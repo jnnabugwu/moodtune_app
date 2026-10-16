@@ -2,10 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:moodtune_app/features/analysis/domain/entities/entities.dart';
 
 class TopTrackCard extends StatelessWidget {
-  const TopTrackCard({
-    required this.track,
-    super.key,
-  });
+  const TopTrackCard({required this.track, super.key});
 
   final TrackAnalysis track;
 
@@ -69,9 +66,9 @@ class _Tag extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(
-          fontSize: 12,
-        ),
+        style: CupertinoTheme.of(
+          context,
+        ).textTheme.textStyle.copyWith(fontSize: 12),
       ),
     );
   }

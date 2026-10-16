@@ -138,10 +138,7 @@ class _ResultsPageState extends State<ResultsPage>
           backgroundColor: _pageBackground,
           middle: Text(
             'Song Analysis',
-            style: TextStyle(
-              color: _textPrimary,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(color: _textPrimary, fontWeight: FontWeight.w600),
           ),
         ),
         child: SafeArea(
@@ -173,10 +170,7 @@ class _ResultsPageState extends State<ResultsPage>
         backgroundColor: _pageBackground,
         middle: Text(
           'Song Analysis',
-          style: TextStyle(
-            color: _textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(color: _textPrimary, fontWeight: FontWeight.w600),
         ),
       ),
       child: Column(
@@ -270,9 +264,7 @@ class _ResultsPageState extends State<ResultsPage>
                         Padding(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                           child: CupertinoButton(
-                            onPressed: () => context.go(
-                              RouteNames.homeAuth,
-                            ),
+                            onPressed: () => context.go(RouteNames.homeAuth),
                             child: const Text(
                               'Go to Home',
                               style: TextStyle(
@@ -385,10 +377,7 @@ class _DetailRow extends StatelessWidget {
 // ── Jamendo attribution ───────────────────────────────────────────────
 
 class _JamendoAttribution extends StatelessWidget {
-  const _JamendoAttribution({
-    required this.artistName,
-    required this.pageUrl,
-  });
+  const _JamendoAttribution({required this.artistName, required this.pageUrl});
 
   final String artistName;
   final String pageUrl;
@@ -399,11 +388,7 @@ class _JamendoAttribution extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          const Icon(
-            CupertinoIcons.music_note,
-            size: 14,
-            color: _textMuted,
-          ),
+          const Icon(CupertinoIcons.music_note, size: 14, color: _textMuted),
           const SizedBox(width: 6),
           Expanded(
             child: GestureDetector(
@@ -427,10 +412,7 @@ class _JamendoAttribution extends StatelessWidget {
           const SizedBox(width: 8),
           const Text(
             'Via Jamendo Free Music',
-            style: TextStyle(
-              fontSize: 11,
-              color: _textMuted,
-            ),
+            style: TextStyle(fontSize: 11, color: _textMuted),
           ),
         ],
       ),

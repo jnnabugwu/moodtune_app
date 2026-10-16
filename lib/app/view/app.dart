@@ -28,9 +28,7 @@ class App extends StatelessWidget {
       ],
       child: MultiBlocProvider(
         providers: [
-          BlocProvider(
-            create: (_) => AuthBloc(getIt()),
-          ),
+          BlocProvider(create: (_) => AuthBloc(getIt())),
           BlocProvider(
             create: (_) => SpotifyBloc(
               getAuthorizeUrl: getIt<GetAuthorizeUrl>(),
@@ -43,9 +41,8 @@ class App extends StatelessWidget {
             ),
           ),
           BlocProvider(
-            create: (context) => AnalysisBloc(
-              repository: context.read<AnalysisRepository>(),
-            ),
+            create: (context) =>
+                AnalysisBloc(repository: context.read<AnalysisRepository>()),
           ),
         ],
         child: ShadApp.custom(

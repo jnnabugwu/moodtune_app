@@ -98,9 +98,7 @@ void main() {
       );
     });
 
-    testWidgets('empty results with a query mention the query', (
-      tester,
-    ) async {
+    testWidgets('empty results with a query mention the query', (tester) async {
       final controller = StreamController<CatalogState>();
       addTearDown(controller.close);
       whenListen(
@@ -234,9 +232,7 @@ void main() {
       },
     );
 
-    testWidgets('cancelling the sheet does not start analysis', (
-      tester,
-    ) async {
+    testWidgets('cancelling the sheet does not start analysis', (tester) async {
       when(
         () => catalogBloc.state,
       ).thenReturn(CatalogLoaded([buildJamendoTrack()]));

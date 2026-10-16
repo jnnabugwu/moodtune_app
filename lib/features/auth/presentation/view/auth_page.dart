@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moodtune_app/core/routing/routing.dart';
@@ -43,18 +44,20 @@ class _AuthPageState extends State<AuthPage> {
           prev.status != curr.status || prev.error != curr.error,
       listener: (context, state) {
         if (state.error != null) {
-          showCupertinoDialog<void>(
-            context: context,
-            builder: (_) => CupertinoAlertDialog(
-              title: const Text('Auth error'),
-              content: Text(state.error ?? ''),
-              actions: [
-                CupertinoDialogAction(
-                  child: const Text('OK'),
-                  // TODO(post-testflight): migrate to context.pop()
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
+          unawaited(
+            showCupertinoDialog<void>(
+              context: context,
+              builder: (_) => CupertinoAlertDialog(
+                title: const Text('Auth error'),
+                content: Text(state.error ?? ''),
+                actions: [
+                  CupertinoDialogAction(
+                    child: const Text('OK'),
+                    // TODO(post-testflight): migrate to context.pop()
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
             ),
           );
         }

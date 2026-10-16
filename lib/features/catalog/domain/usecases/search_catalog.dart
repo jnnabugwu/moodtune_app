@@ -9,10 +9,7 @@ class SearchCatalog {
 
   final CatalogRepository _repository;
 
-  ResultFuture<List<JamendoTrack>> call({
-    String? query,
-    String? moodTag,
-  }) {
+  ResultFuture<List<JamendoTrack>> call({String? query, String? moodTag}) {
     return _repository.searchTracks(query: query, moodTag: moodTag);
   }
 }

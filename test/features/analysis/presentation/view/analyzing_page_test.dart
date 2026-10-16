@@ -139,9 +139,7 @@ void main() {
       expect(find.text('Failed to analyze playlist.'), findsOneWidget);
     });
 
-    testWidgets('navigates to the analysis result on success', (
-      tester,
-    ) async {
+    testWidgets('navigates to the analysis result on success', (tester) async {
       final bloc = mockAnalysisBloc(
         const AnalysisState(status: AnalysisStatus.analyzing),
       );

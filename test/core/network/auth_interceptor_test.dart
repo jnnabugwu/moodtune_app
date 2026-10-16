@@ -141,9 +141,7 @@ void main() {
     // The test binding stubs dart:io HttpClient; we need real loopback I/O.
     previousOverrides = HttpOverrides.current;
     HttpOverrides.global = null;
-    registerFallbackValue(
-      Response<dynamic>(requestOptions: RequestOptions()),
-    );
+    registerFallbackValue(Response<dynamic>(requestOptions: RequestOptions()));
     registerFallbackValue(DioException(requestOptions: RequestOptions()));
 
     await backend.start();

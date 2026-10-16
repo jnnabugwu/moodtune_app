@@ -45,8 +45,8 @@ void main() {
     );
   });
 
-  tearDown(() {
-    bloc.close();
+  tearDown(() async {
+    await bloc.close();
   });
 
   test('initial state is SpotifyState.initial', () {
@@ -56,12 +56,12 @@ void main() {
   blocTest<SpotifyBloc, SpotifyState>(
     'emits loading then connected with profile on start when already connected',
     setUp: () {
-      when(() => repository.checkConnection()).thenAnswer(
-        (_) async => const Right(true),
-      );
-      when(() => repository.getProfile()).thenAnswer(
-        (_) async => const Right(tProfile),
-      );
+      when(
+        () => repository.checkConnection(),
+      ).thenAnswer((_) async => const Right(true));
+      when(
+        () => repository.getProfile(),
+      ).thenAnswer((_) async => const Right(tProfile));
     },
     build: () => bloc,
     act: (bloc) => bloc.add(const SpotifyStarted()),
@@ -88,9 +88,9 @@ void main() {
   blocTest<SpotifyBloc, SpotifyState>(
     'emits launching then awaitingCode with authorize URL on authorize request',
     setUp: () {
-      when(() => repository.getAuthorizeUrl()).thenAnswer(
-        (_) async => const Right('https://example.com/auth'),
-      );
+      when(
+        () => repository.getAuthorizeUrl(),
+      ).thenAnswer((_) async => const Right('https://example.com/auth'));
     },
     build: () => bloc,
     act: (bloc) => bloc.add(const SpotifyAuthorizeRequested()),
@@ -107,9 +107,9 @@ void main() {
   blocTest<SpotifyBloc, SpotifyState>(
     'emits error when authorize URL retrieval fails',
     setUp: () {
-      when(() => repository.getAuthorizeUrl()).thenAnswer(
-        (_) async => const Left(ServerFailure('failed')),
-      );
+      when(
+        () => repository.getAuthorizeUrl(),
+      ).thenAnswer((_) async => const Left(ServerFailure('failed')));
     },
     build: () => bloc,
     act: (bloc) => bloc.add(const SpotifyAuthorizeRequested()),
@@ -131,17 +131,14 @@ void main() {
           SpotifyConnection(isConnected: true, connectedAt: DateTime.now()),
         ),
       );
-      when(() => repository.getProfile()).thenAnswer(
-        (_) async => const Right(tProfile),
-      );
+      when(
+        () => repository.getProfile(),
+      ).thenAnswer((_) async => const Right(tProfile));
     },
     build: () => bloc,
     act: (bloc) => bloc.add(const SpotifyAuthCodeReceived('code-123')),
     expect: () => [
-      const SpotifyState(
-        status: SpotifyStatus.connecting,
-        isConnected: false,
-      ),
+      const SpotifyState(status: SpotifyStatus.connecting, isConnected: false),
       const SpotifyState(status: SpotifyStatus.loading, isConnected: false),
       const SpotifyState(
         status: SpotifyStatus.connected,

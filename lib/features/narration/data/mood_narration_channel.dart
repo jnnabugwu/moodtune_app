@@ -31,10 +31,10 @@ class MoodNarrationChannel implements NarrationEngine {
     NarrationInput input, {
     required Duration timeout,
   }) async {
-    final reply = await _channel.invokeMapMethod<String, String>(
-      'narrate',
-      {...input.toMap(), 'timeoutMs': timeout.inMilliseconds},
-    );
+    final reply = await _channel.invokeMapMethod<String, String>('narrate', {
+      ...input.toMap(),
+      'timeoutMs': timeout.inMilliseconds,
+    });
     final text = reply?['text'];
     if (text == null) {
       throw PlatformException(code: 'empty', message: 'No narration returned');

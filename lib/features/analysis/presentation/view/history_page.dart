@@ -125,18 +125,15 @@ class _HistoryPageState extends State<HistoryPage> {
                         label: filter.label,
                         mood: filter.identity,
                         isSelected: isSelected,
-                        onTap: () => _applyFilter(
-                          isSelected ? null : filter.value,
-                        ),
+                        onTap: () =>
+                            _applyFilter(isSelected ? null : filter.value),
                       );
                     },
                   ),
                 ),
 
                 // List / empty / loading states
-                Expanded(
-                  child: _buildBody(context, state),
-                ),
+                Expanded(child: _buildBody(context, state)),
               ],
             );
           },
@@ -212,10 +209,7 @@ class _HistoryPageState extends State<HistoryPage> {
           );
         }
 
-        return HistoryRowItem(
-          item: items[index],
-          onTap: () {},
-        );
+        return HistoryRowItem(item: items[index], onTap: () {});
       },
     );
   }

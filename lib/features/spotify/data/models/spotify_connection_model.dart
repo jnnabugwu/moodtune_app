@@ -2,10 +2,7 @@ import 'package:moodtune_app/features/spotify/domain/entities/entities.dart';
 
 /// Data model for Spotify connection
 class SpotifyConnectionModel extends SpotifyConnection {
-  const SpotifyConnectionModel({
-    required super.isConnected,
-    super.connectedAt,
-  });
+  const SpotifyConnectionModel({required super.isConnected, super.connectedAt});
 
   /// Creates a [SpotifyConnectionModel] from a domain entity
   factory SpotifyConnectionModel.fromDomain(SpotifyConnection entity) {

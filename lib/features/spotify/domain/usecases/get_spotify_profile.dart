@@ -9,7 +9,7 @@ class GetSpotifyProfile {
   final SpotifyRepository _repository;
 
   /// Fetches the user's Spotify profile
-  ResultFuture<SpotifyProfile> call() async {
+  ResultFuture<SpotifyProfile> call() {
     return _repository.getProfile();
   }
 }

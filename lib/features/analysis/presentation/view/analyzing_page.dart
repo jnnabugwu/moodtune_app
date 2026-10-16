@@ -121,10 +121,7 @@ class AnalyzingPage extends StatelessWidget {
                                   : CupertinoColors.inactiveGray,
                             ),
                             const SizedBox(width: 10),
-                            Text(
-                              step.label,
-                              style: theme.textTheme.textStyle,
-                            ),
+                            Text(step.label, style: theme.textTheme.textStyle),
                           ],
                         ),
                       );

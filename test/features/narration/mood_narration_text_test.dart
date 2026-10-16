@@ -24,9 +24,7 @@ void main() {
     testWidgets('swaps in on-device narration with its caption', (
       tester,
     ) async {
-      final narrator = MoodNarrator(
-        engine: FakeNarrationEngine(output: _good),
-      );
+      final narrator = MoodNarrator(engine: FakeNarrationEngine(output: _good));
 
       await tester.pumpWidget(_wrap(buildAnalysis(), narrator));
       expect(find.text(templateReasoning), findsOneWidget);
@@ -42,9 +40,7 @@ void main() {
     testWidgets('shows on-device narration when the template is empty', (
       tester,
     ) async {
-      final narrator = MoodNarrator(
-        engine: FakeNarrationEngine(output: _good),
-      );
+      final narrator = MoodNarrator(engine: FakeNarrationEngine(output: _good));
 
       await tester.pumpWidget(_wrap(buildAnalysis(reasoning: ''), narrator));
       expect(find.byType(Text), findsNothing);

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -77,7 +78,7 @@ class _SignInPageState extends State<SignInPage> {
           setState(() => _localError = state.error);
         } else if (state.status == AuthStatus.authenticated) {
           if (state.justSignedUp) {
-            context.push(RouteNames.emailVerify);
+            unawaited(context.push(RouteNames.emailVerify));
           } else {
             context.go(RouteNames.homeAuth);
           }
@@ -279,10 +280,7 @@ class _SignInPageState extends State<SignInPage> {
 // ── Private sub-widgets ──────────────────────────────────────────────────────
 
 class _ModeToggle extends StatelessWidget {
-  const _ModeToggle({
-    required this.mode,
-    required this.onChanged,
-  });
+  const _ModeToggle({required this.mode, required this.onChanged});
 
   final _AuthMode mode;
   final void Function(_AuthMode)? onChanged;

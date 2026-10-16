@@ -36,10 +36,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text(entry.value), findsOneWidget);
-        expect(
-          find.text('${(entry.key * 100).round()}%'),
-          findsOneWidget,
-        );
+        expect(find.text('${(entry.key * 100).round()}%'), findsOneWidget);
       });
     }
   });

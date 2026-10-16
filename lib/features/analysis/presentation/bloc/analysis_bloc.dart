@@ -1,17 +1,15 @@
 import 'dart:typed_data';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:moodtune_app/core/error/failures.dart';
 import 'package:moodtune_app/features/analysis/domain/domain.dart';
 
 part 'analysis_event.dart';
 part 'analysis_state.dart';
 
 class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
-  AnalysisBloc({
-    required AnalysisRepository repository,
-  }) : _repository = repository,
-       super(const AnalysisState()) {
+  AnalysisBloc({required AnalysisRepository repository})
+    : _repository = repository,
+      super(const AnalysisState()) {
     on<AnalyzePlaylistRequested>(_onAnalyzeRequested);
     on<AnalysisHistoryRequested>(_onHistoryRequested);
     on<AnalysisHistoryFilterChanged>(_onHistoryFilterChanged);
@@ -28,12 +26,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
     AnalyzePlaylistRequested event,
     Emitter<AnalysisState> emit,
   ) async {
-    emit(
-      state.copyWith(
-        status: AnalysisStatus.analyzing,
-        error: null,
-      ),
-    );
+    emit(state.copyWith(status: AnalysisStatus.analyzing, error: null));
 
     final result = await _repository.analyzePlaylist(
       event.playlistId,
@@ -42,10 +35,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
 
     result.fold(
       (failure) => emit(
-        state.copyWith(
-          status: AnalysisStatus.error,
-          error: failure.message,
-        ),
+        state.copyWith(status: AnalysisStatus.error, error: failure.message),
       ),
       (analysis) => emit(
         state.copyWith(
@@ -60,12 +50,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
     AnalysisHistoryRequested event,
     Emitter<AnalysisState> emit,
   ) async {
-    emit(
-      state.copyWith(
-        historyLoading: true,
-        historyError: null,
-      ),
-    );
+    emit(state.copyWith(historyLoading: true, historyError: null));
 
     final result = await _repository.getHistory(
       limit: event.limit,
@@ -74,10 +59,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
 
     result.fold(
       (failure) => emit(
-        state.copyWith(
-          historyLoading: false,
-          historyError: failure.message,
-        ),
+        state.copyWith(historyLoading: false, historyError: failure.message),
       ),
       (analyses) => emit(
         state.copyWith(
@@ -99,38 +81,23 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
     final filtered = mood == null || mood.isEmpty
         ? state.history
         : state.history
-              .where(
-                (a) => a.primaryMood.toLowerCase() == mood.toLowerCase(),
-              )
+              .where((a) => a.primaryMood.toLowerCase() == mood.toLowerCase())
               .toList();
 
-    emit(
-      state.copyWith(
-        filteredHistory: filtered,
-        historyMoodFilter: mood,
-      ),
-    );
+    emit(state.copyWith(filteredHistory: filtered, historyMoodFilter: mood));
   }
 
   Future<void> _onAnalysisByIdRequested(
     AnalysisByIdRequested event,
     Emitter<AnalysisState> emit,
   ) async {
-    emit(
-      state.copyWith(
-        status: AnalysisStatus.loading,
-        error: null,
-      ),
-    );
+    emit(state.copyWith(status: AnalysisStatus.loading, error: null));
 
     final result = await _repository.getAnalysisById(event.analysisId);
 
     result.fold(
       (failure) => emit(
-        state.copyWith(
-          status: AnalysisStatus.error,
-          error: failure.message,
-        ),
+        state.copyWith(status: AnalysisStatus.error, error: failure.message),
       ),
       (analysis) => emit(
         state.copyWith(
@@ -145,21 +112,13 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
     AnalyzeSongRequested event,
     Emitter<AnalysisState> emit,
   ) async {
-    emit(
-      state.copyWith(
-        status: AnalysisStatus.analyzing,
-        error: null,
-      ),
-    );
+    emit(state.copyWith(status: AnalysisStatus.analyzing, error: null));
 
     final result = await _repository.analyzeSong(event.trackId);
 
     result.fold(
       (failure) => emit(
-        state.copyWith(
-          status: AnalysisStatus.error,
-          error: failure.message,
-        ),
+        state.copyWith(status: AnalysisStatus.error, error: failure.message),
       ),
       (analysis) => emit(
         state.copyWith(
@@ -236,13 +195,13 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
     );
 
     result.fold(
-      (Failure failure) => emit(
+      (failure) => emit(
         state.copyWith(
           catalogStatus: CatalogAnalysisStatus.error,
           catalogError: failure.message,
         ),
       ),
-      (AudioUploadAnalysis analysis) => emit(
+      (analysis) => emit(
         state.copyWith(
           catalogStatus: CatalogAnalysisStatus.success,
           currentCatalogAnalysis: analysis,

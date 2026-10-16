@@ -24,9 +24,7 @@ void main() {
   }
 
   group('showAnalysisSourceSheet', () {
-    testWidgets('shows title, message and both source options', (
-      tester,
-    ) async {
+    testWidgets('shows title, message and both source options', (tester) async {
       await openSheet(tester);
 
       expect(find.text('Analyze a Song'), findsOneWidget);

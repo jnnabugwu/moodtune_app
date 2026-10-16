@@ -62,9 +62,9 @@ class _CatalogConfirmSheetState extends State<CatalogConfirmSheet> {
 
   @override
   void dispose() {
-    _positionSub?.cancel();
-    _stateSub?.cancel();
-    _player.dispose();
+    unawaited(_positionSub?.cancel());
+    unawaited(_stateSub?.cancel());
+    unawaited(_player.dispose());
     super.dispose();
   }
 

@@ -47,10 +47,7 @@ void main() {
   ).captured.cast<Map<String, dynamic>>();
 
   test('creates a default Dio when none is injected', () {
-    expect(
-      JamendoRemoteDataSource(clientId: 'x').clientId,
-      'x',
-    );
+    expect(JamendoRemoteDataSource(clientId: 'x').clientId, 'x');
   });
 
   group('mood tag only', () {

@@ -42,10 +42,7 @@ class AnalysisRepositoryImpl implements AnalysisRepository {
     int offset = 0,
   }) async {
     try {
-      final raw = await _remote.getSongHistory(
-        limit: limit,
-        offset: offset,
-      );
+      final raw = await _remote.getSongHistory(limit: limit, offset: offset);
       final entries = raw
           .map(SongHistoryEntryModel.fromJson)
           .map((m) => m.toDomain())

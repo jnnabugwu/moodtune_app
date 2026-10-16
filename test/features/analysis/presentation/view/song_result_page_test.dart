@@ -11,9 +11,7 @@ import 'results_fixtures.dart';
 
 void main() {
   group('SongResultPage', () {
-    testWidgets('renders header, mood card and audio features', (
-      tester,
-    ) async {
+    testWidgets('renders header, mood card and audio features', (tester) async {
       await tester.pumpApp(const SongResultPage(analysis: testSongAnalysis));
       await tester.pumpAndSettle();
 

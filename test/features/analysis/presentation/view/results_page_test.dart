@@ -40,9 +40,7 @@ void main() {
       WidgetTester tester, {
       required AnalysisState analysisState,
       AnalysisSource source = AnalysisSource.upload,
-      AuthState authState = const AuthState(
-        status: AuthStatus.unauthenticated,
-      ),
+      AuthState authState = const AuthState(status: AuthStatus.unauthenticated),
     }) async {
       await tester.pumpApp(
         ResultsPage(source: source),
@@ -110,9 +108,7 @@ void main() {
         expect(find.text('Via Jamendo Free Music'), findsNothing);
       });
 
-      testWidgets('sign-up strip slides in and pushes sign-in', (
-        tester,
-      ) async {
+      testWidgets('sign-up strip slides in and pushes sign-in', (tester) async {
         await pumpResults(
           tester,
           analysisState: AnalysisState(
@@ -161,9 +157,7 @@ void main() {
         expect(find.text('Smooth (0.40)'), findsOneWidget);
       });
 
-      testWidgets('hides descriptors and reasoning when empty', (
-        tester,
-      ) async {
+      testWidgets('hides descriptors and reasoning when empty', (tester) async {
         await pumpResults(
           tester,
           analysisState: AnalysisState(

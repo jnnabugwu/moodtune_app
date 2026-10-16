@@ -74,9 +74,7 @@ void main() {
                 as LinearGradient;
         expect(gradient.colors, [colors.background, colors.backgroundEnd]);
 
-        final ring = tester.widget<ConfidenceRing>(
-          find.byType(ConfidenceRing),
-        );
+        final ring = tester.widget<ConfidenceRing>(find.byType(ConfidenceRing));
         expect(ring.value, 0.85);
         expect(ring.color, colors.text);
         expect(find.text('85%'), findsOneWidget);

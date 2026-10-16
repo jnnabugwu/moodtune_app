@@ -7,10 +7,7 @@ class GetPlaylists {
 
   final SpotifyRepository _repository;
 
-  ResultFuture<List<SpotifyPlaylist>> call({
-    int limit = 50,
-    int offset = 0,
-  }) {
+  ResultFuture<List<SpotifyPlaylist>> call({int limit = 50, int offset = 0}) {
     return _repository.getPlaylists(limit: limit, offset: offset);
   }
 }

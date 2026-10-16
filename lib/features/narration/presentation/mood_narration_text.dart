@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:moodtune_app/features/analysis/domain/entities/audio_upload_analysis.dart';
 import 'package:moodtune_app/features/narration/presentation/mood_narrator.dart';
@@ -47,12 +48,14 @@ class _MoodNarrationTextState extends State<MoodNarrationText> {
       text: analysis.mood.reasoning,
       source: NarrationSource.template,
     );
-    widget.narrator.narrate(analysis).then((narration) {
-      // Drop late results for an analysis that is no longer shown.
-      if (mounted && widget.analysis.id == analysis.id) {
-        setState(() => _narration = narration);
-      }
-    });
+    unawaited(
+      widget.narrator.narrate(analysis).then((narration) {
+        // Drop late results for an analysis that is no longer shown.
+        if (mounted && widget.analysis.id == analysis.id) {
+          setState(() => _narration = narration);
+        }
+      }),
+    );
   }
 
   @override

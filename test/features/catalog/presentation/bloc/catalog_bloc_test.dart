@@ -117,10 +117,10 @@ void main() {
     });
 
     test('event props', () {
-      expect(
-        const CatalogSearchRequested(query: 'q', moodTag: 'm').props,
-        ['q', 'm'],
-      );
+      expect(const CatalogSearchRequested(query: 'q', moodTag: 'm').props, [
+        'q',
+        'm',
+      ]);
       // Non-const on purpose: exercises the runtime constructor.
       // ignore: prefer_const_constructors
       expect(CatalogCleared(), const CatalogCleared());

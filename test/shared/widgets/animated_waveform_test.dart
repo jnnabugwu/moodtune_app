@@ -72,9 +72,7 @@ void main() {
       expect(before.first, closeTo(40 * 0.3, 0.0001));
     });
 
-    testWidgets('bar heights change over time when animating', (
-      tester,
-    ) async {
+    testWidgets('bar heights change over time when animating', (tester) async {
       await tester.pumpWidgetInShell(waveform());
       final before = barHeights(tester);
 
@@ -86,9 +84,7 @@ void main() {
       }
     });
 
-    testWidgets('stops and restarts when isAnimating toggles', (
-      tester,
-    ) async {
+    testWidgets('stops and restarts when isAnimating toggles', (tester) async {
       await tester.pumpWidgetInShell(waveform());
       await tester.pump(const Duration(milliseconds: 100));
 

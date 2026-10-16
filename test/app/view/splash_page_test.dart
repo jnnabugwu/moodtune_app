@@ -28,9 +28,7 @@ void main() {
   tearDown(() => unawaited(controller.close()));
 
   group('SplashPage', () {
-    testWidgets('renders the logo and requests an auth check', (
-      tester,
-    ) async {
+    testWidgets('renders the logo and requests an auth check', (tester) async {
       await tester.pumpApp(const SplashPage(), authBloc: authBloc);
       await tester.pump();
 
@@ -107,9 +105,7 @@ void main() {
   });
 
   group('MoodTuneLogo', () {
-    testWidgets('renders both variants and repaints on change', (
-      tester,
-    ) async {
+    testWidgets('renders both variants and repaints on change', (tester) async {
       await tester.pumpWidgetInShell(const Center(child: MoodTuneLogo()));
       final darkText = tester.widget<Text>(find.text('moodtune'));
       expect(darkText.style!.color, MoodTuneLogo.cream);

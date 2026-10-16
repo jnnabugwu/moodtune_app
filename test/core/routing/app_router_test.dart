@@ -216,9 +216,7 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('analysis loading accepts AnalysisLoadingArgs', (
-      tester,
-    ) async {
+    testWidgets('analysis loading accepts AnalysisLoadingArgs', (tester) async {
       await pumpRouterAt(
         tester,
         RouteNames.analysisLoading,

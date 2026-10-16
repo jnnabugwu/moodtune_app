@@ -111,9 +111,7 @@ void main() {
 
   group('getHistory', () {
     test('reads song history and maps it to HistoryEntry', () async {
-      when(
-        () => remote.getSongHistory(limit: 50, offset: 0),
-      ).thenAnswer(
+      when(() => remote.getSongHistory(limit: 50, offset: 0)).thenAnswer(
         (_) async => [songHistoryJson(), songHistoryJson(id: 'sh-2')],
       );
 

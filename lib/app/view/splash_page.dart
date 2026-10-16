@@ -179,10 +179,7 @@ class MoodTuneLogo extends StatelessWidget {
 // Shapes 3–5 share the same −22° rotation transform.
 
 class _NoteMarkPainter extends CustomPainter {
-  const _NoteMarkPainter({
-    required this.noteColor,
-    required this.faceColor,
-  });
+  const _NoteMarkPainter({required this.noteColor, required this.faceColor});
 
   final Color noteColor;
   final Color faceColor;
@@ -231,11 +228,7 @@ class _NoteMarkPainter extends CustomPainter {
       ..translate(-110, -168)
       // 3. Head — ellipse cx=110 cy=168 rx=58 ry=42
       ..drawOval(
-        Rect.fromCenter(
-          center: const Offset(110, 168),
-          width: 116,
-          height: 84,
-        ),
+        Rect.fromCenter(center: const Offset(110, 168), width: 116, height: 84),
         fill,
       )
       // 4. Eyes — r=6.5 at (94,160) and (126,160)

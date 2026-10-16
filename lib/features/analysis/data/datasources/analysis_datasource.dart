@@ -34,11 +34,7 @@ class AnalysisRemoteDataSource {
   Future<Options> _options() async {
     final token = await _tokenProvider();
     return Options(
-      headers: token != null
-          ? {
-              'Authorization': 'Bearer $token',
-            }
-          : null,
+      headers: token != null ? {'Authorization': 'Bearer $token'} : null,
     );
   }
 
@@ -48,9 +44,7 @@ class AnalysisRemoteDataSource {
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/analysis/analyze/$playlistId',
-      queryParameters: {
-        'limit': limit,
-      },
+      queryParameters: {'limit': limit},
       options: await _options(),
     );
     return response.data ?? <String, dynamic>{};
@@ -62,10 +56,7 @@ class AnalysisRemoteDataSource {
   }) async {
     final response = await _dio.get<Map<String, dynamic>>(
       '/analysis/history',
-      queryParameters: {
-        'limit': limit,
-        'offset': offset,
-      },
+      queryParameters: {'limit': limit, 'offset': offset},
       options: await _options(),
     );
     final data = response.data ?? <String, dynamic>{};

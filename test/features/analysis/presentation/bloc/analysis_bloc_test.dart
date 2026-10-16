@@ -56,9 +56,8 @@ void main() {
           currentAnalysis: tPlaylistAnalysis,
         ),
       ],
-      verify: (_) => verify(
-        () => repository.analyzePlaylist('p1', limit: 20),
-      ).called(1),
+      verify: (_) =>
+          verify(() => repository.analyzePlaylist('p1', limit: 20)).called(1),
     );
 
     blocTest<AnalysisBloc, AnalysisState>(
@@ -82,10 +81,8 @@ void main() {
         () => repository.getHistory(limit: 10, offset: 5),
       ).thenAnswer((_) async => Right(tHistory)),
       build: buildBloc,
-      seed: () => const AnalysisState(
-        historyError: 'old',
-        historyMoodFilter: 'happy',
-      ),
+      seed: () =>
+          const AnalysisState(historyError: 'old', historyMoodFilter: 'happy'),
       act: (bloc) =>
           bloc.add(const AnalysisHistoryRequested(limit: 10, offset: 5)),
       expect: () => [
@@ -406,10 +403,7 @@ void main() {
         const AnalyzePlaylistRequested(playlistId: 'a'),
         const AnalyzePlaylistRequested(playlistId: 'a'),
       );
-      expect(
-        const AnalyzePlaylistRequested(playlistId: 'a').props,
-        ['a', 50],
-      );
+      expect(const AnalyzePlaylistRequested(playlistId: 'a').props, ['a', 50]);
       expect(const AnalysisHistoryRequested().props, [50, 0]);
       expect(const AnalysisHistoryFilterChanged('x').props, ['x']);
       expect(const AnalysisByIdRequested('id').props, ['id']);
@@ -425,16 +419,13 @@ void main() {
         ).props,
         ['u', 'i', 'n', 'a', 'p'],
       );
-      expect(
-        const AudioUploadRequested(bytes: [1], filename: 'f').props,
-        [
-          [1],
-          'f',
-          null,
-          null,
-          null,
-        ],
-      );
+      expect(const AudioUploadRequested(bytes: [1], filename: 'f').props, [
+        [1],
+        'f',
+        null,
+        null,
+        null,
+      ]);
     });
   });
 }

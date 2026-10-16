@@ -8,7 +8,7 @@ class CheckSpotifyConnection {
   final SpotifyRepository _repository;
 
   /// Checks if the user has a valid Spotify connection
-  ResultFuture<bool> call() async {
+  ResultFuture<bool> call() {
     return _repository.checkConnection();
   }
 }

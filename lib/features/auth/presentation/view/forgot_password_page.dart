@@ -12,10 +12,7 @@ import 'package:moodtune_app/shared/widgets/widgets.dart';
 /// The email field is pre-populated when a non-empty string is passed as
 /// [GoRouterState.extra] from the sign-in screen.
 class ForgotPasswordPage extends StatefulWidget {
-  const ForgotPasswordPage({
-    required this.prefillEmail,
-    super.key,
-  });
+  const ForgotPasswordPage({required this.prefillEmail, super.key});
 
   /// Pre-filled email address — empty string if not provided.
   final String prefillEmail;
@@ -168,10 +165,7 @@ class _DefaultView extends StatelessWidget {
             textInputAction: TextInputAction.done,
             autocorrect: false,
             enabled: !isLoading,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             onSubmitted: (_) => onSend(),
           ),
           if (error != null) ...[
@@ -183,9 +177,7 @@ class _DefaultView extends StatelessWidget {
             onPressed: isLoading ? null : onSend,
             borderRadius: BorderRadius.circular(12),
             child: isLoading
-                ? const CupertinoActivityIndicator(
-                    color: CupertinoColors.white,
-                  )
+                ? const CupertinoActivityIndicator(color: CupertinoColors.white)
                 : const Text(
                     'Send reset link',
                     style: TextStyle(fontWeight: FontWeight.w600),

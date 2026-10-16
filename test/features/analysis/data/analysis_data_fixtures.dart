@@ -5,18 +5,16 @@ import 'package:dio/dio.dart';
 
 /// Shared JSON payloads and HTTP fakes for analysis data-layer tests.
 
-Map<String, dynamic> trackJson({
-  String id = 't1',
-  String name = 'Track One',
-}) => <String, dynamic>{
-  'track_id': id,
-  'track_name': name,
-  'artists': <dynamic>['Artist A', 'Artist B'],
-  'valence': 0.7,
-  'energy': 1,
-  'danceability': 0.55,
-  'mood_label': 'happy',
-};
+Map<String, dynamic> trackJson({String id = 't1', String name = 'Track One'}) =>
+    <String, dynamic>{
+      'track_id': id,
+      'track_name': name,
+      'artists': <dynamic>['Artist A', 'Artist B'],
+      'valence': 0.7,
+      'energy': 1,
+      'danceability': 0.55,
+      'mood_label': 'happy',
+    };
 
 Map<String, dynamic> averagesJson() => <String, dynamic>{
   'valence': 0.6,
@@ -119,10 +117,7 @@ Map<String, dynamic> songHistoryJson({String id = 'sh-1'}) => <String, dynamic>{
   'id': id,
   'track_name': 'Song',
   'artist_name': 'Singer',
-  'mood_results': <String, dynamic>{
-    'primary_mood': 'Sad',
-    'confidence': 0.65,
-  },
+  'mood_results': <String, dynamic>{'primary_mood': 'Sad', 'confidence': 0.65},
   'created_at': '2025-03-04T05:06:07.000Z',
 };
 

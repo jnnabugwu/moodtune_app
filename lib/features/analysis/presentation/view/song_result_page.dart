@@ -4,10 +4,7 @@ import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/features/analysis/domain/entities/song_analysis_result.dart';
 
 class SongResultPage extends StatelessWidget {
-  const SongResultPage({
-    required this.analysis,
-    super.key,
-  });
+  const SongResultPage({required this.analysis, super.key});
 
   final SongAnalysisResult analysis;
 
@@ -51,10 +48,7 @@ class SongResultPage extends StatelessWidget {
 }
 
 class _SongHeader extends StatelessWidget {
-  const _SongHeader({
-    required this.trackName,
-    required this.artistName,
-  });
+  const _SongHeader({required this.trackName, required this.artistName});
 
   final String trackName;
   final String artistName;
@@ -67,9 +61,7 @@ class _SongHeader extends StatelessWidget {
       children: [
         Text(
           trackName,
-          style: theme.textTheme.navTitleTextStyle.copyWith(
-            fontSize: 24,
-          ),
+          style: theme.textTheme.navTitleTextStyle.copyWith(fontSize: 24),
         ),
         const SizedBox(height: 4),
         Text(
@@ -201,10 +193,7 @@ class _FeaturesCard extends StatelessWidget {
 }
 
 class _FeatureRow extends StatelessWidget {
-  const _FeatureRow({
-    required this.label,
-    required this.value,
-  });
+  const _FeatureRow({required this.label, required this.value});
 
   final String label;
   final String value;

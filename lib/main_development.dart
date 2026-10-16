@@ -34,10 +34,7 @@ Future<void> main() async {
         throw Exception('Missing SUPABASE_URL or SUPABASE_ANON_KEY');
       }
 
-      await Supabase.initialize(
-        url: supabaseUrl,
-        anonKey: supabaseAnonKey,
-      );
+      await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
 
       await bootstrap(() => const App());
     },

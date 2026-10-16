@@ -10,10 +10,7 @@ abstract class AnalysisRepository {
 
   /// Fetches playlist and song analyses, merges and sorts by date
   /// (newest first).
-  ResultFuture<List<HistoryEntry>> getHistory({
-    int limit = 50,
-    int offset = 0,
-  });
+  ResultFuture<List<HistoryEntry>> getHistory({int limit = 50, int offset = 0});
 
   ResultFuture<PlaylistAnalysis> getAnalysisById(String analysisId);
 

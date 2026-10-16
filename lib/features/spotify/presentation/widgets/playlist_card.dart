@@ -2,11 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:moodtune_app/features/spotify/domain/entities/spotify_playlist.dart';
 
 class PlaylistCard extends StatelessWidget {
-  const PlaylistCard({
-    required this.playlist,
-    this.onTap,
-    super.key,
-  });
+  const PlaylistCard({required this.playlist, this.onTap, super.key});
 
   final SpotifyPlaylist playlist;
   final VoidCallback? onTap;
@@ -80,10 +76,7 @@ class _Artwork extends StatelessWidget {
         height: 56,
         color: CupertinoColors.systemGrey6,
         child: imageUrl != null
-            ? Image.network(
-                imageUrl!,
-                fit: BoxFit.cover,
-              )
+            ? Image.network(imageUrl!, fit: BoxFit.cover)
             : const Icon(
                 CupertinoIcons.music_note_list,
                 size: 28,

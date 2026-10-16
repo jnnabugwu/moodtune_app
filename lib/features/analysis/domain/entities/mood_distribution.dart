@@ -16,11 +16,5 @@ class MoodDistribution extends Equatable {
   final double danceable;
 
   @override
-  List<Object?> get props => [
-    happy,
-    sad,
-    energetic,
-    calm,
-    danceable,
-  ];
+  List<Object?> get props => [happy, sad, energetic, calm, danceable];
 }

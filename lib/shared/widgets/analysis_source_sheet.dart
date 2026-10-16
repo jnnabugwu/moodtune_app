@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
@@ -13,15 +15,17 @@ Future<void> showAnalysisSourceSheet(BuildContext context) {
       message: const Text('Choose how you want to find your track.'),
       actions: [
         CupertinoActionSheetAction(
-          onPressed: () => context
-            ..pop()
-            ..push(RouteNames.catalog),
+          onPressed: () {
+            context.pop();
+            unawaited(context.push(RouteNames.catalog));
+          },
           child: const Text('Browse Catalog'),
         ),
         CupertinoActionSheetAction(
-          onPressed: () => context
-            ..pop()
-            ..push(RouteNames.uploadMusic),
+          onPressed: () {
+            context.pop();
+            unawaited(context.push(RouteNames.uploadMusic));
+          },
           child: const Text('Upload a Song'),
         ),
       ],

@@ -148,10 +148,13 @@ void main() {
 
       expect(picker.calls, 1);
       expect(picker.lastType, FileType.custom);
-      expect(
-        picker.lastAllowedExtensions,
-        ['mp3', 'm4a', 'flac', 'wav', 'ogg'],
-      );
+      expect(picker.lastAllowedExtensions, [
+        'mp3',
+        'm4a',
+        'flac',
+        'wav',
+        'ogg',
+      ]);
       expect(picker.lastWithData, isTrue);
     });
 
@@ -164,9 +167,7 @@ void main() {
       expect(analyzeButton(tester).onPressed, isNull);
     });
 
-    testWidgets('stays empty when the picker returns no files', (
-      tester,
-    ) async {
+    testWidgets('stays empty when the picker returns no files', (tester) async {
       await pumpPage(tester);
 
       await pickWith(tester, const FilePickerResult([]));
@@ -191,10 +192,7 @@ void main() {
       await pickWith(tester, _result('song.mp3', 1000));
 
       expect(find.text('song.mp3'), findsOneWidget);
-      expect(
-        find.text('0.0 MB  ·  Analysis takes ~15 secs'),
-        findsOneWidget,
-      );
+      expect(find.text('0.0 MB  ·  Analysis takes ~15 secs'), findsOneWidget);
       expect(find.text('Change file'), findsOneWidget);
       expect(find.text('Tap to choose a file'), findsNothing);
       expect(analyzeButton(tester).onPressed, isNotNull);
