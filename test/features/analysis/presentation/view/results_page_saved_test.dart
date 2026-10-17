@@ -4,6 +4,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:moodtune_app/features/analysis/domain/entities/entities.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/analysis/presentation/view/results_page.dart';
+import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:moodtune_app/shared/widgets/confidence_ring.dart';
 import 'package:moodtune_app/shared/widgets/mood_hero_card.dart';
 
@@ -30,21 +31,27 @@ HistoryEntry _entry({
 void main() {
   setUpAll(() {
     registerFallbackValue(const AnalysisHistoryRequested());
+    registerFallbackValue(const AuthSignOutRequested());
   });
 
   group('ResultsPage.saved', () {
-    Future<AnalysisBloc> pumpSaved(
+    Future<({AnalysisBloc analysis, AuthBloc auth})> pumpSaved(
       WidgetTester tester,
       HistoryEntry entry,
     ) async {
-      final bloc = mockAnalysisBloc();
-      await tester.pumpApp(ResultsPage.saved(entry: entry), analysisBloc: bloc);
+      final analysis = mockAnalysisBloc();
+      final auth = mockAuthBloc();
+      await tester.pumpApp(
+        ResultsPage.saved(entry: entry),
+        analysisBloc: analysis,
+        authBloc: auth,
+      );
       await tester.pumpAndSettle();
-      return bloc;
+      return (analysis: analysis, auth: auth);
     }
 
     testWidgets('shows title, artist, mood and confidence', (tester) async {
-      final bloc = await pumpSaved(tester, _entry());
+      final blocs = await pumpSaved(tester, _entry());
 
       expect(find.text('Song Analysis'), findsOneWidget);
       expect(find.text('Saved Song'), findsOneWidget);
@@ -52,8 +59,11 @@ void main() {
       expect(find.text('UPBEAT'), findsOneWidget);
       expect(find.byType(ConfidenceRing), findsOneWidget);
       expect(find.text('80%'), findsOneWidget);
-      // Read-only: nothing dispatched, nothing re-analyzed.
-      verifyNever(() => bloc.add(any()));
+      // Read-only: neither global BLoC is read or sent anything.
+      verifyNever(() => blocs.analysis.state);
+      verifyNever(() => blocs.analysis.add(any()));
+      verifyNever(() => blocs.auth.state);
+      verifyNever(() => blocs.auth.add(any()));
     });
 
     testWidgets('leaves out sections the entry has no data for', (
