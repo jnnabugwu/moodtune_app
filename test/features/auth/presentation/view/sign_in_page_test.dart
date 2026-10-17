@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
+import 'package:moodtune_app/features/auth/domain/entities/social_provider.dart';
 import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:moodtune_app/features/auth/presentation/view/sign_in_page.dart';
 import 'package:moodtune_app/shared/widgets/widgets.dart';
@@ -40,9 +41,90 @@ void main() {
       expect(find.text('Forgot password?'), findsOneWidget);
       expect(find.text('Confirm password'), findsNothing);
       expect(submitButton('Sign in'), findsOneWidget);
-      expect(find.text('Continue with Google'), findsOneWidget);
-      expect(find.text('Continue with Apple'), findsOneWidget);
+      expect(find.text('Continue with Google'), findsNothing);
+      expect(find.text('Continue with Apple'), findsNothing);
+      expect(find.text('or'), findsNothing);
       expect(find.byType(ErrorBanner), findsNothing);
+    });
+
+    group('social sign-in', () {
+      const both = {SocialProvider.apple, SocialProvider.google};
+
+      testWidgets('shows only the available providers', (tester) async {
+        await tester.pumpApp(
+          const SignInPage(),
+          authBloc: mockAuthBloc(
+            const AuthState(
+              status: AuthStatus.unauthenticated,
+              socialProviders: {SocialProvider.google},
+            ),
+          ),
+        );
+
+        expect(find.text('or'), findsOneWidget);
+        expect(find.text('Continue with Google'), findsOneWidget);
+        expect(find.text('Continue with Apple'), findsNothing);
+      });
+
+      testWidgets('each button requests its provider', (tester) async {
+        authBloc = mockAuthBloc(
+          const AuthState(
+            status: AuthStatus.unauthenticated,
+            socialProviders: both,
+          ),
+        );
+        await tester.pumpApp(const SignInPage(), authBloc: authBloc);
+
+        await tester.tap(find.text('Continue with Apple'));
+        await tester.tap(find.text('Continue with Google'));
+
+        verify(
+          () => authBloc.add(
+            const AuthSocialSignInRequested(SocialProvider.apple),
+          ),
+        ).called(1);
+        verify(
+          () => authBloc.add(
+            const AuthSocialSignInRequested(SocialProvider.google),
+          ),
+        ).called(1);
+      });
+
+      testWidgets('starting a social sign-in clears the old error', (
+        tester,
+      ) async {
+        authBloc = mockAuthBloc(
+          const AuthState(
+            status: AuthStatus.unauthenticated,
+            socialProviders: both,
+          ),
+        );
+        await tester.pumpApp(const SignInPage(), authBloc: authBloc);
+        await tester.tap(submitButton('Sign in'));
+        await tester.pump();
+        expect(find.text('Please fill in all fields.'), findsOneWidget);
+
+        await tester.tap(find.text('Continue with Google'));
+        await tester.pump();
+
+        expect(find.byType(ErrorBanner), findsNothing);
+      });
+
+      testWidgets('buttons ignore taps while loading', (tester) async {
+        authBloc = mockAuthBloc(
+          const AuthState(status: AuthStatus.loading, socialProviders: both),
+        );
+        await tester.pumpApp(const SignInPage(), authBloc: authBloc);
+
+        await tester.tap(
+          find.text('Continue with Google'),
+          warnIfMissed: false,
+        );
+
+        verifyNever(
+          () => authBloc.add(any(that: isA<AuthSocialSignInRequested>())),
+        );
+      });
     });
 
     testWidgets('shows validation error when fields are empty', (tester) async {

@@ -100,6 +100,7 @@ Copy `env.example` to `.env` / `dev.env`.
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY` | Supabase project |
 | `API_BASE_URL` | Backend base URL, e.g. `https://moodtune-backend-production-e4fe.up.railway.app/api/v1` (local: `http://127.0.0.1:8000/api/v1`) |
 | `JAMENDO_CLIENT_ID` | Jamendo catalog search |
+| `GOOGLE_WEB_CLIENT_ID`, `GOOGLE_IOS_CLIENT_ID` | Google Sign-In OAuth clients; the Google button is hidden until they're set (iOS needs both, Android the web one) |
 | `SENTRY_DSN` | Optional; monitoring is skipped when empty |
 
 ## Backend API surface

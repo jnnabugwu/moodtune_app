@@ -10,6 +10,7 @@ class AuthState extends Equatable {
     this.justSignedUp = false,
     this.pendingVerificationEmail,
     this.passwordResetSent = false,
+    this.socialProviders = const {},
   });
 
   final AuthStatus status;
@@ -22,6 +23,9 @@ class AuthState extends Equatable {
 
   /// True after a password-reset email has been dispatched successfully.
   final bool passwordResetSent;
+
+  /// Social sign-in buttons to offer (fixed for the app's lifetime).
+  final Set<SocialProvider> socialProviders;
 
   AuthState copyWith({
     AuthStatus? status,
@@ -40,6 +44,7 @@ class AuthState extends Equatable {
           ? this.pendingVerificationEmail
           : pendingVerificationEmail as String?,
       passwordResetSent: passwordResetSent ?? this.passwordResetSent,
+      socialProviders: socialProviders,
     );
   }
 
@@ -51,6 +56,7 @@ class AuthState extends Equatable {
     justSignedUp,
     pendingVerificationEmail,
     passwordResetSent,
+    socialProviders,
   ];
 }
 

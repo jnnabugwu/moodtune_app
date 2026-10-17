@@ -3,6 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:moodtune_app/core/error/failures.dart';
+import 'package:moodtune_app/features/auth/domain/entities/social_provider.dart';
 import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
 
 import '../../../../helpers/helpers.dart';
@@ -126,6 +127,74 @@ void main() {
       expect: () => const [
         AuthState(status: AuthStatus.loading),
         AuthState(status: AuthStatus.error, error: 'taken'),
+      ],
+    );
+  });
+
+  test('starts with the social providers it was given', () {
+    expect(
+      AuthBloc(
+        repository,
+        socialProviders: const {SocialProvider.google},
+      ).state.socialProviders,
+      {SocialProvider.google},
+    );
+  });
+
+  group('AuthSocialSignInRequested', () {
+    const providers = {SocialProvider.apple, SocialProvider.google};
+    AuthBloc buildSocial() => AuthBloc(repository, socialProviders: providers);
+
+    blocTest<AuthBloc, AuthState>(
+      'emits [loading, authenticated] on success',
+      setUp: () => when(
+        () => repository.signInWithProvider(SocialProvider.apple),
+      ).thenAnswer((_) async => const Right(tAppUser)),
+      build: buildSocial,
+      act: (bloc) =>
+          bloc.add(const AuthSocialSignInRequested(SocialProvider.apple)),
+      expect: () => const [
+        AuthState(status: AuthStatus.loading, socialProviders: providers),
+        AuthState(
+          status: AuthStatus.authenticated,
+          user: tAppUser,
+          socialProviders: providers,
+        ),
+      ],
+    );
+
+    blocTest<AuthBloc, AuthState>(
+      'returns to unauthenticated without an error when cancelled',
+      setUp: () => when(
+        () => repository.signInWithProvider(SocialProvider.google),
+      ).thenAnswer((_) async => const Right(null)),
+      build: buildSocial,
+      act: (bloc) =>
+          bloc.add(const AuthSocialSignInRequested(SocialProvider.google)),
+      expect: () => const [
+        AuthState(status: AuthStatus.loading, socialProviders: providers),
+        AuthState(
+          status: AuthStatus.unauthenticated,
+          socialProviders: providers,
+        ),
+      ],
+    );
+
+    blocTest<AuthBloc, AuthState>(
+      'emits [loading, error] on failure',
+      setUp: () => when(
+        () => repository.signInWithProvider(SocialProvider.apple),
+      ).thenAnswer((_) async => const Left(ServerFailure('nope'))),
+      build: buildSocial,
+      act: (bloc) =>
+          bloc.add(const AuthSocialSignInRequested(SocialProvider.apple)),
+      expect: () => const [
+        AuthState(status: AuthStatus.loading, socialProviders: providers),
+        AuthState(
+          status: AuthStatus.error,
+          error: 'nope',
+          socialProviders: providers,
+        ),
       ],
     );
   });
@@ -257,7 +326,15 @@ void main() {
         false,
         null,
         false,
+        <SocialProvider>{},
       ]);
+    });
+
+    test('copyWith keeps the social providers', () {
+      const state = AuthState(socialProviders: {SocialProvider.apple});
+      expect(state.copyWith(status: AuthStatus.loading).socialProviders, {
+        SocialProvider.apple,
+      });
     });
   });
 
@@ -275,6 +352,9 @@ void main() {
     expect(AuthSignUpRequested(a, 'b').props, ['a', 'b']);
     expect(ResendVerificationRequested(a).props, ['a']);
     expect(ForgotPasswordRequested(a).props, ['a']);
+    expect(const AuthSocialSignInRequested(SocialProvider.google).props, [
+      SocialProvider.google,
+    ]);
     expect(AuthSignInRequested(a, 'b'), const AuthSignInRequested('a', 'b'));
     expect(
       const AuthSignInRequested('a', 'b'),
