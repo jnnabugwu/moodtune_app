@@ -1,46 +1,6 @@
 import 'package:moodtune_app/features/analysis/domain/entities/audio_upload_analysis.dart';
 import 'package:moodtune_app/features/analysis/domain/entities/history_entry.dart';
 
-/// Converts a playlist_analyses row (from GET /analysis/history) to [HistoryEntry].
-class PlaylistHistoryEntryModel {
-  const PlaylistHistoryEntryModel({
-    required this.id,
-    required this.playlistName,
-    required this.primaryMood,
-    required this.confidence,
-    required this.createdAt,
-  });
-
-  factory PlaylistHistoryEntryModel.fromJson(Map<String, dynamic> json) {
-    final moodResults =
-        (json['mood_results'] as Map<String, dynamic>?) ?? <String, dynamic>{};
-    return PlaylistHistoryEntryModel(
-      id: json['id'] as String? ?? '',
-      playlistName: json['playlist_name'] as String? ?? '',
-      primaryMood: moodResults['primary_mood'] as String? ?? '',
-      confidence: (moodResults['confidence'] as num?)?.toDouble() ?? 0,
-      createdAt:
-          DateTime.tryParse(json['created_at'] as String? ?? '') ??
-          DateTime.now(),
-    );
-  }
-
-  final String id;
-  final String playlistName;
-  final String primaryMood;
-  final double confidence;
-  final DateTime createdAt;
-
-  HistoryEntry toDomain() => HistoryEntry(
-    id: id,
-    title: playlistName,
-    primaryMood: primaryMood,
-    confidence: confidence,
-    createdAt: createdAt,
-    type: HistoryEntryType.playlist,
-  );
-}
-
 /// Converts a song_analyses row (from GET /song/history) to [HistoryEntry].
 ///
 /// Rows saved by POST /song/history also carry both engines' moods in

@@ -113,19 +113,15 @@ Map<String, dynamic> audioUploadJson() => <String, dynamic>{
   'jamendo_track_url': 'https://jamendo.com/track/1',
 };
 
-Map<String, dynamic> songHistoryJson({String id = 'sh-1'}) => <String, dynamic>{
+Map<String, dynamic> songHistoryJson({
+  String id = 'sh-1',
+  String createdAt = '2025-03-04T05:06:07.000Z',
+}) => <String, dynamic>{
   'id': id,
   'track_name': 'Song',
   'artist_name': 'Singer',
   'mood_results': <String, dynamic>{'primary_mood': 'Sad', 'confidence': 0.65},
-  'created_at': '2025-03-04T05:06:07.000Z',
-};
-
-Map<String, dynamic> playlistHistoryJson() => <String, dynamic>{
-  'id': 'ph-1',
-  'playlist_name': 'Chill',
-  'mood_results': <String, dynamic>{'primary_mood': 'Calm', 'confidence': 1},
-  'created_at': '2025-03-04T05:06:07.000Z',
+  'created_at': createdAt,
 };
 
 /// A [HttpClientAdapter] that records every request and replies with a

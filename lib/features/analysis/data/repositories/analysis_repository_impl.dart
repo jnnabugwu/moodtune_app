@@ -43,10 +43,13 @@ class AnalysisRepositoryImpl implements AnalysisRepository {
   }) async {
     try {
       final raw = await _remote.getSongHistory(limit: limit, offset: offset);
-      final entries = raw
-          .map(SongHistoryEntryModel.fromJson)
-          .map((m) => m.toDomain())
-          .toList();
+      final entries =
+          raw
+              .map(SongHistoryEntryModel.fromJson)
+              .map((m) => m.toDomain())
+              .toList()
+            // Newest first, whatever order the backend sends.
+            ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return Right(entries);
     } on DioException catch (e) {
       return Left(_mapDioError(e));

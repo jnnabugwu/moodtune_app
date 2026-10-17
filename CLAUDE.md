@@ -117,7 +117,7 @@ Paths are relative to `API_BASE_URL`; the datasources in each feature's `data/da
 
 | Area | Endpoints |
 |---|---|
-| Analysis | `POST /audio-upload/analyze` (multipart), `POST /catalog/analyze`, `POST /song/analyze/{trackId}`, `POST /analysis/analyze/{playlistId}`, `GET /analysis/history`, `GET /analysis/{id}`, `GET /song/history` |
+| Analysis | `POST /audio-upload/analyze` (multipart), `POST /catalog/analyze`, `POST /song/analyze/{trackId}`, `POST /analysis/analyze/{playlistId}`, `GET /analysis/{id}`, `GET /song/history` |
 | Mood feedback | `GET /config`, `POST /mood-observations`, `PATCH /mood-observations/{id}/feedback` |
 | Spotify | `/spotify/authorize`, `/spotify/callback`, `/spotify/status`, `/spotify/profile`, `/spotify/playlists`, `/spotify/disconnect`, `/song/playlist/{id}/tracks` |
 
