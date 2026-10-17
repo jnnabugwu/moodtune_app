@@ -165,28 +165,20 @@ class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
 
   // ── Error helpers ───────────────────────────────────────────────────
 
-  bool _isRateLimit(String msg) =>
-      msg.toLowerCase().contains('rate') ||
-      msg.toLowerCase().contains('limit') ||
-      msg.toLowerCase().contains('429');
+  // The screen follows the failure type the bloc recorded, never the
+  // message text: "size limit" or "failed to generate" is a generic error.
 
-  bool _isOffline(String msg) =>
-      msg.toLowerCase().contains('offline') ||
-      msg.toLowerCase().contains('network') ||
-      msg.toLowerCase().contains('socket') ||
-      msg.toLowerCase().contains('connection');
+  String _errorTitle(AnalysisErrorKind? kind) => switch (kind) {
+    AnalysisErrorKind.network => 'Looks like you went offline.',
+    AnalysisErrorKind.rateLimit => "You've done a lot of listening today.",
+    _ => "Something went wrong. It's not your file — try again.",
+  };
 
-  String _errorTitle(String msg) {
-    if (_isOffline(msg)) return 'Looks like you went offline.';
-    if (_isRateLimit(msg)) return "You've done a lot of listening today.";
-    return "Something went wrong. It's not your file — try again.";
-  }
-
-  IconData _errorIcon(String msg) {
-    if (_isOffline(msg)) return CupertinoIcons.bolt_slash_fill;
-    if (_isRateLimit(msg)) return CupertinoIcons.timer;
-    return CupertinoIcons.xmark_circle_fill;
-  }
+  IconData _errorIcon(AnalysisErrorKind? kind) => switch (kind) {
+    AnalysisErrorKind.network => CupertinoIcons.bolt_slash_fill,
+    AnalysisErrorKind.rateLimit => CupertinoIcons.timer,
+    _ => CupertinoIcons.xmark_circle_fill,
+  };
 
   // ── Build ───────────────────────────────────────────────────────────
 
@@ -223,9 +215,9 @@ class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
               state.catalogStatus == CatalogAnalysisStatus.error &&
               state.catalogError != null;
           final hasError = hasUploadError || hasCatalogError;
-          final errorMsg = widget.source == AnalysisSource.upload
-              ? (state.uploadError ?? '')
-              : (state.catalogError ?? '');
+          final errorKind = widget.source == AnalysisSource.upload
+              ? state.uploadErrorKind
+              : state.catalogErrorKind;
 
           return CupertinoPageScaffold(
             child: SafeArea(
@@ -250,9 +242,9 @@ class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
 
                     if (hasError)
                       _ErrorState(
-                        icon: _errorIcon(errorMsg),
-                        title: _errorTitle(errorMsg),
-                        isRateLimit: _isRateLimit(errorMsg),
+                        icon: _errorIcon(errorKind),
+                        title: _errorTitle(errorKind),
+                        isRateLimit: errorKind == AnalysisErrorKind.rateLimit,
                         onRetry: _retry,
                         onCancel: _cancel,
                       )

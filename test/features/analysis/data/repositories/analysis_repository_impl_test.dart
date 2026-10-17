@@ -249,14 +249,16 @@ void main() {
       );
     });
 
-    test('lets TypeErrors from malformed payloads escape', () async {
-      // Documents current behaviour: only `Exception`s are caught, so a
-      // payload with a wrongly-typed field throws instead of returning Left.
+    test('maps a malformed payload to a generic ServerFailure', () async {
+      // A wrongly-typed field throws a TypeError while parsing (AC1).
       when(
         () => remote.analyzeSong(any()),
       ).thenAnswer((_) async => {'track_name': 42});
 
-      await expectLater(repo.analyzeSong('t'), throwsA(isA<TypeError>()));
+      expect(
+        _leftOf(await repo.analyzeSong('t')),
+        const ServerFailure(malformedResponseMessage),
+      );
     });
   });
 
@@ -442,6 +444,7 @@ void main() {
     for (final type in [
       DioExceptionType.connectionError,
       DioExceptionType.connectionTimeout,
+      DioExceptionType.sendTimeout,
       DioExceptionType.receiveTimeout,
     ]) {
       test('$type maps to NetworkFailure', () async {
@@ -465,7 +468,6 @@ void main() {
     });
 
     for (final type in [
-      DioExceptionType.sendTimeout,
       DioExceptionType.cancel,
       DioExceptionType.badCertificate,
       DioExceptionType.unknown,
@@ -477,5 +479,128 @@ void main() {
         );
       });
     }
+
+    test('HTTP 429 maps to RateLimitFailure with the body detail', () async {
+      expect(
+        await mapped(_dioError(data: {'detail': 'Slow down'}, statusCode: 429)),
+        const RateLimitFailure('Slow down'),
+      );
+    });
+
+    test('HTTP 429 without a message gets a default', () async {
+      expect(
+        await mapped(_dioError(data: 'Too Many', statusCode: 429)),
+        const RateLimitFailure('Too many requests'),
+      );
+    });
+  });
+
+  group('malformed payloads (AC1)', () {
+    // Every field of a fixture swapped for a list, so each cast fails.
+    Map<String, dynamic> malformed(Map<String, dynamic> json) => {
+      for (final key in json.keys) key: <Object>[],
+    };
+
+    const failure = ServerFailure(malformedResponseMessage);
+
+    test('analyzePlaylist', () async {
+      when(
+        () => remote.analyzePlaylist(any(), limit: any(named: 'limit')),
+      ).thenAnswer((_) async => malformed(playlistAnalysisJson()));
+
+      expect(_leftOf(await repo.analyzePlaylist('p')), failure);
+    });
+
+    test('getHistory', () async {
+      when(
+        () => remote.getSongHistory(
+          limit: any(named: 'limit'),
+          offset: any(named: 'offset'),
+        ),
+      ).thenAnswer((_) async => [malformed(songHistoryJson())]);
+
+      expect(_leftOf(await repo.getHistory()), failure);
+    });
+
+    test('getAnalysisById', () async {
+      when(
+        () => remote.getAnalysisById(any()),
+      ).thenAnswer((_) async => malformed(playlistAnalysisJson()));
+
+      expect(_leftOf(await repo.getAnalysisById('a')), failure);
+    });
+
+    test('analyzeSong', () async {
+      when(
+        () => remote.analyzeSong(any()),
+      ).thenAnswer((_) async => malformed(songAnalysisJson()));
+
+      expect(_leftOf(await repo.analyzeSong('t')), failure);
+    });
+
+    test('analyzeUploadedAudio', () async {
+      when(
+        () => uploadRemote.uploadAndAnalyzeAudio(
+          bytes: any(named: 'bytes'),
+          filename: any(named: 'filename'),
+        ),
+      ).thenAnswer((_) async => malformed(audioUploadJson()));
+
+      expect(
+        _leftOf(
+          await repo.analyzeUploadedAudio(
+            bytes: Uint8List.fromList([1]),
+            filename: 'x',
+          ),
+        ),
+        failure,
+      );
+    });
+
+    test('analyzeCatalogTrack', () async {
+      when(
+        () => uploadRemote.analyzeCatalogTrack(
+          audioUrl: any(named: 'audioUrl'),
+          trackId: any(named: 'trackId'),
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          jamendoPageUrl: any(named: 'jamendoPageUrl'),
+        ),
+      ).thenAnswer((_) async => malformed(audioUploadJson()));
+
+      expect(
+        _leftOf(
+          await repo.analyzeCatalogTrack(
+            audioUrl: 'u',
+            trackId: 't',
+            trackName: 'n',
+            artistName: 'a',
+            jamendoPageUrl: 'j',
+          ),
+        ),
+        failure,
+      );
+    });
+
+    test('saveResultToHistory', () async {
+      when(
+        () => remote.saveResultToHistory(any()),
+      ).thenThrow(StateError('bad state'));
+
+      expect(
+        _leftOf(
+          await repo.saveResultToHistory(
+            const ResultHistoryRecord(
+              source: ResultHistorySource.upload,
+              title: 'T',
+              displayedMood: 'happy',
+              displayedSource: MoodSource.backend,
+              backendMood: 'happy',
+            ),
+          ),
+        ),
+        failure,
+      );
+    });
   });
 }

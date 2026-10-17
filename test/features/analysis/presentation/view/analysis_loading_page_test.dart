@@ -252,6 +252,7 @@ void main() {
             const AnalysisState(
               uploadStatus: UploadStatus.error,
               uploadError: 'Network connection lost',
+              uploadErrorKind: AnalysisErrorKind.network,
             ),
           ),
         );
@@ -265,7 +266,7 @@ void main() {
         await _dispose(tester);
       });
 
-      testWidgets('rate-limit error shows OK that cancels to upload', (
+      testWidgets('rate-limit error shows OK that cancels to upload (AC3)', (
         tester,
       ) async {
         await _pumpLoading(
@@ -273,7 +274,8 @@ void main() {
           analysisBloc: mockAnalysisBloc(
             const AnalysisState(
               uploadStatus: UploadStatus.error,
-              uploadError: 'HTTP 429',
+              uploadError: 'Too many requests',
+              uploadErrorKind: AnalysisErrorKind.rateLimit,
             ),
           ),
         );
@@ -352,6 +354,7 @@ void main() {
             const AnalysisState(
               uploadStatus: UploadStatus.error,
               uploadError: 'Network down',
+              uploadErrorKind: AnalysisErrorKind.network,
             ),
           ),
         );
@@ -371,6 +374,7 @@ void main() {
             const AnalysisState(
               catalogStatus: CatalogAnalysisStatus.error,
               catalogError: 'Network down',
+              catalogErrorKind: AnalysisErrorKind.network,
             ),
           ),
         );
@@ -379,6 +383,64 @@ void main() {
 
         await _dispose(tester);
       });
+
+      testWidgets('catalog rate-limit error shows the rate-limit screen', (
+        tester,
+      ) async {
+        await _pumpLoading(
+          tester,
+          source: AnalysisSource.catalog,
+          analysisBloc: mockAnalysisBloc(
+            const AnalysisState(
+              catalogStatus: CatalogAnalysisStatus.error,
+              catalogError: 'Slow down',
+              catalogErrorKind: AnalysisErrorKind.rateLimit,
+            ),
+          ),
+        );
+
+        expect(
+          find.text("You've done a lot of listening today."),
+          findsOneWidget,
+        );
+        expect(find.text('OK'), findsOneWidget);
+
+        await _dispose(tester);
+      });
+
+      for (final message in [
+        'Failed to generate mood',
+        'File size limit exceeded',
+        'Rate of 429 per network connection',
+      ]) {
+        testWidgets('server error "$message" shows the generic screen (AC4)', (
+          tester,
+        ) async {
+          await _pumpLoading(
+            tester,
+            analysisBloc: mockAnalysisBloc(
+              AnalysisState(
+                uploadStatus: UploadStatus.error,
+                uploadError: message,
+                uploadErrorKind: AnalysisErrorKind.other,
+              ),
+            ),
+          );
+
+          expect(
+            find.text("Something went wrong. It's not your file — try again."),
+            findsOneWidget,
+          );
+          expect(
+            find.text("You've done a lot of listening today."),
+            findsNothing,
+          );
+          expect(find.text('Looks like you went offline.'), findsNothing);
+          expect(find.text('Try again'), findsOneWidget);
+
+          await _dispose(tester);
+        });
+      }
 
       testWidgets('error emitted mid-analysis replaces the loading view', (
         tester,
@@ -392,6 +454,7 @@ void main() {
             const AnalysisState(
               uploadStatus: UploadStatus.error,
               uploadError: 'socket closed',
+              uploadErrorKind: AnalysisErrorKind.network,
             ),
           ]),
           initialState: const AnalysisState(

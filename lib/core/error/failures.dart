@@ -20,6 +20,11 @@ class NetworkFailure extends Failure {
   const NetworkFailure(super.message);
 }
 
+/// Failure for HTTP 429: the backend is rate limiting this user
+class RateLimitFailure extends Failure {
+  const RateLimitFailure(super.message);
+}
+
 /// Failure for local storage/cache errors
 class CacheFailure extends Failure {
   const CacheFailure(super.message);
