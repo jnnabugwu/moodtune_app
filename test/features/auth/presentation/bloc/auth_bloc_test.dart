@@ -71,6 +71,34 @@ void main() {
         AuthState(status: AuthStatus.unauthenticated, error: 'expired'),
       ],
     );
+
+    blocTest<AuthBloc, AuthState>(
+      'clears a previous user when there is no current one',
+      setUp: () => when(
+        () => repository.getCurrentUser(),
+      ).thenAnswer((_) async => const Right(null)),
+      build: buildBloc,
+      seed: () =>
+          const AuthState(status: AuthStatus.authenticated, user: tAppUser),
+      act: (bloc) => bloc.add(const AuthCheckRequested()),
+      skip: 1,
+      expect: () => const [AuthState(status: AuthStatus.unauthenticated)],
+    );
+
+    blocTest<AuthBloc, AuthState>(
+      'clears a previous user on failure',
+      setUp: () => when(
+        () => repository.getCurrentUser(),
+      ).thenAnswer((_) async => const Left(ServerFailure('expired'))),
+      build: buildBloc,
+      seed: () =>
+          const AuthState(status: AuthStatus.authenticated, user: tAppUser),
+      act: (bloc) => bloc.add(const AuthCheckRequested()),
+      skip: 1,
+      expect: () => const [
+        AuthState(status: AuthStatus.unauthenticated, error: 'expired'),
+      ],
+    );
   });
 
   group('AuthSignInRequested', () {
@@ -99,6 +127,22 @@ void main() {
       act: (bloc) => bloc.add(const AuthSignInRequested(email, password)),
       expect: () => const [
         AuthState(status: AuthStatus.loading),
+        AuthState(status: AuthStatus.error, error: 'bad creds'),
+      ],
+    );
+
+    // AC2
+    blocTest<AuthBloc, AuthState>(
+      'failure after a previous session clears the old user',
+      setUp: () => when(
+        () => repository.signIn(email: email, password: password),
+      ).thenAnswer((_) async => const Left(ServerFailure('bad creds'))),
+      build: buildBloc,
+      seed: () =>
+          const AuthState(status: AuthStatus.unauthenticated, user: tAppUser),
+      act: (bloc) => bloc.add(const AuthSignInRequested(email, password)),
+      expect: () => const [
+        AuthState(status: AuthStatus.loading, user: tAppUser),
         AuthState(status: AuthStatus.error, error: 'bad creds'),
       ],
     );
@@ -134,6 +178,18 @@ void main() {
         AuthState(status: AuthStatus.loading),
         AuthState(status: AuthStatus.error, error: 'taken'),
       ],
+    );
+
+    blocTest<AuthBloc, AuthState>(
+      'failure after a previous session clears the old user',
+      setUp: () => when(
+        () => repository.signUp(email: email, password: password),
+      ).thenAnswer((_) async => const Left(ServerFailure('taken'))),
+      build: buildBloc,
+      seed: () => const AuthState(user: tAppUser),
+      act: (bloc) => bloc.add(const AuthSignUpRequested(email, password)),
+      skip: 1,
+      expect: () => const [AuthState(status: AuthStatus.error, error: 'taken')],
     );
   });
 
@@ -206,16 +262,18 @@ void main() {
   });
 
   group('AuthSignOutRequested', () {
+    // AC1
     blocTest<AuthBloc, AuthState>(
-      'emits [loading, unauthenticated] on success',
+      'emits [loading, unauthenticated] and clears the user on success',
       setUp: () => when(
         () => repository.signOut(),
       ).thenAnswer((_) async => const Right(null)),
       build: buildBloc,
-      seed: () => const AuthState(status: AuthStatus.authenticated),
+      seed: () =>
+          const AuthState(status: AuthStatus.authenticated, user: tAppUser),
       act: (bloc) => bloc.add(const AuthSignOutRequested()),
       expect: () => const [
-        AuthState(status: AuthStatus.loading),
+        AuthState(status: AuthStatus.loading, user: tAppUser),
         AuthState(status: AuthStatus.unauthenticated),
       ],
       verify: (_) => verify(() => repository.signOut()).called(1),
@@ -304,6 +362,64 @@ void main() {
       act: (bloc) => bloc.add(const ForgotPasswordRequested(email)),
       expect: () => const [
         AuthState(status: AuthStatus.loading),
+        AuthState(status: AuthStatus.unauthenticated, error: 'unknown email'),
+      ],
+    );
+
+    blocTest<AuthBloc, AuthState>(
+      'a new request resets passwordResetSent until it succeeds',
+      setUp: () => when(
+        () => repository.sendPasswordResetEmail(email),
+      ).thenAnswer((_) async => const Right(null)),
+      build: buildBloc,
+      seed: () => const AuthState(
+        status: AuthStatus.unauthenticated,
+        passwordResetSent: true,
+      ),
+      act: (bloc) => bloc.add(const ForgotPasswordRequested(email)),
+      expect: () => const [
+        AuthState(status: AuthStatus.loading),
+        AuthState(status: AuthStatus.unauthenticated, passwordResetSent: true),
+      ],
+    );
+
+    blocTest<AuthBloc, AuthState>(
+      'overlapping requests: only the latest result lands',
+      setUp: () {
+        final first = Completer<Either<Failure, void>>();
+        var calls = 0;
+        when(() => repository.sendPasswordResetEmail(email)).thenAnswer((_) {
+          calls++;
+          // The first request succeeds, but only after the second fails.
+          if (calls == 1) return first.future;
+          scheduleMicrotask(() => first.complete(const Right(null)));
+          return Future.value(const Left(ServerFailure('rate limited')));
+        });
+      },
+      build: buildBloc,
+      act: (bloc) async {
+        bloc
+          ..add(const ForgotPasswordRequested(email))
+          ..add(const ForgotPasswordRequested(email));
+        await Future<void>.delayed(Duration.zero);
+      },
+      expect: () => const [
+        AuthState(status: AuthStatus.loading),
+        AuthState(status: AuthStatus.unauthenticated, error: 'rate limited'),
+      ],
+      verify: (bloc) => expect(bloc.state.passwordResetSent, isFalse),
+    );
+
+    blocTest<AuthBloc, AuthState>(
+      'a failed new request leaves passwordResetSent false',
+      setUp: () => when(
+        () => repository.sendPasswordResetEmail(email),
+      ).thenAnswer((_) async => const Left(ServerFailure('unknown email'))),
+      build: buildBloc,
+      seed: () => const AuthState(passwordResetSent: true),
+      act: (bloc) => bloc.add(const ForgotPasswordRequested(email)),
+      skip: 1,
+      expect: () => const [
         AuthState(status: AuthStatus.unauthenticated, error: 'unknown email'),
       ],
     );
@@ -430,6 +546,11 @@ void main() {
           passwordResetSent: true,
         ),
       );
+    });
+
+    test('copyWith can clear user', () {
+      const state = AuthState(user: tAppUser);
+      expect(state.copyWith(user: null).user, isNull);
     });
 
     test('copyWith can clear pendingVerificationEmail', () {

@@ -32,6 +32,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _repository;
   late final StreamSubscription<AuthChange> _authChanges;
 
+  /// Counts password-reset requests so only the latest one's result lands.
+  int _resetRequest = 0;
+
   @override
   Future<void> close() async {
     await _authChanges.cancel();
@@ -235,13 +238,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     ForgotPasswordRequested event,
     Emitter<AuthState> emit,
   ) async {
-    emit(state.copyWith(status: AuthStatus.loading, error: null));
+    final request = ++_resetRequest;
+    emit(
+      state.copyWith(
+        status: AuthStatus.loading,
+        error: null,
+        passwordResetSent: false,
+      ),
+    );
     final result = await _repository.sendPasswordResetEmail(event.email);
+    // A newer request started while this one was in flight: its result wins.
+    if (request != _resetRequest) return;
     result.fold(
       (failure) => emit(
         state.copyWith(
           status: AuthStatus.unauthenticated,
           error: failure.message,
+          passwordResetSent: false,
         ),
       ),
       (_) => emit(
