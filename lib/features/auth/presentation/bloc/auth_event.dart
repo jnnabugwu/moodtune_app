@@ -61,3 +61,22 @@ class ForgotPasswordRequested extends AuthEvent {
   @override
   List<Object?> get props => [email];
 }
+
+class PasswordUpdateRequested extends AuthEvent {
+  const PasswordUpdateRequested(this.password);
+
+  final String password;
+
+  @override
+  List<Object?> get props => [password];
+}
+
+/// Added by the bloc itself when [AuthRepository.authChanges] emits.
+class AuthChanged extends AuthEvent {
+  const AuthChanged(this.change);
+
+  final AuthChange change;
+
+  @override
+  List<Object?> get props => [change];
+}

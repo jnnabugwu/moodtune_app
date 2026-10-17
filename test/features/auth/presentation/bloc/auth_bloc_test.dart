@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:moodtune_app/core/error/failures.dart';
+import 'package:moodtune_app/features/auth/domain/entities/auth_change.dart';
 import 'package:moodtune_app/features/auth/domain/entities/social_provider.dart';
 import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
 
@@ -14,6 +17,9 @@ void main() {
 
   setUp(() {
     repository = MockAuthRepository();
+    when(
+      () => repository.authChanges(),
+    ).thenAnswer((_) => const Stream.empty());
   });
 
   AuthBloc buildBloc() => AuthBloc(repository);
@@ -288,6 +294,107 @@ void main() {
     );
   });
 
+  group('AuthChanged', () {
+    const signedIn = AuthChange(type: AuthChangeType.signedIn, user: tAppUser);
+    const recovery = AuthChange(
+      type: AuthChangeType.passwordRecovery,
+      user: tAppUser,
+    );
+
+    blocTest<AuthBloc, AuthState>(
+      'confirmation link: authenticated and clears justSignedUp',
+      setUp: () => when(
+        () => repository.authChanges(),
+      ).thenAnswer((_) => Stream.value(signedIn)),
+      build: buildBloc,
+      seed: () => const AuthState(
+        status: AuthStatus.authenticated,
+        user: tAppUser,
+        justSignedUp: true,
+        pendingVerificationEmail: email,
+      ),
+      expect: () => const [
+        AuthState(
+          status: AuthStatus.authenticated,
+          user: tAppUser,
+          pendingVerificationEmail: email,
+        ),
+      ],
+    );
+
+    blocTest<AuthBloc, AuthState>(
+      'reset link: authenticated with passwordRecovery',
+      setUp: () => when(
+        () => repository.authChanges(),
+      ).thenAnswer((_) => Stream.value(recovery)),
+      build: buildBloc,
+      expect: () => const [
+        AuthState(
+          status: AuthStatus.authenticated,
+          user: tAppUser,
+          passwordRecovery: true,
+        ),
+      ],
+    );
+  });
+
+  group('PasswordUpdateRequested', () {
+    const recovering = AuthState(
+      status: AuthStatus.authenticated,
+      user: tAppUser,
+      passwordRecovery: true,
+    );
+
+    blocTest<AuthBloc, AuthState>(
+      'emits [loading, authenticated] and clears passwordRecovery',
+      setUp: () => when(
+        () => repository.updatePassword(password),
+      ).thenAnswer((_) async => const Right(null)),
+      build: buildBloc,
+      seed: () => recovering,
+      act: (bloc) => bloc.add(const PasswordUpdateRequested(password)),
+      expect: () => const [
+        AuthState(
+          status: AuthStatus.loading,
+          user: tAppUser,
+          passwordRecovery: true,
+        ),
+        AuthState(status: AuthStatus.authenticated, user: tAppUser),
+      ],
+    );
+
+    blocTest<AuthBloc, AuthState>(
+      'keeps passwordRecovery and reports the error on failure',
+      setUp: () => when(
+        () => repository.updatePassword(password),
+      ).thenAnswer((_) async => const Left(ServerFailure('too weak'))),
+      build: buildBloc,
+      seed: () => recovering,
+      act: (bloc) => bloc.add(const PasswordUpdateRequested(password)),
+      expect: () => const [
+        AuthState(
+          status: AuthStatus.loading,
+          user: tAppUser,
+          passwordRecovery: true,
+        ),
+        AuthState(
+          status: AuthStatus.authenticated,
+          user: tAppUser,
+          passwordRecovery: true,
+          error: 'too weak',
+        ),
+      ],
+    );
+  });
+
+  test('close cancels the auth change subscription', () async {
+    final controller = StreamController<AuthChange>();
+    when(() => repository.authChanges()).thenAnswer((_) => controller.stream);
+    await buildBloc().close();
+    expect(controller.hasListener, isFalse);
+    await controller.close();
+  });
+
   group('AuthState', () {
     test('copyWith keeps values when no args and clears error', () {
       const state = AuthState(
@@ -326,6 +433,7 @@ void main() {
         false,
         null,
         false,
+        false,
         <SocialProvider>{},
       ]);
     });
@@ -352,6 +460,10 @@ void main() {
     expect(AuthSignUpRequested(a, 'b').props, ['a', 'b']);
     expect(ResendVerificationRequested(a).props, ['a']);
     expect(ForgotPasswordRequested(a).props, ['a']);
+    expect(PasswordUpdateRequested(a).props, ['a']);
+    const change = AuthChange(type: AuthChangeType.signedIn, user: tAppUser);
+    expect(const AuthChanged(change).props, [change]);
+    expect(change.props, [AuthChangeType.signedIn, tAppUser]);
     expect(const AuthSocialSignInRequested(SocialProvider.google).props, [
       SocialProvider.google,
     ]);

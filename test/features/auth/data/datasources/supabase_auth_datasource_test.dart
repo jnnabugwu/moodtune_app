@@ -3,6 +3,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:moodtune_app/features/auth/data/datasources/social_credential_source.dart';
 import 'package:moodtune_app/features/auth/data/datasources/supabase_auth_datasource.dart';
 import 'package:moodtune_app/features/auth/domain/entities/app_user.dart';
+import 'package:moodtune_app/features/auth/domain/entities/auth_change.dart';
 import 'package:moodtune_app/features/auth/domain/entities/social_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -38,7 +39,10 @@ void main() {
   setUpAll(() {
     registerFallbackValue(OtpType.signup);
     registerFallbackValue(OAuthProvider.google);
+    registerFallbackValue(UserAttributes());
   });
+
+  const redirect = SupabaseAuthDatasource.authRedirectUrl;
 
   setUp(() {
     client = _MockSupabaseClient();
@@ -138,7 +142,11 @@ void main() {
     test('returns AppUser from the response user', () async {
       final user = buildUser(id: 'u2');
       when(
-        () => auth.signUp(email: email, password: password),
+        () => auth.signUp(
+          email: email,
+          password: password,
+          emailRedirectTo: redirect,
+        ),
       ).thenAnswer((_) async => responseWith(user));
 
       expect(
@@ -149,7 +157,11 @@ void main() {
 
     test('throws AuthException when no user is returned', () async {
       when(
-        () => auth.signUp(email: email, password: password),
+        () => auth.signUp(
+          email: email,
+          password: password,
+          emailRedirectTo: redirect,
+        ),
       ).thenAnswer((_) async => responseWith(null));
 
       await expectLater(
@@ -170,23 +182,34 @@ void main() {
       () => auth.resend(
         type: any(named: 'type'),
         email: any(named: 'email'),
+        emailRedirectTo: any(named: 'emailRedirectTo'),
       ),
     ).thenAnswer((_) async => ResendResponse());
 
     await datasource.resendVerificationEmail(email);
 
-    verify(() => auth.resend(type: OtpType.signup, email: email)).called(1);
+    verify(
+      () => auth.resend(
+        type: OtpType.signup,
+        email: email,
+        emailRedirectTo: redirect,
+      ),
+    ).called(1);
   });
 
   test('sendPasswordResetEmail delegates to resetPasswordForEmail', () async {
-    when(() => auth.resetPasswordForEmail(email)).thenAnswer((_) async {});
+    when(
+      () => auth.resetPasswordForEmail(email, redirectTo: redirect),
+    ).thenAnswer((_) async {});
     await datasource.sendPasswordResetEmail(email);
-    verify(() => auth.resetPasswordForEmail(email)).called(1);
+    verify(
+      () => auth.resetPasswordForEmail(email, redirectTo: redirect),
+    ).called(1);
   });
 
   test('propagates AuthException thrown by Supabase', () async {
     when(
-      () => auth.resetPasswordForEmail(email),
+      () => auth.resetPasswordForEmail(email, redirectTo: redirect),
     ).thenThrow(const AuthException('rate limited'));
 
     await expectLater(
@@ -298,6 +321,63 @@ void main() {
         SupabaseAuthDatasource(client: client).availableSocialProviders,
         isNot(contains(SocialProvider.google)),
       );
+    });
+  });
+
+  test('updatePassword sets the new password on the user', () async {
+    when(
+      () => auth.updateUser(any()),
+    ).thenAnswer((_) async => UserResponse.fromJson({'id': 'u1'}));
+
+    await datasource.updatePassword('new-secret');
+
+    final attrs =
+        verify(() => auth.updateUser(captureAny())).captured.single
+            as UserAttributes;
+    expect(attrs.password, 'new-secret');
+  });
+
+  group('authChanges', () {
+    AuthState stateFor(AuthChangeEvent event, {User? user}) {
+      Session? session;
+      if (user != null) {
+        session = _MockSession();
+        when(() => session!.user).thenReturn(user);
+      }
+      return AuthState(event, session);
+    }
+
+    test('maps signedIn and passwordRecovery, drops everything else', () {
+      final user = buildUser(email: email);
+      when(() => auth.onAuthStateChange).thenAnswer(
+        (_) => Stream.fromIterable([
+          stateFor(AuthChangeEvent.initialSession, user: user),
+          stateFor(AuthChangeEvent.signedIn, user: user),
+          stateFor(AuthChangeEvent.tokenRefreshed, user: user),
+          stateFor(AuthChangeEvent.signedIn),
+          stateFor(AuthChangeEvent.passwordRecovery, user: user),
+        ]),
+      );
+
+      const appUser = AppUser(id: 'u1', email: email);
+      expect(
+        datasource.authChanges(),
+        emitsInOrder([
+          const AuthChange(type: AuthChangeType.signedIn, user: appUser),
+          const AuthChange(
+            type: AuthChangeType.passwordRecovery,
+            user: appUser,
+          ),
+          emitsDone,
+        ]),
+      );
+    });
+
+    test('swallows stream errors from bad links', () {
+      when(
+        () => auth.onAuthStateChange,
+      ).thenAnswer((_) => Stream.error(const AuthException('otp_expired')));
+      expect(datasource.authChanges(), emitsDone);
     });
   });
 }

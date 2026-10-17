@@ -7,9 +7,11 @@ import 'package:moodtune_app/di/injector.dart';
 import 'package:moodtune_app/features/analysis/domain/entities/entities.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/analysis/presentation/view/view.dart';
+import 'package:moodtune_app/features/auth/presentation/view/auth_callback_page.dart';
 import 'package:moodtune_app/features/auth/presentation/view/auth_gate_page.dart';
 import 'package:moodtune_app/features/auth/presentation/view/email_verify_page.dart';
 import 'package:moodtune_app/features/auth/presentation/view/forgot_password_page.dart';
+import 'package:moodtune_app/features/auth/presentation/view/reset_password_page.dart';
 import 'package:moodtune_app/features/auth/presentation/view/sign_in_page.dart';
 import 'package:moodtune_app/features/catalog/presentation/bloc/catalog_bloc.dart';
 import 'package:moodtune_app/features/catalog/presentation/view/catalog_search_page.dart';
@@ -49,6 +51,14 @@ class AppRouter {
         path: RouteNames.forgotPassword,
         builder: (context, state) =>
             ForgotPasswordPage(prefillEmail: state.extra as String? ?? ''),
+      ),
+      GoRoute(
+        path: RouteNames.loginCallback,
+        builder: (context, state) => AuthCallbackPage(uri: state.uri),
+      ),
+      GoRoute(
+        path: RouteNames.resetPassword,
+        builder: (context, state) => const ResetPasswordPage(),
       ),
 
       // ── Authenticated home ────────────────────────────────────────────

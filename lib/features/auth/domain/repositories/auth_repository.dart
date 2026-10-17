@@ -1,4 +1,5 @@
 import 'package:moodtune_app/features/auth/domain/entities/app_user.dart';
+import 'package:moodtune_app/features/auth/domain/entities/auth_change.dart';
 import 'package:moodtune_app/features/auth/domain/entities/social_provider.dart';
 import 'package:moodtune_app/utils/typedef.dart';
 
@@ -26,4 +27,10 @@ abstract class AuthRepository {
 
   /// Sends a password-reset link to [email].
   ResultFuture<void> sendPasswordResetEmail(String email);
+
+  /// Sets a new password for the signed-in user (after a reset link).
+  ResultFuture<void> updatePassword(String password);
+
+  /// Emits when an email link signs the user in or starts password recovery.
+  Stream<AuthChange> authChanges();
 }

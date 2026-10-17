@@ -27,6 +27,12 @@ class RouteNames {
   static const String emailVerify = '/email-verify';
   static const String forgotPassword = '/forgot-password';
 
+  /// Where Supabase email links land (`moodtune://auth/login-callback`).
+  static const String loginCallback = '/login-callback';
+
+  /// Set a new password after opening a reset link.
+  static const String resetPassword = '/reset-password';
+
   /// Authenticated home (tabs: Home + History).
   static const String homeAuth = '/home';
 
