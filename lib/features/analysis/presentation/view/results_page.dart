@@ -13,11 +13,13 @@ import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:moodtune_app/features/mood_feedback/mood_feedback.dart';
 import 'package:moodtune_app/features/mood_feedback/presentation/mood_observation_recorder.dart';
 import 'package:moodtune_app/features/narration/presentation/mood_narration_text.dart';
+import 'package:moodtune_app/l10n/l10n.dart';
 import 'package:moodtune_app/shared/widgets/analysis_source_sheet.dart';
 import 'package:moodtune_app/shared/widgets/collapsible_section.dart';
 import 'package:moodtune_app/shared/widgets/mood_descriptor_tags.dart';
 import 'package:moodtune_app/shared/widgets/mood_hero_card.dart';
 import 'package:moodtune_app/shared/widgets/sign_up_strip.dart';
+import 'package:moodtune_app/shared/widgets/toast_notice.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // Wireframe neutral palette — applied to all page-level elements outside the
@@ -92,11 +94,11 @@ class _ResultsPageState extends State<ResultsPage>
 
         return BlocConsumer<AnalysisBloc, AnalysisState>(
           listenWhen: (prev, curr) {
-            // Show "Saved" snackbar once when authenticated result lands.
+            // Show the "Saved" notice once the upload is saved to history.
             if (!isGuest &&
                 widget.source == AnalysisSource.upload &&
-                prev.currentUploadAnalysis == null &&
-                curr.currentUploadAnalysis != null) {
+                !prev.uploadSaved &&
+                curr.uploadSaved) {
               return true;
             }
             return false;
@@ -332,11 +334,7 @@ class _ResultsPageState extends State<ResultsPage>
   // ── Helpers ────────────────────────────────────────────────────────────
 
   void _showSavedSnackbar(BuildContext ctx) {
-    // CupertinoPageScaffold doesn't have a native snackbar; use an overlay
-    // notification via the ScaffoldMessenger if Material is in the tree,
-    // otherwise show a brief toast overlay. For simplicity, we rely on a
-    // CupertinoAlertDialog-free approach: log only. UI teams can upgrade.
-    // In practice, use flutter_toast or similar in a follow-up.
+    showToastNotice(ctx, message: ctx.l10n.resultsSavedToHistory);
   }
 }
 

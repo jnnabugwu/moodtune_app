@@ -3,5 +3,9 @@
     "counterAppBarTitle": "Counter",
     "@counterAppBarTitle": {
         "description": "Text shown in the AppBar of the Counter Page"
+    },
+    "resultsSavedToHistory": "Saved to history",
+    "@resultsSavedToHistory": {
+        "description": "Notice shown on the results page once a result is saved to history"
     }
 }
