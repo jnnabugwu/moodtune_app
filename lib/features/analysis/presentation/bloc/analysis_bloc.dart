@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:moodtune_app/core/error/failures.dart';
 import 'package:moodtune_app/core/logging/talker.dart';
 import 'package:moodtune_app/features/analysis/domain/domain.dart';
 import 'package:moodtune_app/features/mood_feedback/domain/entities/entities.dart';
@@ -161,6 +162,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
       state.copyWith(
         uploadStatus: UploadStatus.uploading,
         uploadError: null,
+        uploadErrorKind: null,
         currentUploadAnalysis: null,
       ),
     );
@@ -187,6 +189,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
         state.copyWith(
           uploadStatus: UploadStatus.error,
           uploadError: failure.message,
+          uploadErrorKind: AnalysisErrorKind.fromFailure(failure),
           currentUploadAnalysis: null,
         ),
       ),
@@ -203,6 +206,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
             uploadStatus: UploadStatus.success,
             currentUploadAnalysis: displayed,
             uploadError: null,
+            uploadErrorKind: null,
             onDeviceAttempt: attempt,
             observationId: observationId,
           ),
@@ -231,7 +235,9 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
         error: null,
         historyError: null,
         uploadError: null,
+        uploadErrorKind: null,
         catalogError: null,
+        catalogErrorKind: null,
       ),
     );
   }
@@ -244,6 +250,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
       state.copyWith(
         catalogStatus: CatalogAnalysisStatus.analyzing,
         catalogError: null,
+        catalogErrorKind: null,
         currentCatalogAnalysis: null,
       ),
     );
@@ -264,6 +271,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
         state.copyWith(
           catalogStatus: CatalogAnalysisStatus.error,
           catalogError: failure.message,
+          catalogErrorKind: AnalysisErrorKind.fromFailure(failure),
         ),
       ),
       (analysis) {

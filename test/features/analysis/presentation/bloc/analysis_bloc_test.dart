@@ -298,6 +298,23 @@ void main() {
         AnalysisState(
           uploadStatus: UploadStatus.error,
           uploadError: 'too large',
+          uploadErrorKind: AnalysisErrorKind.other,
+        ),
+      ],
+    );
+
+    // AC3 (#40)
+    blocTest<AnalysisBloc, AnalysisState>(
+      'records a RateLimitFailure as a rate-limit error',
+      setUp: () => stubUpload(const Left(RateLimitFailure('Slow down'))),
+      build: buildBloc,
+      act: (bloc) => bloc.add(event),
+      skip: 1,
+      expect: () => const [
+        AnalysisState(
+          uploadStatus: UploadStatus.error,
+          uploadError: 'Slow down',
+          uploadErrorKind: AnalysisErrorKind.rateLimit,
         ),
       ],
     );
@@ -323,6 +340,7 @@ void main() {
         AnalysisState(
           uploadStatus: UploadStatus.error,
           uploadError: 'too large',
+          uploadErrorKind: AnalysisErrorKind.other,
           catalogError: 'catalog',
         ),
       ],
@@ -348,11 +366,13 @@ void main() {
         const AnalysisState(
           uploadStatus: UploadStatus.error,
           uploadError: 'too large',
+          uploadErrorKind: AnalysisErrorKind.other,
           historyLoading: true,
         ),
         AnalysisState(
           uploadStatus: UploadStatus.error,
           uploadError: 'too large',
+          uploadErrorKind: AnalysisErrorKind.other,
           history: tHistory,
           filteredHistory: tHistory,
           historyLoaded: true,
@@ -407,6 +427,22 @@ void main() {
         AnalysisState(
           catalogStatus: CatalogAnalysisStatus.error,
           catalogError: 'jamendo down',
+          catalogErrorKind: AnalysisErrorKind.other,
+        ),
+      ],
+    );
+
+    blocTest<AnalysisBloc, AnalysisState>(
+      'records a NetworkFailure as a network error',
+      setUp: () => stubCatalog(const Left(NetworkFailure('offline'))),
+      build: buildBloc,
+      act: (bloc) => bloc.add(event),
+      skip: 1,
+      expect: () => const [
+        AnalysisState(
+          catalogStatus: CatalogAnalysisStatus.error,
+          catalogError: 'offline',
+          catalogErrorKind: AnalysisErrorKind.network,
         ),
       ],
     );
@@ -434,6 +470,7 @@ void main() {
         AnalysisState(
           catalogStatus: CatalogAnalysisStatus.error,
           catalogError: 'jamendo down',
+          catalogErrorKind: AnalysisErrorKind.other,
           currentUploadAnalysis: tUpload,
           uploadError: 'upload',
         ),
@@ -449,11 +486,34 @@ void main() {
       error: 'e',
       historyError: 'h',
       uploadError: 'u',
+      uploadErrorKind: AnalysisErrorKind.network,
       catalogError: 'c',
+      catalogErrorKind: AnalysisErrorKind.rateLimit,
     ),
     act: (bloc) => bloc.add(const AnalysisClearErrorRequested()),
     expect: () => const [AnalysisState(status: AnalysisStatus.error)],
   );
+
+  group(AnalysisErrorKind, () {
+    test('fromFailure classifies by failure type, not message', () {
+      expect(
+        AnalysisErrorKind.fromFailure(const NetworkFailure('x')),
+        AnalysisErrorKind.network,
+      );
+      expect(
+        AnalysisErrorKind.fromFailure(const RateLimitFailure('x')),
+        AnalysisErrorKind.rateLimit,
+      );
+      expect(
+        AnalysisErrorKind.fromFailure(const ServerFailure('rate limit 429')),
+        AnalysisErrorKind.other,
+      );
+      expect(
+        AnalysisErrorKind.fromFailure(const ServerFailure('network down')),
+        AnalysisErrorKind.other,
+      );
+    });
+  });
 
   group('AnalysisState', () {
     test('copyWith with no args keeps every value, errors included', () {
@@ -470,9 +530,11 @@ void main() {
         historyError: 'h',
         uploadStatus: UploadStatus.success,
         uploadError: 'u',
+        uploadErrorKind: AnalysisErrorKind.network,
         catalogStatus: CatalogAnalysisStatus.success,
         currentCatalogAnalysis: tCatalog,
         catalogError: 'c',
+        catalogErrorKind: AnalysisErrorKind.rateLimit,
       );
 
       final copy = state.copyWith();
@@ -492,6 +554,8 @@ void main() {
       expect(copy.historyError, 'h');
       expect(copy.uploadError, 'u');
       expect(copy.catalogError, 'c');
+      expect(copy.uploadErrorKind, AnalysisErrorKind.network);
+      expect(copy.catalogErrorKind, AnalysisErrorKind.rateLimit);
       expect(copy, state);
     });
 
@@ -549,6 +613,24 @@ void main() {
       expect(state.copyWith(error: 'x').error, 'x');
     });
 
+    test('copyWith clears each error kind only when passed null', () {
+      const state = AnalysisState(
+        uploadErrorKind: AnalysisErrorKind.network,
+        catalogErrorKind: AnalysisErrorKind.rateLimit,
+      );
+
+      expect(state.copyWith(uploadErrorKind: null).uploadErrorKind, isNull);
+      expect(
+        state.copyWith(uploadErrorKind: null).catalogErrorKind,
+        AnalysisErrorKind.rateLimit,
+      );
+      expect(state.copyWith(catalogErrorKind: null).catalogErrorKind, isNull);
+      expect(
+        state.copyWith(catalogErrorKind: null).uploadErrorKind,
+        AnalysisErrorKind.network,
+      );
+    });
+
     test('copyWith can explicitly set historyMoodFilter to null', () {
       const state = AnalysisState(historyMoodFilter: 'happy');
       expect(state.copyWith(historyMoodFilter: null).historyMoodFilter, isNull);
@@ -561,7 +643,7 @@ void main() {
         const AnalysisState(),
         isNot(const AnalysisState(catalogError: 'x')),
       );
-      expect(const AnalysisState().props, hasLength(18));
+      expect(const AnalysisState().props, hasLength(20));
     });
   });
 
@@ -985,7 +1067,11 @@ void main() {
       act: (bloc) => bloc.add(upload),
       skip: 1,
       expect: () => const [
-        AnalysisState(uploadStatus: UploadStatus.error, uploadError: 'down'),
+        AnalysisState(
+          uploadStatus: UploadStatus.error,
+          uploadError: 'down',
+          uploadErrorKind: AnalysisErrorKind.other,
+        ),
       ],
     );
 
@@ -1013,6 +1099,7 @@ void main() {
         AnalysisState(
           catalogStatus: CatalogAnalysisStatus.error,
           catalogError: 'down',
+          catalogErrorKind: AnalysisErrorKind.other,
         ),
       ],
     );

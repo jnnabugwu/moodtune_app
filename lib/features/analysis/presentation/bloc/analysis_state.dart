@@ -6,6 +6,20 @@ enum UploadStatus { initial, uploading, success, error }
 
 enum CatalogAnalysisStatus { initial, analyzing, success, error }
 
+/// What kind of failure an upload or catalog analysis hit, so the UI can pick
+/// its error screen from the failure type rather than its message text.
+enum AnalysisErrorKind {
+  network,
+  rateLimit,
+  other;
+
+  static AnalysisErrorKind fromFailure(Failure failure) => switch (failure) {
+    NetworkFailure() => network,
+    RateLimitFailure() => rateLimit,
+    _ => other,
+  };
+}
+
 class AnalysisState extends Equatable {
   const AnalysisState({
     this.status = AnalysisStatus.initial,
@@ -21,9 +35,11 @@ class AnalysisState extends Equatable {
     this.historyError,
     this.uploadStatus = UploadStatus.initial,
     this.uploadError,
+    this.uploadErrorKind,
     this.catalogStatus = CatalogAnalysisStatus.initial,
     this.currentCatalogAnalysis,
     this.catalogError,
+    this.catalogErrorKind,
     this.onDeviceAttempt,
     this.observationId,
   });
@@ -52,10 +68,16 @@ class AnalysisState extends Equatable {
   final UploadStatus uploadStatus;
   final String? uploadError;
 
+  /// Type of the failure behind [uploadError].
+  final AnalysisErrorKind? uploadErrorKind;
+
   /// Catalog track analysis (Jamendo → /catalog/analyze → AudioUploadAnalysis).
   final CatalogAnalysisStatus catalogStatus;
   final AudioUploadAnalysis? currentCatalogAnalysis;
   final String? catalogError;
+
+  /// Type of the failure behind [catalogError].
+  final AnalysisErrorKind? catalogErrorKind;
 
   /// The on-device classification behind the latest upload or catalog
   /// result, kept to compare engines (ROADMAP OD-4). Null when it didn't run.
@@ -81,9 +103,11 @@ class AnalysisState extends Equatable {
     Object? historyError = _keep,
     UploadStatus? uploadStatus,
     Object? uploadError = _keep,
+    Object? uploadErrorKind = _keep,
     CatalogAnalysisStatus? catalogStatus,
     Object? currentCatalogAnalysis = _keep,
     Object? catalogError = _keep,
+    Object? catalogErrorKind = _keep,
     Object? onDeviceAttempt = _keep,
     Object? observationId = _keep,
   }) {
@@ -109,6 +133,9 @@ class AnalysisState extends Equatable {
       uploadError: uploadError == _keep
           ? this.uploadError
           : uploadError as String?,
+      uploadErrorKind: uploadErrorKind == _keep
+          ? this.uploadErrorKind
+          : uploadErrorKind as AnalysisErrorKind?,
       catalogStatus: catalogStatus ?? this.catalogStatus,
       currentCatalogAnalysis: currentCatalogAnalysis == _keep
           ? this.currentCatalogAnalysis
@@ -116,6 +143,9 @@ class AnalysisState extends Equatable {
       catalogError: catalogError == _keep
           ? this.catalogError
           : catalogError as String?,
+      catalogErrorKind: catalogErrorKind == _keep
+          ? this.catalogErrorKind
+          : catalogErrorKind as AnalysisErrorKind?,
       onDeviceAttempt: onDeviceAttempt == _keep
           ? this.onDeviceAttempt
           : onDeviceAttempt as OnDeviceMoodAttempt?,
@@ -140,9 +170,11 @@ class AnalysisState extends Equatable {
     historyError,
     uploadStatus,
     uploadError,
+    uploadErrorKind,
     catalogStatus,
     currentCatalogAnalysis,
     catalogError,
+    catalogErrorKind,
     onDeviceAttempt,
     observationId,
   ];
