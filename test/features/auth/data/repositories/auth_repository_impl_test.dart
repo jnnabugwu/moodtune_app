@@ -5,6 +5,7 @@ import 'package:moodtune_app/core/error/failures.dart';
 import 'package:moodtune_app/features/auth/data/datasources/supabase_auth_datasource.dart';
 import 'package:moodtune_app/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:moodtune_app/features/auth/domain/entities/app_user.dart';
+import 'package:moodtune_app/features/auth/domain/entities/auth_change.dart';
 import 'package:moodtune_app/features/auth/domain/entities/social_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -203,4 +204,28 @@ void main() {
         ).thenThrow(e),
     call: () => repository.signInWithProvider(SocialProvider.apple),
   );
+
+  test('updatePassword returns Right(null)', () async {
+    when(() => datasource.updatePassword(password)).thenAnswer((_) async {});
+    expect(
+      await repository.updatePassword(password),
+      const Right<Failure, void>(null),
+    );
+    verify(() => datasource.updatePassword(password)).called(1);
+  });
+
+  failureMapping(
+    name: 'updatePassword',
+    stub: (e) =>
+        () => when(() => datasource.updatePassword(password)).thenThrow(e),
+    call: () => repository.updatePassword(password),
+  );
+
+  test('authChanges forwards the datasource stream', () {
+    const change = AuthChange(type: AuthChangeType.signedIn, user: tAppUser);
+    when(
+      () => datasource.authChanges(),
+    ).thenAnswer((_) => Stream.value(change));
+    expect(repository.authChanges(), emitsInOrder([change, emitsDone]));
+  });
 }

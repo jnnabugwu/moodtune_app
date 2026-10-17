@@ -10,9 +10,11 @@ import 'package:moodtune_app/features/analysis/domain/entities/entities.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/analysis/presentation/view/view.dart';
 import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:moodtune_app/features/auth/presentation/view/auth_callback_page.dart';
 import 'package:moodtune_app/features/auth/presentation/view/auth_gate_page.dart';
 import 'package:moodtune_app/features/auth/presentation/view/email_verify_page.dart';
 import 'package:moodtune_app/features/auth/presentation/view/forgot_password_page.dart';
+import 'package:moodtune_app/features/auth/presentation/view/reset_password_page.dart';
 import 'package:moodtune_app/features/auth/presentation/view/sign_in_page.dart';
 import 'package:moodtune_app/features/catalog/presentation/bloc/catalog_bloc.dart';
 import 'package:moodtune_app/features/catalog/presentation/view/catalog_search_page.dart';
@@ -122,6 +124,8 @@ void main() {
     (location: RouteNames.landing, extra: null, page: GuestPage),
     (location: RouteNames.signIn, extra: null, page: SignInPage),
     (location: RouteNames.emailVerify, extra: null, page: EmailVerifyPage),
+    (location: RouteNames.loginCallback, extra: null, page: AuthCallbackPage),
+    (location: RouteNames.resetPassword, extra: null, page: ResetPasswordPage),
     (location: RouteNames.homeAuth, extra: null, page: HomeAuthPage),
     (location: RouteNames.history, extra: null, page: HistoryPage),
     (location: RouteNames.catalog, extra: null, page: CatalogSearchPage),

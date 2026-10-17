@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:moodtune_app/core/error/error.dart';
 import 'package:moodtune_app/features/auth/data/datasources/supabase_auth_datasource.dart';
 import 'package:moodtune_app/features/auth/domain/entities/app_user.dart';
+import 'package:moodtune_app/features/auth/domain/entities/auth_change.dart';
 import 'package:moodtune_app/features/auth/domain/entities/social_provider.dart';
 import 'package:moodtune_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:moodtune_app/utils/typedef.dart';
@@ -106,4 +107,19 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  ResultFuture<void> updatePassword(String password) async {
+    try {
+      await _datasource.updatePassword(password);
+      return const Right(null);
+    } on AuthException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on Exception catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Stream<AuthChange> authChanges() => _datasource.authChanges();
 }

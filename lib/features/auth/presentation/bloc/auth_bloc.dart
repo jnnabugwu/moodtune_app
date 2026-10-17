@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moodtune_app/features/auth/domain/entities/app_user.dart';
+import 'package:moodtune_app/features/auth/domain/entities/auth_change.dart';
 import 'package:moodtune_app/features/auth/domain/entities/social_provider.dart';
 import 'package:moodtune_app/features/auth/domain/repositories/auth_repository.dart';
 
@@ -19,9 +22,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthSignOutRequested>(_onAuthSignOutRequested);
     on<ResendVerificationRequested>(_onResendVerification);
     on<ForgotPasswordRequested>(_onForgotPassword);
+    on<PasswordUpdateRequested>(_onPasswordUpdate);
+    on<AuthChanged>(_onAuthChanged);
+    _authChanges = _repository.authChanges().listen(
+      (change) => add(AuthChanged(change)),
+    );
   }
 
   final AuthRepository _repository;
+  late final StreamSubscription<AuthChange> _authChanges;
+
+  @override
+  Future<void> close() async {
+    await _authChanges.cancel();
+    return await super.close();
+  }
 
   Future<void> _onAuthCheckRequested(
     AuthCheckRequested event,
@@ -188,6 +203,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           user: null,
           error: null,
           justSignedUp: false,
+          passwordRecovery: false,
         ),
       ),
     );
@@ -233,6 +249,40 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           status: AuthStatus.unauthenticated,
           passwordResetSent: true,
         ),
+      ),
+    );
+  }
+
+  Future<void> _onPasswordUpdate(
+    PasswordUpdateRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(state.copyWith(status: AuthStatus.loading, error: null));
+    final result = await _repository.updatePassword(event.password);
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          status: AuthStatus.authenticated,
+          error: failure.message,
+        ),
+      ),
+      (_) => emit(
+        state.copyWith(
+          status: AuthStatus.authenticated,
+          passwordRecovery: false,
+        ),
+      ),
+    );
+  }
+
+  /// An email link opened the app and Supabase created a session.
+  void _onAuthChanged(AuthChanged event, Emitter<AuthState> emit) {
+    emit(
+      state.copyWith(
+        status: AuthStatus.authenticated,
+        user: event.change.user,
+        justSignedUp: false,
+        passwordRecovery: event.change.type == AuthChangeType.passwordRecovery,
       ),
     );
   }
