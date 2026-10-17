@@ -49,19 +49,6 @@ class SpotifyBloc extends Bloc<SpotifyEvent, SpotifyState> {
     SpotifyStarted event,
     Emitter<SpotifyState> emit,
   ) async {
-    // #region agent log
-    final payload = {
-      'sessionId': 'debug-session',
-      'runId': 'prefix-connect',
-      'hypothesisId': 'H-start',
-      'location': 'spotify_bloc.dart:_onStarted',
-      'message': 'SpotifyStarted received',
-      'timestamp': DateTime.now().millisecondsSinceEpoch,
-    };
-    // Debug trace for the Spotify connect flow.
-    // ignore: avoid_print
-    print('AGENTLOG $payload');
-    // #endregion
     emit(state.copyWith(status: SpotifyStatus.loading, error: null));
     final result = await _checkSpotifyConnection();
     await result.fold(
