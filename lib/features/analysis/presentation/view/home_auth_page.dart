@@ -192,15 +192,20 @@ class _HomeTabState extends State<_HomeTab> {
     );
   }
 
-  /// Returns up to two capitalised initials from an email address.
+  /// Returns up to two capitalised initials from an email address, or `?`
+  /// when the local part has no characters besides `.`, `_` and `-`.
   String _initials(String email) {
-    if (email.isEmpty) return '?';
     final local = email.split('@').first;
-    final parts = local.split(RegExp(r'[._\-]'));
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    final parts = local
+        .split(RegExp(r'[._\-]'))
+        .where((part) => part.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) {
+      final part = parts.first;
+      return part.substring(0, part.length.clamp(1, 2)).toUpperCase();
     }
-    return local.substring(0, local.length.clamp(1, 2)).toUpperCase();
+    return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
   }
 
   void _showSignOutSheet(BuildContext context) {
