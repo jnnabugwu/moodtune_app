@@ -177,11 +177,28 @@ void main() {
     await expectLater(build().obtain(), throwsA(isA<AuthException>()));
   });
 
-  test('sends no access token when the scopes need consent', () async {
+  test('asks for the scopes when they were never granted', () async {
     when(
       () => authorizationClient.authorizationForScopes(any()),
     ).thenAnswer((_) async => null);
+    when(() => authorizationClient.authorizeScopes(any())).thenAnswer(
+      (_) async => const GoogleSignInClientAuthorization(accessToken: 'new'),
+    );
 
-    expect((await build().obtain())?.accessToken, isNull);
+    expect((await build().obtain())?.accessToken, 'new');
+    verify(
+      () => authorizationClient.authorizeScopes(['email', 'profile']),
+    ).called(1);
+  });
+
+  test('returns null when the user declines the scopes', () async {
+    when(
+      () => authorizationClient.authorizationForScopes(any()),
+    ).thenAnswer((_) async => null);
+    when(() => authorizationClient.authorizeScopes(any())).thenThrow(
+      const GoogleSignInException(code: GoogleSignInExceptionCode.canceled),
+    );
+
+    expect(await build().obtain(), isNull);
   });
 }

@@ -68,6 +68,11 @@ class _SignInPageState extends State<SignInPage> {
     }
   }
 
+  void _signInWith(SocialProvider provider) {
+    setState(() => _localError = null);
+    context.read<AuthBloc>().add(AuthSocialSignInRequested(provider));
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = CupertinoTheme.of(context);
@@ -232,6 +237,7 @@ class _SignInPageState extends State<SignInPage> {
                     _SocialButtons(
                       providers: state.socialProviders,
                       enabled: !isLoading,
+                      onSelected: _signInWith,
                     ),
                   ],
                   const SizedBox(height: 32),
@@ -349,16 +355,18 @@ class _OrDivider extends StatelessWidget {
 
 /// Apple first and in Apple's own button style, as App Review expects.
 class _SocialButtons extends StatelessWidget {
-  const _SocialButtons({required this.providers, required this.enabled});
+  const _SocialButtons({
+    required this.providers,
+    required this.enabled,
+    required this.onSelected,
+  });
 
   final Set<SocialProvider> providers;
   final bool enabled;
+  final ValueChanged<SocialProvider> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    void signIn(SocialProvider provider) =>
-        context.read<AuthBloc>().add(AuthSocialSignInRequested(provider));
-
     return IgnorePointer(
       ignoring: !enabled,
       child: AnimatedOpacity(
@@ -372,7 +380,7 @@ class _SocialButtons extends StatelessWidget {
                 text: 'Continue with Apple',
                 height: 48,
                 borderRadius: const BorderRadius.all(Radius.circular(12)),
-                onPressed: () => signIn(SocialProvider.apple),
+                onPressed: () => onSelected(SocialProvider.apple),
               ),
               const SizedBox(height: 10),
             ],
@@ -380,7 +388,7 @@ class _SocialButtons extends StatelessWidget {
               _SocialButton(
                 label: 'Continue with Google',
                 icon: CupertinoIcons.globe,
-                onTap: () => signIn(SocialProvider.google),
+                onTap: () => onSelected(SocialProvider.google),
               ),
               const SizedBox(height: 10),
             ],
@@ -407,6 +415,7 @@ class _SocialButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: label,
+      onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,

@@ -61,11 +61,15 @@ class GoogleCredentialSource implements SocialCredentialSource {
       if (idToken == null) {
         throw const AuthException('Google did not return an ID token.');
       }
-      final authorization = await account.authorizationClient
-          .authorizationForScopes(_scopes);
+      // First-time users haven't granted the scopes yet, so ask for them
+      // when there's no existing authorization.
+      final client = account.authorizationClient;
+      final authorization =
+          await client.authorizationForScopes(_scopes) ??
+          await client.authorizeScopes(_scopes);
       return SocialCredential(
         idToken: idToken,
-        accessToken: authorization?.accessToken,
+        accessToken: authorization.accessToken,
       );
     } on GoogleSignInException catch (e) {
       if (e.code == GoogleSignInExceptionCode.canceled) return null;

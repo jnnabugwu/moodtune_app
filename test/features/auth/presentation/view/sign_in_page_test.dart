@@ -90,6 +90,26 @@ void main() {
         ).called(1);
       });
 
+      testWidgets('starting a social sign-in clears the old error', (
+        tester,
+      ) async {
+        authBloc = mockAuthBloc(
+          const AuthState(
+            status: AuthStatus.unauthenticated,
+            socialProviders: both,
+          ),
+        );
+        await tester.pumpApp(const SignInPage(), authBloc: authBloc);
+        await tester.tap(submitButton('Sign in'));
+        await tester.pump();
+        expect(find.text('Please fill in all fields.'), findsOneWidget);
+
+        await tester.tap(find.text('Continue with Google'));
+        await tester.pump();
+
+        expect(find.byType(ErrorBanner), findsNothing);
+      });
+
       testWidgets('buttons ignore taps while loading', (tester) async {
         authBloc = mockAuthBloc(
           const AuthState(status: AuthStatus.loading, socialProviders: both),
