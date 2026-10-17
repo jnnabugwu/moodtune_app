@@ -1,10 +1,9 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:moodtune_app/core/logging/talker.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/features/spotify/presentation/bloc/spotify_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -21,44 +20,6 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
   String? _lastLaunchedUrl;
   StreamSubscription<Uri?>? _linkSub;
   late final AppLinks _appLinks;
-  static const _sessionId = 'debug-session';
-  static const _runId = 'prefix-connect';
-  static const _localLogPath = 'debug_connect.log';
-
-  Future<void> _log(
-    String hypothesisId,
-    String message, [
-    Map<String, Object?> data = const {},
-  ]) async {
-    try {
-      // #region agent log
-      final payload = {
-        'sessionId': _sessionId,
-        'runId': _runId,
-        'hypothesisId': hypothesisId,
-        'location':
-            'connect_spotify_page.dart:'
-            '${StackTrace.current.toString().split('\n').first}',
-        'message': message,
-        'data': data,
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
-      };
-      final file = File(_localLogPath);
-      await file.writeAsString(
-        '${jsonEncode(payload)}\n',
-        mode: FileMode.append,
-        flush: true,
-      );
-      // Also emit to console so we can capture from flutter run output.
-      // #endregion
-      // #region agent log
-      // ignore: avoid_print
-      print('AGENTLOG ${jsonEncode(payload)}');
-      // #endregion
-    } on Exception catch (_) {
-      // ignore logging failures
-    }
-  }
 
   @override
   void initState() {
@@ -66,14 +27,12 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
     _appLinks = AppLinks();
     context.read<SpotifyBloc>().add(const SpotifyStarted());
     unawaited(_initDeepLinks());
-    unawaited(_log('H1', 'initState', {}));
   }
 
   @override
   void dispose() {
     _codeController.dispose();
     unawaited(_linkSub?.cancel());
-    unawaited(_log('H1', 'dispose', {}));
     super.dispose();
   }
 
@@ -99,15 +58,13 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
     final code = uri.queryParameters['code'];
 
     if (status == 'success' && mounted) {
-      unawaited(_log('H2', 'received success deep link', {}));
+      talker.debug('Spotify connect: success deep link received');
       context.read<SpotifyBloc>().add(const SpotifyProfileRequested());
       return;
     }
 
     if (code != null && code.isNotEmpty && mounted) {
-      unawaited(
-        _log('H2', 'received deep link code', {'codeLen': code.length}),
-      );
+      talker.debug('Spotify connect: auth code deep link received');
       context.read<SpotifyBloc>().add(SpotifyAuthCodeReceived(code));
     }
   }
@@ -125,13 +82,7 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
             state.authorizeUrl != null &&
             state.authorizeUrl != _lastLaunchedUrl) {
           _lastLaunchedUrl = state.authorizeUrl;
-          unawaited(
-            _log('H2', 'launch authorize url', {
-              'status': state.status.toString(),
-              'authorizeUrl': state.authorizeUrl,
-              'lastLaunched': _lastLaunchedUrl,
-            }),
-          );
+          talker.debug('Spotify connect: launching authorize URL');
           await launchUrl(
             Uri.parse(state.authorizeUrl!),
             mode: LaunchMode.externalApplication,
@@ -142,13 +93,6 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
         final isBusy =
             state.status == SpotifyStatus.loading ||
             state.status == SpotifyStatus.connecting;
-        unawaited(
-          _log('H3', 'build', {
-            'status': state.status.toString(),
-            'isBusy': isBusy,
-            'hasError': state.error != null,
-          }),
-        );
 
         return CupertinoPageScaffold(
           navigationBar: const CupertinoNavigationBar(
@@ -188,16 +132,9 @@ class _ConnectSpotifyPageState extends State<ConnectSpotifyPage> {
                     CupertinoButton.filled(
                       onPressed: isBusy
                           ? null
-                          : () {
-                              unawaited(
-                                _log('H1', 'tap connect button', {
-                                  'status': state.status.toString(),
-                                }),
-                              );
-                              context.read<SpotifyBloc>().add(
-                                const SpotifyAuthorizeRequested(),
-                              );
-                            },
+                          : () => context.read<SpotifyBloc>().add(
+                              const SpotifyAuthorizeRequested(),
+                            ),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       child: isBusy
                           ? const CupertinoActivityIndicator(
