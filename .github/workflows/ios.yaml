@@ -53,6 +53,7 @@ jobs:
                      if "iOS" in runtime for d in ds if d["name"].startswith("iPhone")))
           ')
           xcrun simctl boot "$udid"
+          xcrun simctl bootstatus "$udid" -b
           echo "udid=$udid" >> "$GITHUB_OUTPUT"
 
       - name: Integration tests
