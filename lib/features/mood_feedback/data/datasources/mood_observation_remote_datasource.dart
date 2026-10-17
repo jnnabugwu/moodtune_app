@@ -26,7 +26,7 @@ class MoodObservationRemoteDataSource {
                      sendTimeout: const Duration(seconds: 15),
                    ),
                  )
-             ..interceptors.add(AuthInterceptor())
+             ..addAuthInterceptor()
              ..interceptors.add(TalkerDioLogger(talker: talker))
              ..addSentry();
 

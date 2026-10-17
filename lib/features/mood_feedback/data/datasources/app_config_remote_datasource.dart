@@ -17,7 +17,7 @@ class AppConfigRemoteDataSource {
                     receiveTimeout: const Duration(seconds: 5),
                   ),
                 )
-            ..interceptors.add(AuthInterceptor())
+            ..addAuthInterceptor()
             ..interceptors.add(TalkerDioLogger(talker: talker))
             ..addSentry();
 

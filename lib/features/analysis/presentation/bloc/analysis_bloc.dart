@@ -226,7 +226,14 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
     AnalysisClearErrorRequested event,
     Emitter<AnalysisState> emit,
   ) {
-    emit(state.copyWith(error: null, historyError: null, uploadError: null));
+    emit(
+      state.copyWith(
+        error: null,
+        historyError: null,
+        uploadError: null,
+        catalogError: null,
+      ),
+    );
   }
 
   Future<void> _onCatalogTrackAnalyzeRequested(

@@ -22,7 +22,7 @@ class AudioUploadRemoteDataSource {
                      sendTimeout: const Duration(seconds: 90),
                    ),
                  )
-             ..interceptors.add(AuthInterceptor())
+             ..addAuthInterceptor()
              ..interceptors.add(TalkerDioLogger(talker: talker))
              ..addSentry();
 
