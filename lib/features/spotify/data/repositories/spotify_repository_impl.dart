@@ -28,7 +28,7 @@ class SpotifyRepositoryImpl implements SpotifyRepository {
                      receiveTimeout: const Duration(seconds: 10),
                    ),
                  )
-             ..interceptors.add(AuthInterceptor())
+             ..addAuthInterceptor()
              ..interceptors.add(TalkerDioLogger(talker: talker))
              ..addSentry();
 
