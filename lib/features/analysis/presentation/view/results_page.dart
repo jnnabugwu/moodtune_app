@@ -111,17 +111,11 @@ class _ResultsPageState extends State<ResultsPage>
             });
           },
           builder: (context, state) {
-            if (widget.source == AnalysisSource.upload) {
-              return _buildUploadResult(context, state, isGuest);
-            }
-            // Catalog — reuse upload result path with currentCatalogAnalysis
-            return _buildUploadResult(
-              context,
-              state.copyWith(
-                currentUploadAnalysis: state.currentCatalogAnalysis,
-              ),
-              isGuest,
-            );
+            // Each source shows only its own result, never the other's.
+            final analysis = widget.source == AnalysisSource.upload
+                ? state.currentUploadAnalysis
+                : state.currentCatalogAnalysis;
+            return _buildUploadResult(context, state, analysis, isGuest);
           },
         );
       },
@@ -133,10 +127,9 @@ class _ResultsPageState extends State<ResultsPage>
   Widget _buildUploadResult(
     BuildContext context,
     AnalysisState state,
+    AudioUploadAnalysis? analysis,
     bool isGuest,
   ) {
-    final analysis = state.currentUploadAnalysis;
-
     if (analysis == null) {
       return CupertinoPageScaffold(
         backgroundColor: _pageBackground,

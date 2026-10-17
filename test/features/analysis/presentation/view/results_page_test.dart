@@ -87,6 +87,23 @@ void main() {
 
         expect(find.text('No result available.'), findsOneWidget);
       });
+
+      // AC1 (#38): a leftover upload result must not show as the catalog's.
+      testWidgets('catalog source ignores a leftover upload result', (
+        tester,
+      ) async {
+        await pumpResults(
+          tester,
+          source: AnalysisSource.catalog,
+          analysisState: AnalysisState(
+            currentUploadAnalysis: testUploadAnalysis(),
+            catalogStatus: CatalogAnalysisStatus.analyzing,
+          ),
+        );
+
+        expect(find.text('No result available.'), findsOneWidget);
+        expect(find.byType(MoodHeroCard), findsNothing);
+      });
     });
 
     group('upload result (guest)', () {
@@ -431,6 +448,27 @@ void main() {
         expect(find.byType(MoodHeroCard), findsOneWidget);
         expect(find.text('Test Artist on Jamendo ↗'), findsOneWidget);
         expect(find.text('Via Jamendo Free Music'), findsOneWidget);
+      });
+
+      // AC1 (#38): with both results in state, each source shows its own.
+      testWidgets('shows the catalog result, not an earlier upload', (
+        tester,
+      ) async {
+        await pumpResults(
+          tester,
+          source: AnalysisSource.catalog,
+          analysisState: AnalysisState(
+            currentUploadAnalysis: testUploadAnalysis(artist: 'Upload Artist'),
+            currentCatalogAnalysis: testUploadAnalysis(
+              id: 'catalog-1',
+              artist: 'Catalog Artist',
+              jamendoTrackUrl: 'https://jamendo.com/track/1',
+            ),
+          ),
+        );
+
+        expect(find.text('Catalog Artist on Jamendo ↗'), findsOneWidget);
+        expect(find.textContaining('Upload Artist'), findsNothing);
       });
 
       testWidgets('tapping attribution launches the Jamendo page', (

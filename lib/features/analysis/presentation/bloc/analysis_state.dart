@@ -65,24 +65,25 @@ class AnalysisState extends Equatable {
   /// "Does this feel right?" feedback. Null when nothing was recorded.
   final String? observationId;
 
+  /// Fields typed `Object?` default to [_keep]: omit one to leave it
+  /// unchanged, pass `null` to clear it.
   AnalysisState copyWith({
     AnalysisStatus? status,
     List<HistoryEntry>? history,
     List<HistoryEntry>? filteredHistory,
-    // Use a sentinel to distinguish "set to null" from "leave unchanged"
     Object? historyMoodFilter = _keep,
     PlaylistAnalysis? currentAnalysis,
     SongAnalysisResult? currentSongAnalysis,
-    AudioUploadAnalysis? currentUploadAnalysis,
-    String? error,
+    Object? currentUploadAnalysis = _keep,
+    Object? error = _keep,
     bool? historyLoading,
     bool? historyLoaded,
-    String? historyError,
+    Object? historyError = _keep,
     UploadStatus? uploadStatus,
-    String? uploadError,
+    Object? uploadError = _keep,
     CatalogAnalysisStatus? catalogStatus,
-    AudioUploadAnalysis? currentCatalogAnalysis,
-    String? catalogError,
+    Object? currentCatalogAnalysis = _keep,
+    Object? catalogError = _keep,
     Object? onDeviceAttempt = _keep,
     Object? observationId = _keep,
   }) {
@@ -95,18 +96,26 @@ class AnalysisState extends Equatable {
           : historyMoodFilter as String?,
       currentAnalysis: currentAnalysis ?? this.currentAnalysis,
       currentSongAnalysis: currentSongAnalysis ?? this.currentSongAnalysis,
-      currentUploadAnalysis:
-          currentUploadAnalysis ?? this.currentUploadAnalysis,
-      error: error,
+      currentUploadAnalysis: currentUploadAnalysis == _keep
+          ? this.currentUploadAnalysis
+          : currentUploadAnalysis as AudioUploadAnalysis?,
+      error: error == _keep ? this.error : error as String?,
       historyLoading: historyLoading ?? this.historyLoading,
       historyLoaded: historyLoaded ?? this.historyLoaded,
-      historyError: historyError,
+      historyError: historyError == _keep
+          ? this.historyError
+          : historyError as String?,
       uploadStatus: uploadStatus ?? this.uploadStatus,
-      uploadError: uploadError,
+      uploadError: uploadError == _keep
+          ? this.uploadError
+          : uploadError as String?,
       catalogStatus: catalogStatus ?? this.catalogStatus,
-      currentCatalogAnalysis:
-          currentCatalogAnalysis ?? this.currentCatalogAnalysis,
-      catalogError: catalogError,
+      currentCatalogAnalysis: currentCatalogAnalysis == _keep
+          ? this.currentCatalogAnalysis
+          : currentCatalogAnalysis as AudioUploadAnalysis?,
+      catalogError: catalogError == _keep
+          ? this.catalogError
+          : catalogError as String?,
       onDeviceAttempt: onDeviceAttempt == _keep
           ? this.onDeviceAttempt
           : onDeviceAttempt as OnDeviceMoodAttempt?,
