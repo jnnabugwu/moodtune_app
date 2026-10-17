@@ -301,6 +301,64 @@ void main() {
         ),
       ],
     );
+
+    // AC3 (#38)
+    blocTest<AnalysisBloc, AnalysisState>(
+      'a new upload clears the previous upload error and result, '
+      'and leaves other errors alone',
+      setUp: () => stubUpload(const Left(ServerFailure('too large'))),
+      build: buildBloc,
+      seed: () => AnalysisState(
+        uploadStatus: UploadStatus.error,
+        uploadError: 'old',
+        currentUploadAnalysis: tUpload,
+        catalogError: 'catalog',
+      ),
+      act: (bloc) => bloc.add(event),
+      expect: () => const [
+        AnalysisState(
+          uploadStatus: UploadStatus.uploading,
+          catalogError: 'catalog',
+        ),
+        AnalysisState(
+          uploadStatus: UploadStatus.error,
+          uploadError: 'too large',
+          catalogError: 'catalog',
+        ),
+      ],
+    );
+
+    // AC2 (#38)
+    blocTest<AnalysisBloc, AnalysisState>(
+      'the upload error survives a history reload that follows it',
+      setUp: () {
+        stubUpload(const Left(ServerFailure('too large')));
+        when(
+          () => repository.getHistory(limit: 50, offset: 0),
+        ).thenAnswer((_) async => Right(tHistory));
+      },
+      build: buildBloc,
+      act: (bloc) async {
+        bloc.add(event);
+        await Future<void>.delayed(Duration.zero);
+        bloc.add(const AnalysisHistoryRequested());
+      },
+      skip: 2,
+      expect: () => [
+        const AnalysisState(
+          uploadStatus: UploadStatus.error,
+          uploadError: 'too large',
+          historyLoading: true,
+        ),
+        AnalysisState(
+          uploadStatus: UploadStatus.error,
+          uploadError: 'too large',
+          history: tHistory,
+          filteredHistory: tHistory,
+          historyLoaded: true,
+        ),
+      ],
+    );
   });
 
   group('CatalogTrackAnalyzeRequested', () {
@@ -352,6 +410,35 @@ void main() {
         ),
       ],
     );
+
+    // AC3 (#38)
+    blocTest<AnalysisBloc, AnalysisState>(
+      'a new catalog analysis clears the previous catalog error and result, '
+      'and leaves the upload error and result alone',
+      setUp: () => stubCatalog(const Left(ServerFailure('jamendo down'))),
+      build: buildBloc,
+      seed: () => AnalysisState(
+        catalogStatus: CatalogAnalysisStatus.error,
+        catalogError: 'old',
+        currentCatalogAnalysis: tCatalog,
+        currentUploadAnalysis: tUpload,
+        uploadError: 'upload',
+      ),
+      act: (bloc) => bloc.add(event),
+      expect: () => [
+        AnalysisState(
+          catalogStatus: CatalogAnalysisStatus.analyzing,
+          currentUploadAnalysis: tUpload,
+          uploadError: 'upload',
+        ),
+        AnalysisState(
+          catalogStatus: CatalogAnalysisStatus.error,
+          catalogError: 'jamendo down',
+          currentUploadAnalysis: tUpload,
+          uploadError: 'upload',
+        ),
+      ],
+    );
   });
 
   blocTest<AnalysisBloc, AnalysisState>(
@@ -362,13 +449,14 @@ void main() {
       error: 'e',
       historyError: 'h',
       uploadError: 'u',
+      catalogError: 'c',
     ),
     act: (bloc) => bloc.add(const AnalysisClearErrorRequested()),
     expect: () => const [AnalysisState(status: AnalysisStatus.error)],
   );
 
   group('AnalysisState', () {
-    test('copyWith with no args keeps values but drops transient errors', () {
+    test('copyWith with no args keeps every value, errors included', () {
       final state = AnalysisState(
         status: AnalysisStatus.success,
         history: tHistory,
@@ -400,10 +488,65 @@ void main() {
       expect(copy.uploadStatus, UploadStatus.success);
       expect(copy.catalogStatus, CatalogAnalysisStatus.success);
       expect(copy.currentCatalogAnalysis, tCatalog);
-      expect(copy.error, isNull);
-      expect(copy.historyError, isNull);
-      expect(copy.uploadError, isNull);
-      expect(copy.catalogError, isNull);
+      expect(copy.error, 'e');
+      expect(copy.historyError, 'h');
+      expect(copy.uploadError, 'u');
+      expect(copy.catalogError, 'c');
+      expect(copy, state);
+    });
+
+    // AC4 (#38)
+    test('copyWith can explicitly clear the upload and catalog results', () {
+      final state = AnalysisState(
+        currentUploadAnalysis: tUpload,
+        currentCatalogAnalysis: tCatalog,
+      );
+
+      expect(
+        state.copyWith(currentUploadAnalysis: null).currentUploadAnalysis,
+        isNull,
+      );
+      expect(
+        state.copyWith(currentUploadAnalysis: null).currentCatalogAnalysis,
+        tCatalog,
+      );
+      expect(
+        state.copyWith(currentCatalogAnalysis: null).currentCatalogAnalysis,
+        isNull,
+      );
+      expect(
+        state.copyWith(currentCatalogAnalysis: null).currentUploadAnalysis,
+        tUpload,
+      );
+      expect(
+        state.copyWith(currentCatalogAnalysis: tUpload).currentCatalogAnalysis,
+        tUpload,
+      );
+    });
+
+    test('copyWith clears each error field only when passed null', () {
+      const state = AnalysisState(
+        error: 'e',
+        historyError: 'h',
+        uploadError: 'u',
+        catalogError: 'c',
+      );
+
+      expect(
+        state.copyWith(error: null),
+        const AnalysisState(
+          historyError: 'h',
+          uploadError: 'u',
+          catalogError: 'c',
+        ),
+      );
+      expect(state.copyWith(historyError: null).historyError, isNull);
+      expect(state.copyWith(historyError: null).error, 'e');
+      expect(state.copyWith(uploadError: null).uploadError, isNull);
+      expect(state.copyWith(uploadError: null).catalogError, 'c');
+      expect(state.copyWith(catalogError: null).catalogError, isNull);
+      expect(state.copyWith(catalogError: null).uploadError, 'u');
+      expect(state.copyWith(error: 'x').error, 'x');
     });
 
     test('copyWith can explicitly set historyMoodFilter to null', () {
