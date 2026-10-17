@@ -71,6 +71,34 @@ void main() {
         AuthState(status: AuthStatus.unauthenticated, error: 'expired'),
       ],
     );
+
+    blocTest<AuthBloc, AuthState>(
+      'clears a previous user when there is no current one',
+      setUp: () => when(
+        () => repository.getCurrentUser(),
+      ).thenAnswer((_) async => const Right(null)),
+      build: buildBloc,
+      seed: () =>
+          const AuthState(status: AuthStatus.authenticated, user: tAppUser),
+      act: (bloc) => bloc.add(const AuthCheckRequested()),
+      skip: 1,
+      expect: () => const [AuthState(status: AuthStatus.unauthenticated)],
+    );
+
+    blocTest<AuthBloc, AuthState>(
+      'clears a previous user on failure',
+      setUp: () => when(
+        () => repository.getCurrentUser(),
+      ).thenAnswer((_) async => const Left(ServerFailure('expired'))),
+      build: buildBloc,
+      seed: () =>
+          const AuthState(status: AuthStatus.authenticated, user: tAppUser),
+      act: (bloc) => bloc.add(const AuthCheckRequested()),
+      skip: 1,
+      expect: () => const [
+        AuthState(status: AuthStatus.unauthenticated, error: 'expired'),
+      ],
+    );
   });
 
   group('AuthSignInRequested', () {
@@ -353,6 +381,33 @@ void main() {
         AuthState(status: AuthStatus.loading),
         AuthState(status: AuthStatus.unauthenticated, passwordResetSent: true),
       ],
+    );
+
+    blocTest<AuthBloc, AuthState>(
+      'overlapping requests: only the latest result lands',
+      setUp: () {
+        final first = Completer<Either<Failure, void>>();
+        var calls = 0;
+        when(() => repository.sendPasswordResetEmail(email)).thenAnswer((_) {
+          calls++;
+          // The first request succeeds, but only after the second fails.
+          if (calls == 1) return first.future;
+          scheduleMicrotask(() => first.complete(const Right(null)));
+          return Future.value(const Left(ServerFailure('rate limited')));
+        });
+      },
+      build: buildBloc,
+      act: (bloc) async {
+        bloc
+          ..add(const ForgotPasswordRequested(email))
+          ..add(const ForgotPasswordRequested(email));
+        await Future<void>.delayed(Duration.zero);
+      },
+      expect: () => const [
+        AuthState(status: AuthStatus.loading),
+        AuthState(status: AuthStatus.unauthenticated, error: 'rate limited'),
+      ],
+      verify: (bloc) => expect(bloc.state.passwordResetSent, isFalse),
     );
 
     blocTest<AuthBloc, AuthState>(
