@@ -73,11 +73,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<AuthBloc, AuthState>(
+      // Only a request that succeeds while this page is open flips the flag
+      // from false to true; a true left over from an earlier visit doesn't.
       listenWhen: (prev, curr) =>
-          prev.passwordResetSent != curr.passwordResetSent ||
-          prev.status != curr.status,
+          !prev.passwordResetSent && curr.passwordResetSent,
       listener: (context, state) {
-        if (state.passwordResetSent && !_sent) {
+        if (!_sent) {
           setState(() => _sent = true);
           _startCooldown();
         }

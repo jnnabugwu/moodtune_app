@@ -22,7 +22,8 @@ class AuthState extends Equatable {
   /// Set after sign-up so the Email Verify screen knows which address to show.
   final String? pendingVerificationEmail;
 
-  /// True after a password-reset email has been dispatched successfully.
+  /// True after a password-reset email has been dispatched successfully;
+  /// reset to false when the next request starts.
   final bool passwordResetSent;
 
   /// True after a reset link opened the app; cleared once the new password
@@ -34,7 +35,7 @@ class AuthState extends Equatable {
 
   AuthState copyWith({
     AuthStatus? status,
-    AppUser? user,
+    Object? user = _keep,
     String? error,
     bool? justSignedUp,
     Object? pendingVerificationEmail = _keep,
@@ -43,7 +44,7 @@ class AuthState extends Equatable {
   }) {
     return AuthState(
       status: status ?? this.status,
-      user: user ?? this.user,
+      user: user == _keep ? this.user : user as AppUser?,
       error: error,
       justSignedUp: justSignedUp ?? this.justSignedUp,
       pendingVerificationEmail: pendingVerificationEmail == _keep
