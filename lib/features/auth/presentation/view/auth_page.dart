@@ -62,7 +62,7 @@ class _AuthPageState extends State<AuthPage> {
           );
         }
         if (state.status == AuthStatus.authenticated) {
-          context.go(RouteNames.guest);
+          context.go(RouteNames.homeAuth);
         }
       },
       child: BlocBuilder<AuthBloc, AuthState>(
