@@ -32,6 +32,7 @@ dependencies:
   sentry_dio: ^9.10.0
   sentry_flutter: ^9.30.1
   shadcn_ui: ^0.43.0
+  share_plus: ^12.0.2
   shared_preferences: ^2.5.6
   sign_in_with_apple: ^8.2.0
   supabase_flutter: ^2.12.0
@@ -57,6 +58,18 @@ flutter:
   assets:
     - assets/icons/
     - assets/models/
+
+  # Inter Tight (OFL, assets/fonts/OFL.txt). The brand wordmark and the share
+  # card use it; the share card is rasterized, so the real font must ship.
+  fonts:
+    - family: Inter Tight
+      fonts:
+        - asset: assets/fonts/InterTight-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/InterTight-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/InterTight-Bold.ttf
+          weight: 700
 
 sentry:
   upload_debug_symbols: true
