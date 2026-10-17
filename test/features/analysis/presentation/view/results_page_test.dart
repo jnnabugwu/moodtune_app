@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/di/injector.dart';
@@ -58,7 +61,7 @@ void main() {
 
     /// Mounts an upload result whose history save then lands ([saved]) or
     /// does not.
-    Future<void> pumpSaved(
+    Future<GoRouter> pumpSaved(
       WidgetTester tester, {
       bool saved = true,
       AuthState authState = _authenticated,
@@ -70,12 +73,13 @@ void main() {
         Stream<AnalysisState>.value(landed.copyWith(uploadSaved: saved)),
         initialState: landed,
       );
-      await tester.pumpApp(
+      final router = await tester.pumpApp(
         const ResultsPage(source: AnalysisSource.upload),
         analysisBloc: analysisBloc,
         authBloc: mockAuthBloc(authState),
       );
       await tester.pump();
+      return router;
     }
 
     group('without a result', () {
@@ -415,6 +419,20 @@ void main() {
         expect(find.text('Saved to history'), findsNothing);
         await tester.pump(const Duration(seconds: 2));
         await tester.pumpAndSettle();
+      });
+
+      testWidgets('no notice over a page pushed on top of the results', (
+        tester,
+      ) async {
+        final router = await pumpSaved(tester);
+        unawaited(router.push(RouteNames.uploadMusic));
+        await tester.pumpAndSettle();
+        expect(find.text(navigatedTo(RouteNames.uploadMusic)), findsOneWidget);
+
+        await tester.pump(const Duration(milliseconds: 800));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Saved to history'), findsNothing);
       });
 
       testWidgets('saved notice is skipped if page is disposed first', (

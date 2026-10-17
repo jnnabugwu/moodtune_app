@@ -50,6 +50,8 @@ void main() {
       await show(tester);
 
       await tester.pumpWidget(const SizedBox());
+      // Past the 2 s hold: a live timer would fire on a disposed controller.
+      await tester.pump(const Duration(seconds: 3));
 
       expect(find.byType(ToastNotice), findsNothing);
       expect(tester.takeException(), isNull);

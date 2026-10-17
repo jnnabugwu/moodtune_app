@@ -334,6 +334,8 @@ class _ResultsPageState extends State<ResultsPage>
   // ── Helpers ────────────────────────────────────────────────────────────
 
   void _showSavedSnackbar(BuildContext ctx) {
+    // Not over a page pushed on top of the results (e.g. a new upload).
+    if (!(ModalRoute.isCurrentOf(ctx) ?? true)) return;
     showToastNotice(ctx, message: ctx.l10n.resultsSavedToHistory);
   }
 }

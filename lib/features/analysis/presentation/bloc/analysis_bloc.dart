@@ -189,6 +189,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
           uploadStatus: UploadStatus.error,
           uploadError: failure.message,
           currentUploadAnalysis: null,
+          uploadSaved: false,
         ),
       ),
       (analysis) async {
@@ -204,6 +205,8 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
             uploadStatus: UploadStatus.success,
             currentUploadAnalysis: displayed,
             uploadError: null,
+            // Set once this result is saved, below.
+            uploadSaved: false,
             onDeviceAttempt: attempt,
             observationId: observationId,
           ),
@@ -219,7 +222,8 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
             observationId: observationId,
           ),
         );
-        // Skip it when a newer upload has replaced this result meanwhile.
+        // uploadSaved describes the result on screen: skip it when another
+        // upload's result (or its loading state) has replaced this one.
         if (saved && identical(state.currentUploadAnalysis, displayed)) {
           emit(state.copyWith(uploadSaved: true));
         }

@@ -875,6 +875,50 @@ void main() {
       await bloc.close();
     });
 
+    test(
+      "a newer upload that lands clears an older upload's saved flag",
+      () async {
+        final backendA = Completer<Either<Failure, AudioUploadAnalysis>>();
+        final backendB = Completer<Either<Failure, AudioUploadAnalysis>>();
+        when(
+          () => repository.analyzeUploadedAudio(
+            bytes: any(named: 'bytes'),
+            filename: any(named: 'filename'),
+            title: any(named: 'title'),
+            artist: any(named: 'artist'),
+            album: any(named: 'album'),
+          ),
+        ).thenAnswer(
+          (i) => i.namedArguments[#filename] == 'a.mp3'
+              ? backendA.future
+              : backendB.future,
+        );
+        var saves = 0;
+        when(() => repository.saveResultToHistory(any())).thenAnswer(
+          (_) async => ++saves == 1
+              ? const Right(true)
+              : const Left(ServerFailure('down')),
+        );
+        final bloc = buildBloc()
+          ..add(const AudioUploadRequested(bytes: [1], filename: 'a.mp3'))
+          ..add(const AudioUploadRequested(bytes: [2], filename: 'b.mp3'));
+        await Future<void>.delayed(Duration.zero);
+
+        // A lands while B is in flight and is saved: A is on screen, saved.
+        backendA.complete(Right(buildUploadAnalysis(id: 'a')));
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        expect(bloc.state.currentUploadAnalysis?.id, 'a');
+        expect(bloc.state.uploadSaved, isTrue);
+
+        // B replaces it and its save fails: no "Saved" for B.
+        backendB.complete(Right(buildUploadAnalysis(id: 'b')));
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        expect(bloc.state.currentUploadAnalysis?.id, 'b');
+        expect(bloc.state.uploadSaved, isFalse);
+        await bloc.close();
+      },
+    );
+
     blocTest<AnalysisBloc, AnalysisState>(
       'does not mark a guest upload saved',
       build: buildBloc,
