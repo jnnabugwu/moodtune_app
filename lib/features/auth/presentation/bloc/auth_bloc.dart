@@ -1,15 +1,20 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moodtune_app/features/auth/domain/entities/app_user.dart';
+import 'package:moodtune_app/features/auth/domain/entities/social_provider.dart';
 import 'package:moodtune_app/features/auth/domain/repositories/auth_repository.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  AuthBloc(this._repository) : super(const AuthState()) {
+  /// [socialProviders] are the sign-in buttons to offer; see
+  /// [AuthRepository.availableSocialProviders].
+  AuthBloc(this._repository, {Set<SocialProvider> socialProviders = const {}})
+    : super(AuthState(socialProviders: socialProviders)) {
     on<AuthCheckRequested>(_onAuthCheckRequested);
     on<AuthSignInRequested>(_onAuthSignInRequested);
+    on<AuthSocialSignInRequested>(_onSocialSignInRequested);
     on<AuthSignUpRequested>(_onAuthSignUpRequested);
     on<AuthSignOutRequested>(_onAuthSignOutRequested);
     on<ResendVerificationRequested>(_onResendVerification);
@@ -83,6 +88,39 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           error: null,
           justSignedUp: false,
         ),
+      ),
+    );
+  }
+
+  Future<void> _onSocialSignInRequested(
+    AuthSocialSignInRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        status: AuthStatus.loading,
+        error: null,
+        justSignedUp: false,
+      ),
+    );
+    final result = await _repository.signInWithProvider(event.provider);
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          status: AuthStatus.error,
+          error: failure.message,
+          justSignedUp: false,
+        ),
+      ),
+      (user) => emit(
+        // A dismissed sheet is not an error: back to where the user was.
+        user == null
+            ? state.copyWith(status: AuthStatus.unauthenticated)
+            : state.copyWith(
+                status: AuthStatus.authenticated,
+                user: user,
+                justSignedUp: false,
+              ),
       ),
     );
   }

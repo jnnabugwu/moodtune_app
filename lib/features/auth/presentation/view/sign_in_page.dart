@@ -3,8 +3,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
+import 'package:moodtune_app/features/auth/domain/entities/social_provider.dart';
 import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:moodtune_app/shared/widgets/widgets.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 enum _AuthMode { signIn, signUp }
 
@@ -222,50 +224,16 @@ class _SignInPageState extends State<SignInPage> {
                             style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                   ),
-                  const SizedBox(height: 24),
-
-                  // ── "or" divider ───────────────────────────────────────
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: 0.5,
-                          color: CupertinoColors.separator,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Text(
-                          'or',
-                          style: theme.textTheme.textStyle.copyWith(
-                            color: CupertinoColors.secondaryLabel,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Container(
-                          height: 0.5,
-                          color: CupertinoColors.separator,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // ── Social buttons (OAuth placeholders) ────────────────
-                  // TODO(oauth): wire Google + Apple sign-in via url_launcher.
-                  const _SocialButton(
-                    label: 'Continue with Google',
-                    icon: CupertinoIcons.globe,
-                    onTap: null,
-                  ),
-                  const SizedBox(height: 10),
-                  const _SocialButton(
-                    label: 'Continue with Apple',
-                    icon: CupertinoIcons.device_phone_portrait,
-                    onTap: null,
-                  ),
+                  // ── Social sign-in ─────────────────────────────────────
+                  if (state.socialProviders.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    const _OrDivider(),
+                    const SizedBox(height: 16),
+                    _SocialButtons(
+                      providers: state.socialProviders,
+                      enabled: !isLoading,
+                    ),
+                  ],
                   const SizedBox(height: 32),
                 ],
               ),
@@ -350,6 +318,79 @@ class _Tab extends StatelessWidget {
   }
 }
 
+class _OrDivider extends StatelessWidget {
+  const _OrDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
+    return Row(
+      children: [
+        Expanded(
+          child: Container(height: 0.5, color: CupertinoColors.separator),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            'or',
+            style: theme.textTheme.textStyle.copyWith(
+              color: CupertinoColors.secondaryLabel,
+              fontSize: 13,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Container(height: 0.5, color: CupertinoColors.separator),
+        ),
+      ],
+    );
+  }
+}
+
+/// Apple first and in Apple's own button style, as App Review expects.
+class _SocialButtons extends StatelessWidget {
+  const _SocialButtons({required this.providers, required this.enabled});
+
+  final Set<SocialProvider> providers;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    void signIn(SocialProvider provider) =>
+        context.read<AuthBloc>().add(AuthSocialSignInRequested(provider));
+
+    return IgnorePointer(
+      ignoring: !enabled,
+      child: AnimatedOpacity(
+        opacity: enabled ? 1 : 0.5,
+        duration: const Duration(milliseconds: 150),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (providers.contains(SocialProvider.apple)) ...[
+              SignInWithAppleButton(
+                text: 'Continue with Apple',
+                height: 48,
+                borderRadius: const BorderRadius.all(Radius.circular(12)),
+                onPressed: () => signIn(SocialProvider.apple),
+              ),
+              const SizedBox(height: 10),
+            ],
+            if (providers.contains(SocialProvider.google)) ...[
+              _SocialButton(
+                label: 'Continue with Google',
+                icon: CupertinoIcons.globe,
+                onTap: () => signIn(SocialProvider.google),
+              ),
+              const SizedBox(height: 10),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _SocialButton extends StatelessWidget {
   const _SocialButton({
     required this.label,
@@ -359,32 +400,37 @@ class _SocialButton extends StatelessWidget {
 
   final String label;
   final IconData icon;
-  final VoidCallback? onTap;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 13),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: CupertinoColors.separator),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 18, color: CupertinoColors.label),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: CupertinoColors.label,
+    return Semantics(
+      button: true,
+      label: label,
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 48,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: CupertinoColors.separator),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 18, color: CupertinoColors.label),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: CupertinoColors.label,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
