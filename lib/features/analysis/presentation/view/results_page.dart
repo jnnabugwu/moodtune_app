@@ -7,6 +7,7 @@ import 'package:moodtune_app/app/theme/mood_theme.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/di/injector.dart';
 import 'package:moodtune_app/features/analysis/domain/entities/audio_upload_analysis.dart';
+import 'package:moodtune_app/features/analysis/domain/entities/history_entry.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/analysis/presentation/view/analysis_loading_page.dart';
 import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
@@ -37,10 +38,21 @@ const _textMuted = Color(0xFF8A8275); // warm gray
 ///
 /// The page uses the wireframe warm-cream light theme outside the mood hero
 /// card. The card itself keeps its mood-specific gradient (palette intent).
+///
+/// [ResultsPage.saved] shows a history entry read-only instead: only what the
+/// entry stores (title, artist, mood, confidence, both engines' moods), with
+/// no BLoC reads, backend calls or follow-up actions.
 class ResultsPage extends StatefulWidget {
-  const ResultsPage({required this.source, super.key});
+  const ResultsPage({required this.source, super.key}) : savedEntry = null;
+
+  const ResultsPage.saved({required HistoryEntry entry, super.key})
+    : savedEntry = entry,
+      source = AnalysisSource.upload;
 
   final AnalysisSource source;
+
+  /// Set in read-only mode; [source] is unused then.
+  final HistoryEntry? savedEntry;
 
   @override
   State<ResultsPage> createState() => _ResultsPageState();
@@ -88,6 +100,7 @@ class _ResultsPageState extends State<ResultsPage>
 
   @override
   Widget build(BuildContext context) {
+    if (widget.savedEntry case final entry?) return _SavedResult(entry);
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, authState) {
         final isGuest = authState.status != AuthStatus.authenticated;
@@ -453,3 +466,91 @@ class _JamendoAttribution extends StatelessWidget {
 /// the backend's mood, which may differ).
 List<String> _pillsFor(UploadMoodResult mood) =>
     mood.source == MoodSource.onDevice ? mood.soundTags : mood.descriptors;
+
+// ── Saved result (read-only, from history) ────────────────────────────
+
+/// A history entry shown read-only. Sections the entry has no data for
+/// (descriptor pills, narration, feedback prompt, audio details, Jamendo
+/// attribution) are left out rather than faked.
+class _SavedResult extends StatelessWidget {
+  const _SavedResult(this.entry);
+
+  final HistoryEntry entry;
+
+  @override
+  Widget build(BuildContext context) {
+    final comparison = entry.comparison;
+    final onDeviceMood = comparison?.onDeviceMood;
+    // The confidence belongs to the backend's label; on-device results are
+    // saved without one, and a row that says on-device was shown never
+    // gets the ring (ROADMAP OD-5).
+    final confidence = comparison?.displayedSource == MoodSource.onDevice
+        ? null
+        : entry.confidence;
+
+    return CupertinoPageScaffold(
+      backgroundColor: _pageBackground,
+      navigationBar: CupertinoNavigationBar(
+        backgroundColor: _pageBackground,
+        middle: Text(
+          entry.type == HistoryEntryType.playlist
+              ? 'Playlist Analysis'
+              : 'Song Analysis',
+          style: const TextStyle(
+            color: _textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      child: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Text(
+              entry.title,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: _textPrimary,
+              ),
+            ),
+            if (entry.subtitle case final artist?) ...[
+              const SizedBox(height: 4),
+              Text(
+                artist,
+                style: const TextStyle(fontSize: 15, color: _textSecondary),
+              ),
+            ],
+            const SizedBox(height: 16),
+            MoodHeroCard.saved(
+              primaryMood: entry.primaryMood,
+              confidence: confidence,
+            ),
+            if (comparison != null) ...[
+              const SizedBox(height: 16),
+              _DetailRow(
+                label: 'Mood shown from',
+                value: comparison.displayedSource == MoodSource.onDevice
+                    ? 'On-device'
+                    : 'Backend',
+              ),
+              _DetailRow(
+                label: 'Backend mood',
+                value: _moodLabel(comparison.backendMood),
+              ),
+              _DetailRow(
+                label: 'On-device mood',
+                value: onDeviceMood == null
+                    ? 'Didn’t run'
+                    : _moodLabel(onDeviceMood),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String _moodLabel(String mood) =>
+      MoodTheme.shortLabel(MoodTheme.fromString(mood));
+}

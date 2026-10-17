@@ -71,22 +71,63 @@ Each problem surfaced only after the previous one was fixed; in order:
 - **Check the log against `main` before acting on it.** About half the CLAUDE.md complaints described the old file: no `ci_check.sh`, the old test command, three features instead of seven. The current file covers all of those. The agent was reading the copy loaded when the parent session started.
 - **Review is still yours.** The diff was small and correct. It removed an early return that the new empty-parts branch already covered, and the 7 new cases failed before the fix and passed after. Green checks plus a person reading the diff is the bar. Checks alone aren't.
 
+## Batch 2
+
+Five issues ran in parallel on 2026-10-17 (PRs opened 21:54–21:58, all merged by 22:09). They ran from the laptop, not the cloud: every commit carries the local VS Code co-author line and none links a cloud session. There was no friction log this time, so everything below comes from the PRs, their CI runs and `main`.
+
+| PR | Closes | First push green | Review rounds | Merged |
+| --- | --- | --- | --- | --- |
+| #55 | #42 auth redirect | yes | 0 | 22:00 |
+| #56 | #47 Spotify debug logging | yes | 0 | 22:03 |
+| #58 | #38 `AnalysisState.copyWith` | yes | 0 | 22:05 |
+| #60 | #46 401 retry | yes | 0 | 22:07 |
+| #57 | #39 sign-out, "Link sent" | yes | 1 (cubic) | 22:09 |
+
+**What held up.** All five passed the required checks on the first push. Nobody complained about CLAUDE.md, so the stale-copy problem from #51 didn't come back. #57, #58 and #60 each say they reverted the fix and watched the new tests fail.
+
+**What went wrong**, each checked against `main` @ `9392072`:
+
+1. **#47 under-described the bug.** Its AC1 grep also matches a `#region agent log` block in `spotify_bloc.dart`, which was already there at the SHA the issue cites (`a4ed99d`), but "Current state" listed only the page. AC2 relied on "existing page tests" for `ConnectSpotifyPage`, and there are none. The agent handled both, but the issue was written from one file and its own check command was never run. *Fixed in the template:* run any command AC on `main` and list every hit; cite test files by path or say there are none.
+2. **#46 offered a fallback that can't be built.** R3 said "retry with a fresh `FormData`, or fail with a clear `Failure`". Dio raises the single-use-file `StateError` asynchronously, outside the future the interceptor sees, so the second half isn't possible. *Fixed in the template:* offer an "or" only after checking it.
+3. **#39 left a sibling path alone.** The issue named email sign-in and sign-up, so the agent left `_onSocialSignInRequested` as it was. On `main` its failure branch still emits `copyWith` without `user: null`, so a failed social sign-in keeps the previous user. It's low impact, but the agent couldn't tell whether the omission was deliberate. *Fixed in the template:* Non-goals now asks for paths with the same bug that the issue skips.
+4. **Only the AI reviewer caught the real defect.** In #57, cubic found that overlapping reset requests could let an older success set "Link sent" after a newer failure. The local checks and the agent both missed it. It was the batch's only fix round.
+5. **Strict mode serialized the merges.** By 22:00 four PRs were green, but each merge made the rest stale: 4 of 5 had to merge `main` and re-run `build / build` (about 1.5–2 minutes each). Landing five green PRs took 9 minutes. A merge queue would take this over; not set up yet.
+6. **A Still-open item from #51 cost time again.** #57, #58 and #60 all worked out per-file coverage by hand from `lcov.info`. *Fixed:* `tool/ci_check.sh test coverage` prints it, and the template's "no drop in coverage" (which nothing could check) became "list it and explain anything under 80%".
+7. **An agent found a security bug outside its scope.** #56 noticed `lib/bootstrap.dart:55` logs the full Supabase access token with `talker.info`. Filed as #59; still on `main`.
+
+### Cloud vs laptop
+
+Batch 2 gives no comparison, because it didn't run in the cloud. Checking it from a cloud session (claude.ai/code) did show what a cloud batch will hit:
+
+- **Works out of the box.** Flutter 3.47.5 is preinstalled. `tool/ci_check.sh deps format analyze` passes with no env files; `flutter analyze` alone took 53 s. `deps test` took 100 s, against 35 s for every step on the laptop, so expect the local check to take about 3 times as long.
+- **The repo has to be attached with push access.** An anonymous clone reads code, but the GitHub API returns 403 and nothing can be pushed.
+- **GitHub GraphQL is blocked.** `gh pr view`, `gh pr list` and `gh pr create` fail. `ci_check.sh`'s title step used `gh pr view`, so in the cloud it silently spell-checked the last commit subject instead of the PR title. *Fixed:* it now uses the REST API, and CLAUDE.md gives the REST command for opening a PR.
+- **No iOS simulator**, so the `integration_test/` check and anything under `ios/` can't be verified in a session.
+
+These are in CLAUDE.md under "Cloud sessions", so the next agent starts with them.
+
 ## Numbers
 
 | Measure | Value |
 | --- | --- |
 | Backend suite | 80 tests, about 1 s locally; about 40 s per CI run including installs |
 | App local check (`tool/ci_check.sh`, all steps) | 35 s |
-| App CI, `build / build` | 1 min 42 s |
+| App CI, `build / build` | 1 min 42 s (batch 2: 1 min 16 s to 1 min 54 s) |
+| `tool/ci_check.sh deps test` in a cloud session | 100 s |
+| Batch 2, five PRs from open to all merged | 15 minutes (21:54 to 22:09), 9 of them waiting on strict-mode re-runs |
 | #48, issue to all checks green | about 8.5 minutes, no fix rounds |
 | Backend routers with tests | 3 of 11 (mood observations, history, Spotify) |
 
 ## Still open
 
-- [ ] Review and merge #51.
-- [ ] Work through #38–#47. #42, #43 and #45 have their decisions recorded and are ready.
+- [x] Review and merge #51.
+- [ ] Work through #40, #41, #43, #44 and #45 (#38, #39, #42, #46 and #47 merged in batch 2). #43 and #45 have their decisions recorded and are ready.
+- [ ] Fix #59: the Supabase access token is logged at startup.
+- [ ] Failed social sign-in keeps the previous user (`_onSocialSignInRequested`); file it, or fold it into another auth issue.
+- [ ] Turn on a merge queue so parallel agent PRs don't each need a manual "Update branch".
+- [ ] Run a batch from the cloud to get a real cloud-vs-laptop comparison.
 - [ ] When spawning an agent from a long session, tell it to re-read CLAUDE.md in its worktree before starting.
-- [ ] Add a per-file coverage summary to `tool/ci_check.sh`, or drop "no drop in coverage on touched files" from the issue template.
+- [x] Add a per-file coverage summary to `tool/ci_check.sh` (the `coverage` step).
 - [ ] Decide what the root `cspell.json` is for, or remove it.
 - [ ] Quiet Talker in tests, or print a one-line pass/fail summary at the end of `ci_check.sh`.
 - [ ] Backend tests for analysis, audio upload, song analysis and catalog, the routers an agent is most likely to change.

@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:moodtune_app/app/theme/mood_theme.dart';
+import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/di/injector.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/analysis/presentation/engine_comparison.dart';
@@ -265,7 +267,8 @@ class _HistoryPageState extends State<HistoryPage> {
 
         return HistoryRowItem(
           item: items[index],
-          onTap: () {},
+          onTap: () =>
+              unawaited(context.push(RouteNames.result, extra: items[index])),
           showComparison: showComparison,
         );
       },
