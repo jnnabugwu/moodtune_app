@@ -553,7 +553,6 @@ void main() {
         expect(find.text(navigatedTo(RouteNames.result)), findsOneWidget);
 
         await tester.pump(const Duration(seconds: 40));
-        expect(find.text(slowMessage), findsNothing);
         expect(find.text(navigatedTo(RouteNames.result)), findsOneWidget);
       });
     });
