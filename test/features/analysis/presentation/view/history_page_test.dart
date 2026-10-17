@@ -6,6 +6,7 @@ import 'package:moodtune_app/features/analysis/domain/entities/entities.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/analysis/presentation/engine_comparison.dart';
 import 'package:moodtune_app/features/analysis/presentation/view/history_page.dart';
+import 'package:moodtune_app/features/analysis/presentation/view/results_page.dart';
 import 'package:moodtune_app/shared/widgets/history_row_item.dart';
 import 'package:moodtune_app/shared/widgets/mood_chip.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -263,11 +264,75 @@ void main() {
           find.text('Showing your 50 most recent analyses.'),
           findsNothing,
         );
+      });
 
-        // Rows are tappable without side effects.
+      testWidgets('tapping a row opens its saved result (AC1)', (tester) async {
+        final history = [
+          testHistoryEntry(0, subtitle: 'Artist Zero'),
+          testHistoryEntry(1, mood: 'serene', subtitle: 'Artist One'),
+        ];
+        final bloc = mockAnalysisBloc(
+          AnalysisState(history: history, filteredHistory: history),
+        );
+
+        await tester.pumpApp(
+          const HistoryPage(),
+          analysisBloc: bloc,
+          extraRoutes: [savedResultRoute],
+        );
+        await tester.pumpAndSettle();
+
         await tester.tap(find.text('Entry 1'));
-        await tester.pump();
-        expect(tester.takeException(), isNull);
+        await tester.pumpAndSettle();
+
+        final page = tester.widget<ResultsPage>(find.byType(ResultsPage));
+        expect(page.savedEntry, history[1]);
+        expect(find.text('Artist One'), findsOneWidget);
+        expect(find.text('SERENE'), findsOneWidget);
+        // Only the initial-load check touched the bloc: no new requests.
+        verifyNever(() => bloc.add(any()));
+      });
+
+      testWidgets('back returns to the list at the same scroll position '
+          '(AC3)', (tester) async {
+        final history = testHistory(30);
+        final bloc = mockAnalysisBloc(
+          AnalysisState(history: history, filteredHistory: history),
+        );
+
+        await tester.pumpApp(
+          const HistoryPage(),
+          analysisBloc: bloc,
+          extraRoutes: [savedResultRoute],
+        );
+        await tester.pumpAndSettle();
+
+        ScrollPosition listPosition() => tester
+            .state<ScrollableState>(
+              find
+                  .descendant(
+                    of: find.byType(ListView).last,
+                    matching: find.byType(Scrollable),
+                  )
+                  .first,
+            )
+            .position;
+
+        await tester.drag(find.byType(ListView).last, const Offset(0, -600));
+        await tester.pumpAndSettle();
+        final offset = listPosition().pixels;
+        expect(offset, greaterThan(0));
+
+        final row = find.byType(HistoryRowItem).hitTestable().first;
+        await tester.tap(row);
+        await tester.pumpAndSettle();
+        expect(find.byType(ResultsPage), findsOneWidget);
+
+        await tester.tap(find.byType(CupertinoNavigationBarBackButton));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(ResultsPage), findsNothing);
+        expect(listPosition().pixels, offset);
       });
 
       testWidgets('shows cap footnote when 50 items are shown', (tester) async {

@@ -144,4 +144,31 @@ void main() {
     expect(find.text('85%'), findsNothing);
     expect(find.text('UPBEAT'), findsOneWidget);
   });
+
+  group('saved', () {
+    testWidgets('shows the stored mood and confidence', (tester) async {
+      await tester.pumpWidgetInShell(
+        const SingleChildScrollView(
+          child: MoodHeroCard.saved(primaryMood: 'calm', confidence: 0.6),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('SERENE'), findsOneWidget);
+      expect(find.byType(ConfidenceRing), findsOneWidget);
+      expect(find.text('60%'), findsOneWidget);
+    });
+
+    testWidgets('hides the ring without a confidence', (tester) async {
+      await tester.pumpWidgetInShell(
+        const SingleChildScrollView(
+          child: MoodHeroCard.saved(primaryMood: 'calm'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('SERENE'), findsOneWidget);
+      expect(find.byType(ConfidenceRing), findsNothing);
+    });
+  });
 }
