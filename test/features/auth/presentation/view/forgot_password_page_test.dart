@@ -195,15 +195,61 @@ void main() {
       controller.add(sent);
       await tester.pump();
       await tester.pump(const Duration(seconds: 60));
-      controller.add(
-        const AuthState(status: AuthStatus.loading, passwordResetSent: true),
-      );
+      // A new request resets the flag while it runs.
+      controller.add(const AuthState(status: AuthStatus.loading));
       await tester.pump();
       await tester.pump();
 
       expect(find.text('Link sent'), findsNWidgets(2));
       expect(find.byType(CupertinoActivityIndicator), findsOneWidget);
       expect(find.text('Resend'), findsNothing);
+    });
+
+    // AC4
+    testWidgets('a request that succeeds shows "Link sent"', (tester) async {
+      final bloc = mockAuthBloc();
+      whenListen(
+        bloc,
+        Stream.fromIterable(const [
+          AuthState(status: AuthStatus.loading),
+          sent,
+        ]),
+        initialState: idle,
+      );
+      await tester.pumpApp(
+        const ForgotPasswordPage(prefillEmail: testEmail),
+        authBloc: bloc,
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Link sent'), findsNWidgets(2));
+      expect(find.text('Resend in 60s'), findsOneWidget);
+    });
+
+    // AC3
+    testWidgets('a reset link sent on an earlier visit does not show '
+        '"Link sent"', (tester) async {
+      final controller = StreamController<AuthState>();
+      addTearDown(controller.close);
+      final bloc = mockAuthBloc();
+      // The flag is still true from the earlier visit when the page opens.
+      whenListen(bloc, controller.stream, initialState: sent);
+      await tester.pumpApp(
+        const ForgotPasswordPage(prefillEmail: testEmail),
+        authBloc: bloc,
+      );
+
+      // An unrelated status change while the stale flag is still set.
+      controller.add(
+        const AuthState(status: AuthStatus.error, passwordResetSent: true),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Reset your password'), findsOneWidget);
+      expect(find.text('Link sent'), findsNothing);
+      expect(button('Send reset link'), findsOneWidget);
     });
 
     testWidgets('"Back to sign in" navigates to sign-in', (tester) async {
