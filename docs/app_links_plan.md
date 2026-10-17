@@ -1,6 +1,6 @@
 # App Links / Universal Links Plan (to add later)
 
-Domain: **`getmoodtune.com`** (registered on Vercel, Hobby team `jnnabugwus-projects`). The static site is [jnnabugwu/getmoodtune-site](https://github.com/jnnabugwu/getmoodtune-site); pushes to its `main` deploy automatically, and `www` 301s to the apex. We do **not** own `moodtune.com`, `moodtune.io` or `moodtune.app`, so never point links at them.
+Domain: **`getmoodtune.com`** (registered on Vercel, Hobby team `jnnabugwus-projects`). The static site is [jnnabugwu/getmoodtune-site](https://github.com/jnnabugwu/getmoodtune-site); pushes to its `main` deploy automatically, and `www.getmoodtune.com` redirects permanently (308) to the apex. We do **not** own `moodtune.com`, `moodtune.io` or `moodtune.app`, so never point links at them.
 
 1. ~~Acquire domain and host HTTPS.~~ Done: `https://getmoodtune.com`.
 2. Set `SPOTIFY_APP_REDIRECT_URI` to `https://getmoodtune.com/spotify/callback` (keep custom scheme fallback `moodtune://spotify/callback`).
