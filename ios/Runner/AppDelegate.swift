@@ -21,6 +21,95 @@ import FoundationModels
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "AudioDecode") {
       AudioDecodeChannel.register(with: registrar.messenger())
     }
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "Share") {
+      ShareChannel.register(with: registrar.messenger())
+    }
+  }
+}
+
+/// Native side of Dart's `moodtune/share` channel (issue #35, D2).
+///
+/// Instagram Stories uses the documented `instagram-stories://share` scheme
+/// with the card on the pasteboard as a sticker over a two-colour gradient
+/// (D3). iOS can't target X alone, so `shareImageToX` answers `false` and
+/// Dart falls back to the system share sheet.
+enum ShareChannel {
+  static let instagramStoriesURL = "instagram-stories://share"
+  static let xURL = "twitter://"
+
+  static func register(with messenger: FlutterBinaryMessenger) {
+    let channel = FlutterMethodChannel(name: "moodtune/share", binaryMessenger: messenger)
+    channel.setMethodCallHandler { call, result in
+      switch call.method {
+      case "isInstagramInstalled":
+        result(canOpen(instagramStoriesURL))
+      case "isXInstalled":
+        result(canOpen(xURL))
+      case "shareToInstagramStory":
+        guard
+          let args = call.arguments as? [String: Any],
+          let stickerPath = args["stickerPath"] as? String,
+          let topColor = args["topColor"] as? String,
+          let bottomColor = args["bottomColor"] as? String,
+          let appId = args["appId"] as? String
+        else {
+          result(FlutterError(
+            code: "bad_args",
+            message: "Expected stickerPath, topColor, bottomColor and appId",
+            details: nil
+          ))
+          return
+        }
+        shareToInstagramStory(
+          stickerPath: stickerPath,
+          topColor: topColor,
+          bottomColor: bottomColor,
+          appId: appId,
+          result: result
+        )
+      case "shareImageToX":
+        result(false)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+  }
+
+  static func canOpen(_ string: String) -> Bool {
+    guard let url = URL(string: string) else { return false }
+    return UIApplication.shared.canOpenURL(url)
+  }
+
+  static func shareToInstagramStory(
+    stickerPath: String,
+    topColor: String,
+    bottomColor: String,
+    appId: String,
+    result: @escaping FlutterResult
+  ) {
+    guard
+      let encodedId = appId.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+      let url = URL(string: "\(instagramStoriesURL)?source_application=\(encodedId)"),
+      UIApplication.shared.canOpenURL(url)
+    else {
+      result(false)
+      return
+    }
+    guard let sticker = FileManager.default.contents(atPath: stickerPath) else {
+      result(FlutterError(code: "read_failed", message: "Could not read \(stickerPath)", details: nil))
+      return
+    }
+    let items: [[String: Any]] = [[
+      "com.instagram.sharedSticker.stickerImage": sticker,
+      "com.instagram.sharedSticker.backgroundTopColor": topColor,
+      "com.instagram.sharedSticker.backgroundBottomColor": bottomColor,
+    ]]
+    // Instagram reads the pasteboard once it opens; expire it soon after.
+    let options: [UIPasteboard.OptionsKey: Any] = [
+      .expirationDate: Date().addingTimeInterval(60 * 5),
+    ]
+    UIPasteboard.general.setItems(items, options: options)
+    UIApplication.shared.open(url, options: [:]) { opened in result(opened) }
   }
 }
 

@@ -95,4 +95,6 @@ flutter {
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.20")
+    // FileProvider for ShareChannel.kt (issue #35).
+    implementation("androidx.core:core:1.13.1")
 }
