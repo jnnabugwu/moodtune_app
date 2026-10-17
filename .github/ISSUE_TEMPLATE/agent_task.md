@@ -1,14 +1,17 @@
 ---
 name: Agent-ready task
 about: A feature or bug written so an agent can build it without asking. Model it on #35.
-title: "fix(scope): "
+title: ""
 labels: []
 ---
 
 <!--
   Write for an agent that knows only CLAUDE.md and this issue.
   Every claim about the code should cite a path:line on main.
-  The title is the PR title, so use a Conventional Commit.
+  Title the issue with the full Conventional Commit the PR should use, e.g.
+  `feat(sharing): share mood results to Instagram Stories and X`.
+  GitHub doesn't copy it to the PR: the agent sets the PR title to it, and
+  CI's semantic-pull-request check validates the PR title, not this one.
 -->
 
 ## Summary
@@ -54,9 +57,10 @@ labels: []
 ## Definition of done
 
 - [ ] All ACs pass. Manual ACs have screenshots or a recording in the PR.
-- [ ] `tool/ci_check.sh` passes locally (format, analyze, tests at 80% coverage, cspell, PR title).
+- [ ] `tool/ci_check.sh` passes locally (format, analyze, tests at 80% coverage, cspell on the docs and the PR title).
 - [ ] No drop in coverage on the files you touched.
 - [ ] Branched from `main`; the PR references this issue and the R/AC IDs it covers.
+- [ ] The PR title is this issue's title: a complete Conventional Commit (`type(scope): subject`). `tool/ci_check.sh` only spell-checks it; the semantic-pull-request check in CI enforces the format.
 
 ## Decisions required
 
