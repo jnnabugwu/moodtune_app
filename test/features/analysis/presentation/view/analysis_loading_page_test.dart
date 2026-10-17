@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,9 +11,6 @@ import 'package:moodtune_app/features/analysis/presentation/view/analysis_loadin
 
 import '../../../../helpers/helpers.dart';
 import 'flow_fixtures.dart';
-
-const _timeoutCopy =
-    "This one's taking longer than usual.\nGive it another try.";
 
 Future<void> _pumpLoading(
   WidgetTester tester, {
@@ -44,8 +43,19 @@ Future<void> _advance(WidgetTester tester, int seconds) async {
 Future<void> _dispose(WidgetTester tester) =>
     tester.pumpWidget(const SizedBox());
 
+/// The ghost result card is the first AnimatedOpacity on the page.
 double _ghostOpacity(WidgetTester tester) =>
-    tester.widget<AnimatedOpacity>(find.byType(AnimatedOpacity)).opacity;
+    tester.widget<AnimatedOpacity>(find.byType(AnimatedOpacity).first).opacity;
+
+/// Opacity of the "taking longer" note (0 until the analysis runs long).
+double _slowNoteOpacity(WidgetTester tester) => tester
+    .widget<AnimatedOpacity>(
+      find.ancestor(
+        of: find.text(slowMessage),
+        matching: find.byType(AnimatedOpacity),
+      ),
+    )
+    .opacity;
 
 class _FakeAnalysisEvent extends Fake implements AnalysisEvent {}
 
@@ -130,76 +140,81 @@ void main() {
       });
     });
 
-    group('timeout', () {
-      testWidgets('shows timeout UI after 35 seconds', (tester) async {
+    group('running long', () {
+      testWidgets('keeps waiting past 35 s with a note', (tester) async {
         await _pumpLoading(tester, trackDurationSeconds: 180);
 
         await _advance(tester, 34);
-        expect(find.text(_timeoutCopy), findsNothing);
+        expect(_slowNoteOpacity(tester), 0);
 
         await _advance(tester, 1);
-        expect(find.text(_timeoutCopy), findsOneWidget);
-        expect(find.text('Try again'), findsOneWidget);
-        expect(find.text('Almost there…'), findsNothing);
+        expect(_slowNoteOpacity(tester), 1);
+        expect(find.text('Almost there…'), findsOneWidget);
+        expect(find.text('Try again'), findsNothing);
 
         await _dispose(tester);
       });
 
-      testWidgets('Try again resets phases and restarts timers', (
+      testWidgets('still navigates when the result arrives late', (
         tester,
       ) async {
-        await _pumpLoading(tester);
-        await _advance(tester, 35);
-        expect(find.text(_timeoutCopy), findsOneWidget);
+        final changes = StreamController<AnalysisState>();
+        addTearDown(changes.close);
+        const uploading = AnalysisState(uploadStatus: UploadStatus.uploading);
+        final bloc = mockAnalysisBloc(uploading);
+        whenListen(bloc, changes.stream, initialState: uploading);
+        await _pumpLoading(
+          tester,
+          analysisBloc: bloc,
+          extraRoutes: [
+            GoRoute(
+              path: RouteNames.result,
+              builder: (_, _) => const Text('result'),
+            ),
+          ],
+        );
+        await _advance(tester, 70);
+        expect(_slowNoteOpacity(tester), 1);
 
-        await tester.tap(find.text('Try again'));
+        changes.add(
+          AnalysisState(
+            uploadStatus: UploadStatus.success,
+            currentUploadAnalysis: audioUploadAnalysis,
+          ),
+        );
         await tester.pump();
-        await tester.pump(const Duration(milliseconds: 700));
+        await tester.pump(const Duration(milliseconds: 500));
 
-        expect(find.text(_timeoutCopy), findsNothing);
-        expect(find.text('Uploading your track…'), findsOneWidget);
-        expect(_ghostOpacity(tester), 0);
-
-        // Timers run again from zero.
-        await _advance(tester, 5);
-        expect(find.text('Listening to the rhythm…'), findsOneWidget);
-        await _advance(tester, 30);
-        expect(find.text(_timeoutCopy), findsOneWidget);
-
-        await _dispose(tester);
+        expect(find.text('result'), findsOneWidget);
       });
 
-      testWidgets('Cancel on timeout returns to upload screen', (tester) async {
+      testWidgets('Cancel still leaves while running long', (tester) async {
         await _pumpLoading(tester);
-        await _advance(tester, 35);
+        await _advance(tester, 40);
 
-        // Two "Cancel" buttons: the top-right one and the timeout one.
-        expect(find.text('Cancel'), findsNWidgets(2));
-        await tester.tap(find.text('Cancel').last);
+        await tester.tap(find.text('Cancel'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 500));
 
         expect(find.text(navigatedTo(RouteNames.uploadMusic)), findsOneWidget);
       });
 
-      testWidgets('long tracks (> 4 min) never show the timeout UI', (
-        tester,
-      ) async {
+      testWidgets('long tracks (> 4 min) never show the note', (tester) async {
         await _pumpLoading(tester, trackDurationSeconds: 241);
 
         await _advance(tester, 60);
-        expect(find.text(_timeoutCopy), findsNothing);
+        expect(_slowNoteOpacity(tester), 0);
         expect(find.text('Almost there…'), findsOneWidget);
         expect(_ghostOpacity(tester), 1);
 
         await _dispose(tester);
       });
 
-      testWidgets('a 4 min track still times out', (tester) async {
+      testWidgets('a 4 min track still shows the note', (tester) async {
         await _pumpLoading(tester, trackDurationSeconds: 240);
 
         await _advance(tester, 35);
-        expect(find.text(_timeoutCopy), findsOneWidget);
+        expect(_slowNoteOpacity(tester), 1);
 
         await _dispose(tester);
       });
@@ -601,7 +616,6 @@ void main() {
         expect(find.text(navigatedTo(RouteNames.result)), findsOneWidget);
 
         await tester.pump(const Duration(seconds: 40));
-        expect(find.text(_timeoutCopy), findsNothing);
         expect(find.text(navigatedTo(RouteNames.result)), findsOneWidget);
       });
     });

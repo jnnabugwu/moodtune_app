@@ -147,7 +147,12 @@ class _HomeTabState extends State<_HomeTab> {
                     return Column(
                       children: [
                         for (final item in recent)
-                          HistoryRowItem(item: item, onTap: () {}),
+                          HistoryRowItem(
+                            item: item,
+                            onTap: () => unawaited(
+                              context.push(RouteNames.result, extra: item),
+                            ),
+                          ),
                         const SizedBox(height: 8),
                         GestureDetector(
                           onTap: () {

@@ -16,9 +16,26 @@ import 'package:moodtune_app/shared/widgets/confidence_ring.dart';
 /// When [MediaQueryData.disableAnimations] is true all elements appear
 /// instantly at full opacity.
 class MoodHeroCard extends StatefulWidget {
-  const MoodHeroCard({required this.analysis, super.key});
+  MoodHeroCard({required AudioUploadAnalysis analysis, super.key})
+    : primaryMood = analysis.mood.primaryMood,
+      // Hidden for on-device moods until their probabilities are
+      // recalibrated (ROADMAP OD-5): the backend's confidence belongs to
+      // its own label.
+      confidence = analysis.mood.source == MoodSource.backend
+          ? analysis.mood.confidence
+          : null;
 
-  final AudioUploadAnalysis analysis;
+  /// A saved result: only the mood and, when stored, its confidence.
+  const MoodHeroCard.saved({
+    required this.primaryMood,
+    this.confidence,
+    super.key,
+  });
+
+  final String primaryMood;
+
+  /// Null hides the confidence ring.
+  final double? confidence;
 
   @override
   State<MoodHeroCard> createState() => _MoodHeroCardState();
@@ -94,12 +111,12 @@ class _MoodHeroCardState extends State<MoodHeroCard>
 
   @override
   Widget build(BuildContext context) {
-    final identity = MoodTheme.fromString(widget.analysis.mood.primaryMood);
+    final identity = MoodTheme.fromString(widget.primaryMood);
     final colors = MoodTheme.colorsFor(identity);
     final icon = MoodTheme.iconFor(identity);
     final quadrant = MoodTheme.quadrantLabel(identity);
     final short = MoodTheme.shortLabel(identity);
-    final confidence = widget.analysis.mood.confidence;
+    final confidence = widget.confidence;
 
     return FadeTransition(
       opacity: _bgOpacity,
@@ -158,10 +175,8 @@ class _MoodHeroCardState extends State<MoodHeroCard>
                 ),
               ),
             ),
-            // Confidence ring — mounts and self-animates when revealed. Hidden
-            // for on-device moods until their probabilities are recalibrated
-            // (ROADMAP OD-5): the backend's confidence belongs to its label.
-            if (widget.analysis.mood.source == MoodSource.backend) ...[
+            // Confidence ring — mounts and self-animates when revealed.
+            if (confidence != null) ...[
               const SizedBox(height: 24),
               FadeTransition(
                 opacity: _ringOpacity,

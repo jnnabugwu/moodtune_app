@@ -36,6 +36,7 @@ class AnalysisState extends Equatable {
     this.uploadStatus = UploadStatus.initial,
     this.uploadError,
     this.uploadErrorKind,
+    this.uploadSaved = false,
     this.catalogStatus = CatalogAnalysisStatus.initial,
     this.currentCatalogAnalysis,
     this.catalogError,
@@ -71,6 +72,10 @@ class AnalysisState extends Equatable {
   /// Type of the failure behind [uploadError].
   final AnalysisErrorKind? uploadErrorKind;
 
+  /// True once the shown upload result is saved to the signed-in user's
+  /// history. Reset by each new upload; drives the "Saved to history" notice.
+  final bool uploadSaved;
+
   /// Catalog track analysis (Jamendo → /catalog/analyze → AudioUploadAnalysis).
   final CatalogAnalysisStatus catalogStatus;
   final AudioUploadAnalysis? currentCatalogAnalysis;
@@ -104,6 +109,7 @@ class AnalysisState extends Equatable {
     UploadStatus? uploadStatus,
     Object? uploadError = _keep,
     Object? uploadErrorKind = _keep,
+    bool? uploadSaved,
     CatalogAnalysisStatus? catalogStatus,
     Object? currentCatalogAnalysis = _keep,
     Object? catalogError = _keep,
@@ -136,6 +142,7 @@ class AnalysisState extends Equatable {
       uploadErrorKind: uploadErrorKind == _keep
           ? this.uploadErrorKind
           : uploadErrorKind as AnalysisErrorKind?,
+      uploadSaved: uploadSaved ?? this.uploadSaved,
       catalogStatus: catalogStatus ?? this.catalogStatus,
       currentCatalogAnalysis: currentCatalogAnalysis == _keep
           ? this.currentCatalogAnalysis
@@ -171,6 +178,7 @@ class AnalysisState extends Equatable {
     uploadStatus,
     uploadError,
     uploadErrorKind,
+    uploadSaved,
     catalogStatus,
     currentCatalogAnalysis,
     catalogError,

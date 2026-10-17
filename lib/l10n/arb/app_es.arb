@@ -3,5 +3,9 @@
     "counterAppBarTitle": "Contador",
     "@counterAppBarTitle": {
         "description": "Texto mostrado en la AppBar de la página del contador"
+    },
+    "resultsSavedToHistory": "Guardado en el historial",
+    "@resultsSavedToHistory": {
+        "description": "Aviso que aparece en la página de resultados cuando un resultado se guarda en el historial"
     }
 }

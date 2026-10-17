@@ -122,13 +122,20 @@ void main() {
       expect(entries.first.title, 'Song');
       expect(entries.first.subtitle, 'Singer');
       expect(entries.first.primaryMood, 'Sad');
-      // Only the song endpoint is consulted.
-      verifyNever(
-        () => remote.getHistory(
-          limit: any(named: 'limit'),
-          offset: any(named: 'offset'),
-        ),
+    });
+
+    test('returns entries newest first', () async {
+      when(() => remote.getSongHistory(limit: 50, offset: 0)).thenAnswer(
+        (_) async => [
+          songHistoryJson(id: 'old', createdAt: '2025-01-01T00:00:00.000Z'),
+          songHistoryJson(id: 'new', createdAt: '2025-03-01T00:00:00.000Z'),
+          songHistoryJson(id: 'mid', createdAt: '2025-02-01T00:00:00.000Z'),
+        ],
       );
+
+      final entries = _rightOf(await repo.getHistory());
+
+      expect(entries.map((e) => e.id), ['new', 'mid', 'old']);
     });
 
     test('forwards limit and offset', () async {

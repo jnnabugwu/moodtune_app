@@ -643,7 +643,21 @@ void main() {
         const AnalysisState(),
         isNot(const AnalysisState(catalogError: 'x')),
       );
-      expect(const AnalysisState().props, hasLength(20));
+      expect(
+        const AnalysisState(uploadSaved: true),
+        isNot(const AnalysisState()),
+      );
+      expect(const AnalysisState().props, hasLength(21));
+    });
+
+    test('copyWith sets uploadSaved and keeps it when omitted', () {
+      const state = AnalysisState();
+      expect(state.uploadSaved, isFalse);
+      expect(state.copyWith(uploadSaved: true).uploadSaved, isTrue);
+      expect(
+        state.copyWith(uploadSaved: true).copyWith(error: 'x').uploadSaved,
+        isTrue,
+      );
     });
   });
 
@@ -878,6 +892,123 @@ void main() {
         // Nothing is emitted after the failed save.
         expect(bloc.state.currentUploadAnalysis, tUpload);
         expect(bloc.state.uploadError, isNull);
+        // AC2 (#44): no "Saved" notice for a failed save.
+        expect(bloc.state.uploadSaved, isFalse);
+      },
+    );
+
+    // AC1 (#44): a saved upload flags the "Saved to history" notice.
+    blocTest<AnalysisBloc, AnalysisState>(
+      'marks the upload saved once it is saved to history',
+      setUp: () => when(
+        () => repository.saveResultToHistory(any()),
+      ).thenAnswer((_) async => const Right(true)),
+      build: buildBloc,
+      seed: () => const AnalysisState(uploadSaved: true),
+      act: (bloc) =>
+          bloc.add(const AudioUploadRequested(bytes: [1], filename: 'a.mp3')),
+      expect: () => [
+        isA<AnalysisState>()
+            .having(
+              (s) => s.uploadStatus,
+              'uploadStatus',
+              UploadStatus.uploading,
+            )
+            .having((s) => s.uploadSaved, 'uploadSaved', isFalse),
+        isA<AnalysisState>()
+            .having((s) => s.uploadStatus, 'uploadStatus', UploadStatus.success)
+            .having((s) => s.uploadSaved, 'uploadSaved', isFalse),
+        isA<AnalysisState>()
+            .having((s) => s.currentUploadAnalysis, 'result', tUpload)
+            .having((s) => s.uploadSaved, 'uploadSaved', isTrue),
+      ],
+    );
+
+    test('a save that lands after a newer upload started is ignored', () async {
+      final firstSave = Completer<Either<Failure, bool>>();
+      var saves = 0;
+      when(() => repository.saveResultToHistory(any())).thenAnswer(
+        (_) =>
+            ++saves == 1 ? firstSave.future : Future.value(const Right(false)),
+      );
+      // Each upload gets its own result object.
+      when(
+        () => repository.analyzeUploadedAudio(
+          bytes: any(named: 'bytes'),
+          filename: any(named: 'filename'),
+          title: any(named: 'title'),
+          artist: any(named: 'artist'),
+          album: any(named: 'album'),
+        ),
+      ).thenAnswer((_) async => Right(buildUploadAnalysis()));
+      final bloc = buildBloc()
+        ..add(const AudioUploadRequested(bytes: [1], filename: 'a.mp3'));
+      await Future<void>.delayed(Duration.zero);
+      bloc.add(const AudioUploadRequested(bytes: [2], filename: 'b.mp3'));
+      await Future<void>.delayed(Duration.zero);
+      // The newer upload is in flight, so the first one is no longer shown.
+      final states = <AnalysisState>[];
+      final sub = bloc.stream.listen(states.add);
+      firstSave.complete(const Right(true));
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      expect(states.where((s) => s.uploadSaved), isEmpty);
+      await sub.cancel();
+      await bloc.close();
+    });
+
+    test(
+      "a newer upload that lands clears an older upload's saved flag",
+      () async {
+        final backendA = Completer<Either<Failure, AudioUploadAnalysis>>();
+        final backendB = Completer<Either<Failure, AudioUploadAnalysis>>();
+        when(
+          () => repository.analyzeUploadedAudio(
+            bytes: any(named: 'bytes'),
+            filename: any(named: 'filename'),
+            title: any(named: 'title'),
+            artist: any(named: 'artist'),
+            album: any(named: 'album'),
+          ),
+        ).thenAnswer(
+          (i) => i.namedArguments[#filename] == 'a.mp3'
+              ? backendA.future
+              : backendB.future,
+        );
+        var saves = 0;
+        when(() => repository.saveResultToHistory(any())).thenAnswer(
+          (_) async => ++saves == 1
+              ? const Right(true)
+              : const Left(ServerFailure('down')),
+        );
+        final bloc = buildBloc()
+          ..add(const AudioUploadRequested(bytes: [1], filename: 'a.mp3'))
+          ..add(const AudioUploadRequested(bytes: [2], filename: 'b.mp3'));
+        await Future<void>.delayed(Duration.zero);
+
+        // A lands while B is in flight and is saved: A is on screen, saved.
+        backendA.complete(Right(buildUploadAnalysis(id: 'a')));
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        expect(bloc.state.currentUploadAnalysis?.id, 'a');
+        expect(bloc.state.uploadSaved, isTrue);
+
+        // B replaces it and its save fails: no "Saved" for B.
+        backendB.complete(Right(buildUploadAnalysis(id: 'b')));
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        expect(bloc.state.currentUploadAnalysis?.id, 'b');
+        expect(bloc.state.uploadSaved, isFalse);
+        await bloc.close();
+      },
+    );
+
+    blocTest<AnalysisBloc, AnalysisState>(
+      'does not mark a guest upload saved',
+      build: buildBloc,
+      act: (bloc) =>
+          bloc.add(const AudioUploadRequested(bytes: [1], filename: 'a.mp3')),
+      verify: (bloc) {
+        verify(() => repository.saveResultToHistory(any())).called(1);
+        expect(bloc.state.uploadSaved, isFalse);
       },
     );
   });
