@@ -5,6 +5,7 @@ import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/analysis/presentation/view/history_page.dart';
 import 'package:moodtune_app/features/analysis/presentation/view/home_auth_page.dart';
+import 'package:moodtune_app/features/analysis/presentation/view/results_page.dart';
 import 'package:moodtune_app/features/auth/domain/entities/app_user.dart';
 import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:moodtune_app/shared/widgets/history_row_item.dart';
@@ -135,17 +136,34 @@ void main() {
         expect(find.text('Entry 2'), findsOneWidget);
         expect(find.text('Entry 3'), findsNothing);
 
-        // Rows are tappable without side effects.
-        await tester.tap(find.text('Entry 0'));
-        await tester.pump();
-        expect(tester.takeException(), isNull);
-
         await tester.ensureVisible(find.text('See all history'));
         await tester.tap(find.text('See all history'));
         await tester.pumpAndSettle();
 
         expect(find.text(navigatedTo(RouteNames.history)), findsOneWidget);
       });
+    });
+
+    testWidgets('tapping a recent row opens its saved result (AC2)', (
+      tester,
+    ) async {
+      final history = testHistory(3);
+      await tester.pumpApp(
+        const HomeAuthPage(),
+        analysisBloc: mockAnalysisBloc(AnalysisState(history: history)),
+        extraRoutes: [savedResultRoute],
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Entry 2'));
+      await tester.pumpAndSettle();
+
+      final page = tester.widget<ResultsPage>(find.byType(ResultsPage));
+      expect(page.savedEntry, history[2]);
+
+      await tester.tap(find.byType(CupertinoNavigationBarBackButton));
+      await tester.pumpAndSettle();
+      expect(find.text('Recent analyses'), findsOneWidget);
     });
 
     group('action cards', () {

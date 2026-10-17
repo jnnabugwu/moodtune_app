@@ -136,6 +136,18 @@ void main() {
       page: ResultsPage,
     ),
     (location: RouteNames.result, extra: null, page: ResultsPage),
+    (
+      location: RouteNames.result,
+      extra: HistoryEntry(
+        id: 'h1',
+        title: 'Saved Song',
+        primaryMood: 'happy',
+        confidence: 0.8,
+        createdAt: DateTime(2026, 10, 17),
+        type: HistoryEntryType.song,
+      ),
+      page: ResultsPage,
+    ),
     (location: RouteNames.spotify, extra: null, page: AuthGatePage),
     (location: RouteNames.callback, extra: null, page: AuthGatePage),
     (location: RouteNames.playlists, extra: null, page: SpotifyPlaylistsPage),
