@@ -56,6 +56,14 @@ void main() {
         'mary-jo@example.com': 'MJ',
         'bob@example.com': 'BO',
         'a@example.com': 'A',
+        // Empty segments are ignored (#48).
+        'john_@x.com': 'JO',
+        '_john@x.com': 'JO',
+        'john__smith@x.com': 'JS',
+        '.a@x.com': 'A',
+        '_@x.com': '?',
+        '.-_@x.com': '?',
+        '@x.com': '?',
       };
 
       for (final entry in cases.entries) {
