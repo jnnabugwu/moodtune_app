@@ -162,6 +162,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
         uploadStatus: UploadStatus.uploading,
         uploadError: null,
         currentUploadAnalysis: null,
+        uploadSaved: false,
       ),
     );
 
@@ -182,15 +183,16 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
     // A backend error is shown right away; only a result waits for on-device.
     final attempt = result.isRight() ? await _settle(onDevice) : null;
 
-    result.fold(
-      (failure) => emit(
+    await result.fold(
+      (failure) async => emit(
         state.copyWith(
           uploadStatus: UploadStatus.error,
           uploadError: failure.message,
           currentUploadAnalysis: null,
+          uploadSaved: false,
         ),
       ),
-      (analysis) {
+      (analysis) async {
         final displayed = MoodSwitchover.apply(analysis, attempt);
         final observationId = _record(
           MoodObservationSource.upload,
@@ -203,11 +205,13 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
             uploadStatus: UploadStatus.success,
             currentUploadAnalysis: displayed,
             uploadError: null,
+            // Set once this result is saved, below.
+            uploadSaved: false,
             onDeviceAttempt: attempt,
             observationId: observationId,
           ),
         );
-        _saveToHistory(
+        final saved = await _saveToHistory(
           ResultHistoryRecord.fromResult(
             source: ResultHistorySource.upload,
             title: _uploadTitle(event),
@@ -218,6 +222,11 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
             observationId: observationId,
           ),
         );
+        // uploadSaved describes the result on screen: skip it when another
+        // upload's result (or its loading state) has replaced this one.
+        if (saved && identical(state.currentUploadAnalysis, displayed)) {
+          emit(state.copyWith(uploadSaved: true));
+        }
       },
     );
   }
@@ -282,16 +291,18 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
             observationId: observationId,
           ),
         );
-        _saveToHistory(
-          ResultHistoryRecord.fromResult(
-            source: ResultHistorySource.catalog,
-            title: event.trackName,
-            artist: event.artistName,
-            trackId: event.trackId,
-            backend: analysis,
-            displayed: displayed,
-            onDeviceMood: attempt?.mood?.primaryMood,
-            observationId: observationId,
+        unawaited(
+          _saveToHistory(
+            ResultHistoryRecord.fromResult(
+              source: ResultHistorySource.catalog,
+              title: event.trackName,
+              artist: event.artistName,
+              trackId: event.trackId,
+              backend: analysis,
+              displayed: displayed,
+              onDeviceMood: attempt?.mood?.primaryMood,
+              observationId: observationId,
+            ),
           ),
         );
       },
@@ -331,23 +342,21 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
 
   /// Saves [record] to history without holding up the results screen.
   /// Guests are skipped by the repository. Reloads history if it has been
-  /// loaded (even empty), so the new row shows up.
-  void _saveToHistory(ResultHistoryRecord record) {
-    unawaited(
-      _repository
-          .saveResultToHistory(record)
-          .then(
-            (result) => result.fold(
-              (failure) => talker.warning(
-                'Result not saved to history: ${failure.message}',
-              ),
-              (saved) {
-                if (saved && state.historyLoaded && !isClosed) {
-                  add(const AnalysisHistoryRequested());
-                }
-              },
-            ),
-          ),
+  /// loaded (even empty), so the new row shows up. Returns whether the
+  /// record was saved (false for guests and on failure).
+  Future<bool> _saveToHistory(ResultHistoryRecord record) async {
+    final result = await _repository.saveResultToHistory(record);
+    return result.fold<bool>(
+      (failure) {
+        talker.warning('Result not saved to history: ${failure.message}');
+        return false;
+      },
+      (saved) {
+        if (saved && state.historyLoaded && !isClosed) {
+          add(const AnalysisHistoryRequested());
+        }
+        return saved;
+      },
     );
   }
 
