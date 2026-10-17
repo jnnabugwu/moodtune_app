@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:moodtune_app/features/auth/data/datasources/social_credential_source.dart';
 import 'package:moodtune_app/features/auth/data/datasources/supabase_auth_datasource.dart';
 import 'package:moodtune_app/features/auth/domain/entities/app_user.dart';
+import 'package:moodtune_app/features/auth/domain/entities/social_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _MockSupabaseClient extends Mock implements SupabaseClient {}
@@ -14,6 +16,17 @@ class _MockUser extends Mock implements User {}
 
 class _MockSession extends Mock implements Session {}
 
+class _FakeSource implements SocialCredentialSource {
+  _FakeSource({this.isAvailable = true, this.credential});
+
+  @override
+  final bool isAvailable;
+  final SocialCredential? credential;
+
+  @override
+  Future<SocialCredential?> obtain() async => credential;
+}
+
 void main() {
   late _MockSupabaseClient client;
   late _MockGoTrueClient auth;
@@ -24,6 +37,7 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(OtpType.signup);
+    registerFallbackValue(OAuthProvider.google);
   });
 
   setUp(() {
@@ -179,5 +193,111 @@ void main() {
       datasource.sendPasswordResetEmail(email),
       throwsA(isA<AuthException>()),
     );
+  });
+
+  group('social sign-in', () {
+    SupabaseAuthDatasource withSources({
+      SocialCredentialSource? apple,
+      SocialCredentialSource? google,
+    }) => SupabaseAuthDatasource(
+      client: client,
+      apple: apple ?? _FakeSource(),
+      google: google ?? _FakeSource(),
+    );
+
+    void stubIdTokenSignIn(User? user) => when(
+      () => auth.signInWithIdToken(
+        provider: any(named: 'provider'),
+        idToken: any(named: 'idToken'),
+        accessToken: any(named: 'accessToken'),
+        nonce: any(named: 'nonce'),
+      ),
+    ).thenAnswer((_) async => responseWith(user));
+
+    test('lists only the available providers', () {
+      expect(
+        withSources(
+          google: _FakeSource(isAvailable: false),
+        ).availableSocialProviders,
+        {SocialProvider.apple},
+      );
+      expect(withSources().availableSocialProviders, {
+        SocialProvider.apple,
+        SocialProvider.google,
+      });
+    });
+
+    test('signs in to Supabase with the Apple token and raw nonce', () async {
+      stubIdTokenSignIn(buildUser(email: email));
+      final datasource = withSources(
+        apple: _FakeSource(
+          credential: const SocialCredential(idToken: 'jwt', rawNonce: 'n'),
+        ),
+      );
+
+      final user = await datasource.signInWithProvider(SocialProvider.apple);
+
+      expect(user, const AppUser(id: 'u1', email: email));
+      verify(
+        () => auth.signInWithIdToken(
+          provider: OAuthProvider.apple,
+          idToken: 'jwt',
+          nonce: 'n',
+        ),
+      ).called(1);
+    });
+
+    test('passes Google tokens through and maps a missing email', () async {
+      stubIdTokenSignIn(buildUser());
+      final datasource = withSources(
+        google: _FakeSource(
+          credential: const SocialCredential(idToken: 'g', accessToken: 'a'),
+        ),
+      );
+
+      final user = await datasource.signInWithProvider(SocialProvider.google);
+
+      expect(user, const AppUser(id: 'u1', email: ''));
+      verify(
+        () => auth.signInWithIdToken(
+          provider: OAuthProvider.google,
+          idToken: 'g',
+          accessToken: 'a',
+        ),
+      ).called(1);
+    });
+
+    test('returns null without calling Supabase when cancelled', () async {
+      final user = await withSources().signInWithProvider(SocialProvider.apple);
+
+      expect(user, isNull);
+      verifyNever(
+        () => auth.signInWithIdToken(
+          provider: any(named: 'provider'),
+          idToken: any(named: 'idToken'),
+        ),
+      );
+    });
+
+    test('throws when Supabase returns no user', () async {
+      stubIdTokenSignIn(null);
+      final datasource = withSources(
+        apple: _FakeSource(credential: const SocialCredential(idToken: 'j')),
+      );
+
+      await expectLater(
+        datasource.signInWithProvider(SocialProvider.apple),
+        throwsA(isA<AuthException>()),
+      );
+    });
+
+    test('builds its own sources by default', () {
+      // No dart-defines in tests, so Google is unavailable; Apple depends on
+      // the host platform.
+      expect(
+        SupabaseAuthDatasource(client: client).availableSocialProviders,
+        isNot(contains(SocialProvider.google)),
+      );
+    });
   });
 }

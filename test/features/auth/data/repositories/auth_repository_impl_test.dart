@@ -5,6 +5,7 @@ import 'package:moodtune_app/core/error/failures.dart';
 import 'package:moodtune_app/features/auth/data/datasources/supabase_auth_datasource.dart';
 import 'package:moodtune_app/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:moodtune_app/features/auth/domain/entities/app_user.dart';
+import 'package:moodtune_app/features/auth/domain/entities/social_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../blocs_fixtures.dart';
@@ -160,5 +161,46 @@ void main() {
     stub: (e) =>
         () => when(() => datasource.sendPasswordResetEmail(email)).thenThrow(e),
     call: () => repository.sendPasswordResetEmail(email),
+  );
+
+  group('social sign-in', () {
+    test('exposes the datasource providers', () {
+      when(
+        () => datasource.availableSocialProviders,
+      ).thenReturn({SocialProvider.apple});
+
+      expect(repository.availableSocialProviders, {SocialProvider.apple});
+    });
+
+    test('returns the signed-in user', () async {
+      when(
+        () => datasource.signInWithProvider(SocialProvider.google),
+      ).thenAnswer((_) async => const AppUser(id: 'u1', email: email));
+
+      expect(
+        await repository.signInWithProvider(SocialProvider.google),
+        const Right<Failure, AppUser?>(AppUser(id: 'u1', email: email)),
+      );
+    });
+
+    test('returns Right(null) when cancelled', () async {
+      when(
+        () => datasource.signInWithProvider(SocialProvider.apple),
+      ).thenAnswer((_) async => null);
+
+      expect(
+        await repository.signInWithProvider(SocialProvider.apple),
+        const Right<Failure, AppUser?>(null),
+      );
+    });
+  });
+
+  failureMapping(
+    name: 'signInWithProvider',
+    stub: (e) =>
+        () => when(
+          () => datasource.signInWithProvider(SocialProvider.apple),
+        ).thenThrow(e),
+    call: () => repository.signInWithProvider(SocialProvider.apple),
   );
 }

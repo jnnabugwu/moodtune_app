@@ -5,6 +5,7 @@ import 'package:moodtune_app/core/routing/app_router.dart';
 import 'package:moodtune_app/di/injector.dart';
 import 'package:moodtune_app/features/analysis/domain/repositories/analysis_repository.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
+import 'package:moodtune_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:moodtune_app/features/mood_feedback/presentation/mood_observation_recorder.dart';
 import 'package:moodtune_app/features/on_device_mood/presentation/mood_switchover.dart';
@@ -30,7 +31,15 @@ class App extends StatelessWidget {
       ],
       child: MultiBlocProvider(
         providers: [
-          BlocProvider(create: (_) => AuthBloc(getIt())),
+          BlocProvider(
+            create: (_) {
+              final auth = getIt<AuthRepository>();
+              return AuthBloc(
+                auth,
+                socialProviders: auth.availableSocialProviders,
+              );
+            },
+          ),
           BlocProvider(
             create: (_) => SpotifyBloc(
               getAuthorizeUrl: getIt<GetAuthorizeUrl>(),

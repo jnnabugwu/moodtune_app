@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:moodtune_app/core/error/error.dart';
 import 'package:moodtune_app/features/auth/data/datasources/supabase_auth_datasource.dart';
 import 'package:moodtune_app/features/auth/domain/entities/app_user.dart';
+import 'package:moodtune_app/features/auth/domain/entities/social_provider.dart';
 import 'package:moodtune_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:moodtune_app/utils/typedef.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -46,6 +47,22 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     try {
       final user = await _datasource.signUp(email: email, password: password);
+      return Right(user);
+    } on AuthException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on Exception catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Set<SocialProvider> get availableSocialProviders =>
+      _datasource.availableSocialProviders;
+
+  @override
+  ResultFuture<AppUser?> signInWithProvider(SocialProvider provider) async {
+    try {
+      final user = await _datasource.signInWithProvider(provider);
       return Right(user);
     } on AuthException catch (e) {
       return Left(ServerFailure(e.message));
