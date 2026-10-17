@@ -3,5 +3,73 @@
     "counterAppBarTitle": "Contador",
     "@counterAppBarTitle": {
         "description": "Texto mostrado en la AppBar de la página del contador"
+    },
+    "shareButton": "Compartir",
+    "@shareButton": {
+        "description": "Etiqueta de la acción Compartir en la pantalla de resultados y en las filas del historial"
+    },
+    "shareSheetTitle": "Comparte tu resultado",
+    "@shareSheetTitle": {
+        "description": "Título de la hoja inferior que lista los destinos para compartir"
+    },
+    "shareTargetInstagramStory": "Historias de Instagram",
+    "@shareTargetInstagramStory": {
+        "description": "Destino que abre el editor de historias de Instagram"
+    },
+    "shareTargetX": "X",
+    "@shareTargetX": {
+        "description": "Destino que publica en X (antes Twitter)"
+    },
+    "shareTargetMore": "Más…",
+    "@shareTargetMore": {
+        "description": "Destino que abre la hoja de compartir del sistema"
+    },
+    "sharePreparing": "Preparando tu tarjeta…",
+    "@sharePreparing": {
+        "description": "Se muestra mientras se genera la tarjeta para compartir"
+    },
+    "shareFailed": "No se pudo compartir ahora. Inténtalo de nuevo.",
+    "@shareFailed": {
+        "description": "Mensaje en línea cuando falla la generación o la app de destino rechaza el contenido"
+    },
+    "shareCaptionWithTitle": "Mi canción \"{title}\" suena {mood} 🎧 Descubre el mood de tu canción en MoodTune",
+    "@shareCaptionWithTitle": {
+        "description": "Texto para compartir cuando la canción tiene un título válido. El enlace se añade aparte.",
+        "placeholders": {
+            "title": {
+                "type": "String",
+                "example": "Blinding Lights"
+            },
+            "mood": {
+                "type": "String",
+                "example": "Intensa"
+            }
+        }
+    },
+    "shareCaptionWithoutTitle": "Esta canción suena {mood} 🎧 Descubre el mood de tu canción en MoodTune",
+    "@shareCaptionWithoutTitle": {
+        "description": "Texto para compartir cuando la canción no tiene título o el título parece un nombre de archivo. El enlace se añade aparte.",
+        "placeholders": {
+            "mood": {
+                "type": "String",
+                "example": "Intensa"
+            }
+        }
+    },
+    "shareMoodUpbeat": "Animada",
+    "@shareMoodUpbeat": {
+        "description": "Palabra de mood usada en el texto para compartir"
+    },
+    "shareMoodSerene": "Serena",
+    "@shareMoodSerene": {
+        "description": "Palabra de mood usada en el texto para compartir"
+    },
+    "shareMoodCharged": "Intensa",
+    "@shareMoodCharged": {
+        "description": "Palabra de mood usada en el texto para compartir"
+    },
+    "shareMoodReflective": "Reflexiva",
+    "@shareMoodReflective": {
+        "description": "Palabra de mood usada en el texto para compartir"
     }
 }

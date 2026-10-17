@@ -3,5 +3,73 @@
     "counterAppBarTitle": "Counter",
     "@counterAppBarTitle": {
         "description": "Text shown in the AppBar of the Counter Page"
+    },
+    "shareButton": "Share",
+    "@shareButton": {
+        "description": "Label of the Share action on the results screen and on history rows"
+    },
+    "shareSheetTitle": "Share your result",
+    "@shareSheetTitle": {
+        "description": "Title of the bottom sheet listing share targets"
+    },
+    "shareTargetInstagramStory": "Instagram Stories",
+    "@shareTargetInstagramStory": {
+        "description": "Share target that opens Instagram's Story composer"
+    },
+    "shareTargetX": "X",
+    "@shareTargetX": {
+        "description": "Share target that posts to X (formerly Twitter)"
+    },
+    "shareTargetMore": "More…",
+    "@shareTargetMore": {
+        "description": "Share target that opens the system share sheet"
+    },
+    "sharePreparing": "Preparing your card…",
+    "@sharePreparing": {
+        "description": "Shown while the share card is being rendered"
+    },
+    "shareFailed": "Couldn't share right now. Try again.",
+    "@shareFailed": {
+        "description": "Inline message when rendering fails or the target app rejects the share"
+    },
+    "shareCaptionWithTitle": "My song \"{title}\" feels {mood} 🎧 Find your song's mood on MoodTune",
+    "@shareCaptionWithTitle": {
+        "description": "Share caption when the song has a usable title. The link is appended separately.",
+        "placeholders": {
+            "title": {
+                "type": "String",
+                "example": "Blinding Lights"
+            },
+            "mood": {
+                "type": "String",
+                "example": "Charged"
+            }
+        }
+    },
+    "shareCaptionWithoutTitle": "This song feels {mood} 🎧 Find your song's mood on MoodTune",
+    "@shareCaptionWithoutTitle": {
+        "description": "Share caption when the song has no title or the title looks like a filename. The link is appended separately.",
+        "placeholders": {
+            "mood": {
+                "type": "String",
+                "example": "Charged"
+            }
+        }
+    },
+    "shareMoodUpbeat": "Upbeat",
+    "@shareMoodUpbeat": {
+        "description": "Mood word used in the share caption"
+    },
+    "shareMoodSerene": "Serene",
+    "@shareMoodSerene": {
+        "description": "Mood word used in the share caption"
+    },
+    "shareMoodCharged": "Charged",
+    "@shareMoodCharged": {
+        "description": "Mood word used in the share caption"
+    },
+    "shareMoodReflective": "Reflective",
+    "@shareMoodReflective": {
+        "description": "Mood word used in the share caption"
     }
 }

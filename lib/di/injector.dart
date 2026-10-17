@@ -20,6 +20,7 @@ import 'package:moodtune_app/features/on_device_mood/data/yamnet_assets.dart';
 import 'package:moodtune_app/features/on_device_mood/data/yamnet_engine.dart';
 import 'package:moodtune_app/features/on_device_mood/presentation/mood_switchover.dart';
 import 'package:moodtune_app/features/on_device_mood/presentation/on_device_mood_classifier.dart';
+import 'package:moodtune_app/features/sharing/sharing.dart';
 import 'package:moodtune_app/features/spotify/data/data.dart';
 import 'package:moodtune_app/features/spotify/domain/repositories/spotify_repository.dart';
 import 'package:moodtune_app/features/spotify/domain/usecases/usecases.dart';
@@ -94,6 +95,14 @@ Future<void> configureDependencies({
       ),
     )
     ..registerLazySingleton(() => MoodObservationRecorder(repository: getIt()))
+    // Sharing (#35). META_APP_ID is public and comes from --dart-define;
+    // without it Instagram Stories is hidden from the share sheet.
+    ..registerLazySingleton<ShareRepository>(
+      () => ShareRepositoryImpl(
+        metaAppId: const String.fromEnvironment('META_APP_ID'),
+      ),
+    )
+    ..registerLazySingleton<ShareCardRenderer>(MoodShareCardRenderer.new)
     // Catalog use cases
     ..registerLazySingleton(() => SearchCatalog(getIt()))
     // Catalog BLoC — factory so each screen gets a fresh instance

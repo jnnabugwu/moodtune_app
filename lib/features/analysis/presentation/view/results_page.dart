@@ -13,6 +13,9 @@ import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:moodtune_app/features/mood_feedback/mood_feedback.dart';
 import 'package:moodtune_app/features/mood_feedback/presentation/mood_observation_recorder.dart';
 import 'package:moodtune_app/features/narration/presentation/mood_narration_text.dart';
+import 'package:moodtune_app/features/sharing/domain/share_content_mapper.dart';
+import 'package:moodtune_app/features/sharing/presentation/widgets/share_sheet.dart';
+import 'package:moodtune_app/l10n/l10n.dart';
 import 'package:moodtune_app/shared/widgets/analysis_source_sheet.dart';
 import 'package:moodtune_app/shared/widgets/collapsible_section.dart';
 import 'package:moodtune_app/shared/widgets/mood_descriptor_tags.dart';
@@ -267,6 +270,43 @@ class _ResultsPageState extends State<ResultsPage>
                           artistName: analysis.artist ?? 'Artist',
                           pageUrl: analysis.jamendoTrackUrl!,
                         ),
+
+                      // Share — outlined button opening the share sheet (R1)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: _textPrimary),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: CupertinoButton(
+                            key: const Key('results_share_button'),
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            onPressed: () => showShareSheet(
+                              context,
+                              ShareContentMapper.fromAnalysis(analysis),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  CupertinoIcons.share,
+                                  size: 18,
+                                  color: _textPrimary,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  context.l10n.shareButton,
+                                  style: const TextStyle(
+                                    color: _textPrimary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
 
                       // Analyze another song — dark filled button
                       Padding(
