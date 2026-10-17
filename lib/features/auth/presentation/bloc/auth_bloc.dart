@@ -235,7 +235,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     ForgotPasswordRequested event,
     Emitter<AuthState> emit,
   ) async {
-    emit(state.copyWith(status: AuthStatus.loading, error: null));
+    emit(
+      state.copyWith(
+        status: AuthStatus.loading,
+        error: null,
+        passwordResetSent: false,
+      ),
+    );
     final result = await _repository.sendPasswordResetEmail(event.email);
     result.fold(
       (failure) => emit(
