@@ -123,7 +123,7 @@ void main() {
       expect(find.byType(CupertinoAlertDialog), findsNothing);
     });
 
-    testWidgets('navigates to /guest when authenticated', (tester) async {
+    testWidgets('navigates to /home when authenticated', (tester) async {
       whenListen(
         authBloc,
         Stream.fromIterable(const [
@@ -134,7 +134,8 @@ void main() {
       await tester.pumpApp(const AuthPage(), authBloc: authBloc);
       await tester.pumpAndSettle();
 
-      expect(find.text(navigatedTo(RouteNames.guest)), findsOneWidget);
+      expect(find.text(navigatedTo(RouteNames.homeAuth)), findsOneWidget);
+      expect(find.text(navigatedTo(RouteNames.guest)), findsNothing);
     });
   });
 }
