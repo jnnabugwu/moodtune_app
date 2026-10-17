@@ -1,9 +1,13 @@
+import 'dart:async';
+
+import 'package:moodtune_app/core/logging/talker.dart';
 import 'package:moodtune_app/features/auth/data/datasources/apple_credential_source.dart';
 import 'package:moodtune_app/features/auth/data/datasources/google_credential_source.dart';
 import 'package:moodtune_app/features/auth/data/datasources/social_credential_source.dart';
 import 'package:moodtune_app/features/auth/domain/entities/app_user.dart';
 import 'package:moodtune_app/features/auth/domain/entities/auth_change.dart';
 import 'package:moodtune_app/features/auth/domain/entities/social_provider.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseAuthDatasource {
@@ -130,8 +134,14 @@ class SupabaseAuthDatasource {
         })
         .where((change) => change != null)
         .cast<AuthChange>()
-        // Expired or invalid links surface as stream errors; the callback
-        // page shows its own timeout, so drop them here.
-        .handleError((Object _) {});
+        // Errors must not end the stream. Expired links and failed session
+        // refreshes arrive as AuthExceptions and are expected (the callback
+        // page shows its own error); anything else is a bug worth reporting.
+        .handleError((Object error, StackTrace stackTrace) {
+          talker.warning('Auth state stream error: $error');
+          if (error is! AuthException) {
+            unawaited(Sentry.captureException(error, stackTrace: stackTrace));
+          }
+        });
   }
 }

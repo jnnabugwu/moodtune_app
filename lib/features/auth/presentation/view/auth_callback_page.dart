@@ -22,27 +22,44 @@ class AuthCallbackPage extends StatefulWidget {
   /// How long to wait for the session before calling the link broken.
   static const timeout = Duration(seconds: 10);
 
+  /// How long to wait when a session already exists, in case the link turns
+  /// out to be a password reset, before going home.
+  static const signedInGrace = Duration(seconds: 2);
+
   @override
   State<AuthCallbackPage> createState() => _AuthCallbackPageState();
 }
 
 class _AuthCallbackPageState extends State<AuthCallbackPage> {
   Timer? _timer;
-  String? _error;
+
+  /// The link itself carried an error; nothing can recover from that.
+  String? _linkError;
+
+  /// No session arrived in time. A late one still wins.
+  bool _timedOut = false;
 
   @override
   void initState() {
     super.initState();
-    _error = _linkError(widget.uri);
-    if (_error != null) return;
+    _linkError = _errorIn(widget.uri);
+    if (_linkError != null) return;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // The recovery event can beat this page to the bloc.
-      if (mounted && context.read<AuthBloc>().state.passwordRecovery) {
+      if (!mounted) return;
+      // The link's auth change can beat this page to the bloc.
+      final state = context.read<AuthBloc>().state;
+      if (state.passwordRecovery) {
         context.go(RouteNames.resetPassword);
+        return;
       }
+      _timer = Timer(
+        _isSignedIn(state)
+            ? AuthCallbackPage.signedInGrace
+            : AuthCallbackPage.timeout,
+        _onTimeout,
+      );
     });
-    _timer = Timer(AuthCallbackPage.timeout, _onTimeout);
   }
 
   @override
@@ -51,43 +68,44 @@ class _AuthCallbackPageState extends State<AuthCallbackPage> {
     super.dispose();
   }
 
+  static bool _isSignedIn(AuthState state) =>
+      state.status == AuthStatus.authenticated && !state.justSignedUp;
+
   /// Supabase puts link errors in the query (PKCE) or fragment (implicit).
-  static String? _linkError(Uri uri) {
+  /// Both decoders already turn `+` into spaces.
+  static String? _errorIn(Uri uri) {
     final fragment = uri.fragment.contains('=')
         ? Uri.splitQueryString(uri.fragment)
         : const <String, String>{};
-    final description =
-        uri.queryParameters['error_description'] ??
+    return uri.queryParameters['error_description'] ??
         fragment['error_description'];
-    if (description == null) return null;
-    return description.replaceAll('+', ' ');
   }
 
   void _onTimeout() {
     if (!mounted) return;
-    final state = context.read<AuthBloc>().state;
     // Already signed in (e.g. the change landed before this page did).
-    if (state.status == AuthStatus.authenticated && !state.justSignedUp) {
+    if (_isSignedIn(context.read<AuthBloc>().state)) {
       context.go(RouteNames.homeAuth);
       return;
     }
-    setState(() {
-      _error = 'This link is invalid or has expired. Request a new one.';
-    });
+    setState(() => _timedOut = true);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = CupertinoTheme.of(context);
-    final error = _error;
+    final error =
+        _linkError ??
+        (_timedOut
+            ? 'This link is invalid or has expired. Request a new one.'
+            : null);
 
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if (_error != null) return;
+        if (_linkError != null) return;
         if (state.passwordRecovery) {
           context.go(RouteNames.resetPassword);
-        } else if (state.status == AuthStatus.authenticated &&
-            !state.justSignedUp) {
+        } else if (_isSignedIn(state)) {
           context.go(RouteNames.homeAuth);
         }
       },

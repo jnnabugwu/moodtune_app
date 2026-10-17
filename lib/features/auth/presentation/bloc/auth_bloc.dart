@@ -203,6 +203,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           user: null,
           error: null,
           justSignedUp: false,
+          passwordRecovery: false,
         ),
       ),
     );

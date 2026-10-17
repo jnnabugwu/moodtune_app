@@ -222,6 +222,21 @@ void main() {
     );
 
     blocTest<AuthBloc, AuthState>(
+      'ends a password recovery',
+      setUp: () => when(
+        () => repository.signOut(),
+      ).thenAnswer((_) async => const Right(null)),
+      build: buildBloc,
+      seed: () => const AuthState(
+        status: AuthStatus.authenticated,
+        passwordRecovery: true,
+      ),
+      act: (bloc) => bloc.add(const AuthSignOutRequested()),
+      skip: 1,
+      expect: () => const [AuthState(status: AuthStatus.unauthenticated)],
+    );
+
+    blocTest<AuthBloc, AuthState>(
       'emits [loading, error] on failure',
       setUp: () => when(
         () => repository.signOut(),

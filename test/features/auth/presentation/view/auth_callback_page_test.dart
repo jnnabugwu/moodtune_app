@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -117,15 +119,69 @@ void main() {
       expect(find.textContaining('invalid or has expired'), findsOneWidget);
     });
 
-    testWidgets('times out to home when already signed in', (tester) async {
+    testWidgets('goes home after a short grace when already signed in', (
+      tester,
+    ) async {
       await tester.pumpApp(
         AuthCallbackPage(uri: linkUri),
         authBloc: mockAuthBloc(signedIn),
       );
-      await tester.pump(AuthCallbackPage.timeout);
+      await tester.pump(
+        AuthCallbackPage.signedInGrace - const Duration(milliseconds: 1),
+      );
+      expect(find.text('Signing you in…'), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1));
       await tester.pumpAndSettle();
 
       expect(find.text(navigatedTo(RouteNames.homeAuth)), findsOneWidget);
+    });
+
+    testWidgets('a session arriving after the timeout still goes home', (
+      tester,
+    ) async {
+      final changes = StreamController<AuthState>();
+      addTearDown(changes.close);
+      final bloc = mockAuthBloc();
+      whenListen(bloc, changes.stream, initialState: pendingVerify);
+      await tester.pumpApp(AuthCallbackPage(uri: linkUri), authBloc: bloc);
+      await tester.pump(AuthCallbackPage.timeout);
+      expect(find.textContaining('invalid or has expired'), findsOneWidget);
+
+      changes.add(signedIn);
+      await tester.pumpAndSettle();
+
+      expect(find.text(navigatedTo(RouteNames.homeAuth)), findsOneWidget);
+    });
+
+    testWidgets('a link error ignores later auth changes', (tester) async {
+      final bloc = mockAuthBloc();
+      whenListen(
+        bloc,
+        Stream.fromIterable(const [signedIn]),
+        initialState: pendingVerify,
+      );
+      await tester.pumpApp(
+        AuthCallbackPage(
+          uri: Uri.parse('/login-callback?error_description=Link+expired'),
+        ),
+        authBloc: bloc,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Link expired'), findsOneWidget);
+      expect(find.text(navigatedTo(RouteNames.homeAuth)), findsNothing);
+    });
+
+    testWidgets('keeps a literal plus sign in the link error', (tester) async {
+      await tester.pumpApp(
+        AuthCallbackPage(
+          uri: Uri.parse('/login-callback?error_description=Use+A%2B+links'),
+        ),
+        authBloc: mockAuthBloc(pendingVerify),
+      );
+
+      expect(find.text('Use A+ links'), findsOneWidget);
     });
   });
 }

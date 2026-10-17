@@ -31,6 +31,7 @@ abstract class AuthRepository {
   /// Sets a new password for the signed-in user (after a reset link).
   ResultFuture<void> updatePassword(String password);
 
-  /// Emits when an email link signs the user in or starts password recovery.
+  /// Emits whenever Supabase signs a user in (email link, password or social
+  /// sign-in) or an email link starts password recovery.
   Stream<AuthChange> authChanges();
 }

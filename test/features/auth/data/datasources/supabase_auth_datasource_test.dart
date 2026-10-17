@@ -42,7 +42,9 @@ void main() {
     registerFallbackValue(UserAttributes());
   });
 
-  const redirect = SupabaseAuthDatasource.authRedirectUrl;
+  // Pinned literally: it must match the Redirect URLs allowlist in Supabase
+  // and the deep links the app registers.
+  const redirect = 'moodtune://auth/login-callback';
 
   setUp(() {
     client = _MockSupabaseClient();
@@ -367,6 +369,29 @@ void main() {
           const AuthChange(
             type: AuthChangeType.passwordRecovery,
             user: appUser,
+          ),
+          emitsDone,
+        ]),
+      );
+    });
+
+    test('keeps going after an unexpected stream error', () {
+      final user = buildUser(email: email);
+      when(() => auth.onAuthStateChange).thenAnswer(
+        (_) => Stream.multi((controller) {
+          controller
+            ..addError(StateError('boom'))
+            ..add(stateFor(AuthChangeEvent.signedIn, user: user))
+            ..closeSync();
+        }),
+      );
+
+      expect(
+        datasource.authChanges(),
+        emitsInOrder([
+          const AuthChange(
+            type: AuthChangeType.signedIn,
+            user: AppUser(id: 'u1', email: email),
           ),
           emitsDone,
         ]),

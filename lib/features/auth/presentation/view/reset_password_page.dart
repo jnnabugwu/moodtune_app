@@ -54,6 +54,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         } else if (state.status == AuthStatus.authenticated &&
             !state.passwordRecovery) {
           context.go(RouteNames.homeAuth);
+        } else if (state.status == AuthStatus.unauthenticated) {
+          // Cancelled: the recovery session was signed out.
+          context.go(RouteNames.signIn);
         }
       },
       builder: (context, state) {
@@ -61,9 +64,20 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         final displayError = _localError;
 
         return CupertinoPageScaffold(
-          navigationBar: const CupertinoNavigationBar(
+          navigationBar: CupertinoNavigationBar(
             automaticallyImplyLeading: false,
-            middle: Text('New password'),
+            // A reset link signs the user in; cancelling signs them out
+            // again rather than leaving a half-finished recovery session.
+            leading: CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: isLoading
+                  ? null
+                  : () => context.read<AuthBloc>().add(
+                      const AuthSignOutRequested(),
+                    ),
+              child: const Text('Cancel'),
+            ),
+            middle: const Text('New password'),
           ),
           child: SafeArea(
             child: SingleChildScrollView(

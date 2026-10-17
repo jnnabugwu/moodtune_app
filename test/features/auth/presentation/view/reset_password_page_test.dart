@@ -93,6 +93,30 @@ void main() {
       expect(find.text(navigatedTo(RouteNames.homeAuth)), findsOneWidget);
     });
 
+    testWidgets('Cancel signs out of the recovery session', (tester) async {
+      final bloc = mockAuthBloc(recovering);
+      await tester.pumpApp(const ResetPasswordPage(), authBloc: bloc);
+
+      await tester.tap(find.text('Cancel'));
+
+      verify(() => bloc.add(const AuthSignOutRequested())).called(1);
+    });
+
+    testWidgets('goes to sign in once signed out', (tester) async {
+      final bloc = mockAuthBloc();
+      whenListen(
+        bloc,
+        Stream.fromIterable(const [
+          AuthState(status: AuthStatus.unauthenticated),
+        ]),
+        initialState: recovering,
+      );
+      await tester.pumpApp(const ResetPasswordPage(), authBloc: bloc);
+      await tester.pumpAndSettle();
+
+      expect(find.text(navigatedTo(RouteNames.signIn)), findsOneWidget);
+    });
+
     testWidgets('shows the server error', (tester) async {
       final bloc = mockAuthBloc();
       whenListen(
