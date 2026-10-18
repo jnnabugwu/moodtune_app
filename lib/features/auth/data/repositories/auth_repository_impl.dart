@@ -101,7 +101,11 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await _accountDataSource.deleteAccount();
     } on DioException catch (e) {
-      return Left(_mapDioError(e));
+      // 401 means the token no longer validates (AuthInterceptor's refresh
+      // failed too). That is what a retry after a successful delete gets,
+      // because a deleted user's token is rejected: treat the account as
+      // gone and finish signing out (moodtune-backend#15).
+      if (e.response?.statusCode != 401) return Left(_mapDioError(e));
     } on Exception catch (e) {
       return Left(ServerFailure(e.toString()));
     }

@@ -10,9 +10,11 @@ typedef AccountTokenProvider = Future<String?> Function();
 /// which holds the Supabase service role. The app never deletes users
 /// itself.
 ///
-/// The backend answers 204 on success (also when the account is already
-/// gone), 401 without a valid token and 500 when deletion fails. Non-2xx
-/// responses and network errors surface as [DioException]s.
+/// The backend (moodtune-backend#15) answers 204 when the account was
+/// deleted; 401 when the token is missing or invalid, which includes a retry
+/// after a successful delete; and 500 `{"detail": "Could not delete
+/// account"}` when a step failed (safe to retry). Non-2xx responses and
+/// network errors surface as [DioException]s.
 class AccountRemoteDataSource {
   AccountRemoteDataSource({
     Dio? dio,

@@ -65,7 +65,7 @@ void main() {
   test('throws a bad-response DioException on 500', () async {
     adapter
       ..statusCode = 500
-      ..body = {'detail': 'Account deletion failed'};
+      ..body = {'detail': 'Could not delete account'};
 
     await expectLater(
       build(token: 'tok').deleteAccount(),

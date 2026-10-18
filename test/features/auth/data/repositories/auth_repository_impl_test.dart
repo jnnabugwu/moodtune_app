@@ -207,14 +207,27 @@ void main() {
       );
     });
 
+    // moodtune-backend#15: a deleted user's token no longer validates, so a
+    // retry after a successful delete gets 401 (after AuthInterceptor's
+    // refresh fails). The account is gone: finish signing out.
+    test('treats 401 as already deleted: signs out and clears', () async {
+      when(() => account.deleteAccount()).thenAnswer((_) async {
+        calls.add('delete');
+        throw dioError(status: 401, data: {'detail': 'Not authenticated'});
+      });
+
+      expect(await build().deleteAccount(), const Right<Failure, void>(null));
+      expect(calls, ['delete', 'signOut', 'clearLocalData']);
+    });
+
     test('maps a 500 to ServerFailure(detail) without signing out', () async {
       when(() => account.deleteAccount()).thenThrow(
-        dioError(status: 500, data: {'detail': 'Account deletion failed'}),
+        dioError(status: 500, data: {'detail': 'Could not delete account'}),
       );
 
       expect(
         await build().deleteAccount(),
-        const Left<Failure, void>(ServerFailure('Account deletion failed')),
+        const Left<Failure, void>(ServerFailure('Could not delete account')),
       );
       verifyNever(() => datasource.signOut());
       expect(calls, isEmpty);
@@ -223,7 +236,7 @@ void main() {
     test('falls back to the Dio message when there is no detail', () async {
       when(
         () => account.deleteAccount(),
-      ).thenThrow(dioError(status: 401, data: ''));
+      ).thenThrow(dioError(status: 502, data: ''));
 
       expect(
         await build().deleteAccount(),
