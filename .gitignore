@@ -118,3 +118,6 @@ app.*.map.json
 # Generated l10n files
 lib/l10n/gen/
 sentry.properties
+
+# Golden test diff output (flutter_test writes it next to the goldens)
+test/**/failures/

@@ -146,7 +146,21 @@ void main() {
         'on_device_mood': 'calm',
         'confidence': null,
         'observation_id': 'o-1',
+        'title_from_filename': false,
       });
+    });
+
+    test('sends title_from_filename for a title made from the filename', () {
+      const record = ResultHistoryRecord(
+        source: ResultHistorySource.upload,
+        title: 'Summer Vibes',
+        titleFromFilename: true,
+        displayedMood: 'happy',
+        displayedSource: MoodSource.backend,
+        backendMood: 'happy',
+      );
+
+      expect(record.toJson()['title_from_filename'], isTrue);
     });
   });
 }

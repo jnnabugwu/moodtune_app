@@ -35,6 +35,27 @@ void main() {
       expect(model.createdAt.isBefore(before), isFalse);
     });
 
+    test('fromJson reads title_from_filename; absent means false', () {
+      Map<String, dynamic> row(Map<String, dynamic> extra) => {
+        'id': 'sh-3',
+        'track_name': 'Summer Vibes',
+        'artist_name': '',
+        'mood_results': {'primary_mood': 'happy', ...extra},
+        'created_at': '2026-10-18T10:00:00Z',
+      };
+
+      expect(
+        SongHistoryEntryModel.fromJson(
+          row({'title_from_filename': true}),
+        ).toDomain().titleFromFilename,
+        isTrue,
+      );
+      expect(
+        SongHistoryEntryModel.fromJson(row({})).toDomain().titleFromFilename,
+        isFalse,
+      );
+    });
+
     test("fromJson reads both engines and the user's answer", () {
       final entry = SongHistoryEntryModel.fromJson(<String, dynamic>{
         'id': 'sh-2',

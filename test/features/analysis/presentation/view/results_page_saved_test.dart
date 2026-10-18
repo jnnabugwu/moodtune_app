@@ -138,6 +138,26 @@ void main() {
       expect(find.byType(ConfidenceRing), findsOneWidget);
     });
 
+    testWidgets('song entries offer Share, which opens the share sheet', (
+      tester,
+    ) async {
+      registerSharingMocks();
+      await pumpSaved(tester, _entry());
+
+      final share = find.byKey(const Key('saved_result_share_button'));
+      await tester.ensureVisible(share);
+      await tester.tap(share);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Share your result'), findsOneWidget);
+    });
+
+    testWidgets('playlist entries offer no Share', (tester) async {
+      await pumpSaved(tester, _entry(type: HistoryEntryType.playlist));
+
+      expect(find.byKey(const Key('saved_result_share_button')), findsNothing);
+    });
+
     testWidgets('playlist entries without an artist', (tester) async {
       await pumpSaved(
         tester,

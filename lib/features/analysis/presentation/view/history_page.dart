@@ -6,8 +6,11 @@ import 'package:go_router/go_router.dart';
 import 'package:moodtune_app/app/theme/mood_theme.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/di/injector.dart';
+import 'package:moodtune_app/features/analysis/domain/entities/history_entry.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/analysis/presentation/engine_comparison.dart';
+import 'package:moodtune_app/features/sharing/domain/share_content_mapper.dart';
+import 'package:moodtune_app/features/sharing/presentation/widgets/share_sheet.dart';
 import 'package:moodtune_app/shared/widgets/analysis_source_sheet.dart';
 import 'package:moodtune_app/shared/widgets/history_row_item.dart';
 import 'package:moodtune_app/shared/widgets/mood_chip.dart';
@@ -265,10 +268,18 @@ class _HistoryPageState extends State<HistoryPage> {
           );
         }
 
+        final item = items[index];
         return HistoryRowItem(
-          item: items[index],
-          onTap: () =>
-              unawaited(context.push(RouteNames.result, extra: items[index])),
+          item: item,
+          onTap: () => unawaited(context.push(RouteNames.result, extra: item)),
+          // Song rows share like the results screen (R12). Playlist
+          // analyses are out of scope for sharing.
+          onShare: item.type == HistoryEntryType.song
+              ? () => showShareSheet(
+                  context,
+                  ShareContentMapper.fromHistoryEntry(item),
+                )
+              : null,
           showComparison: showComparison,
         );
       },

@@ -91,6 +91,7 @@ void main() {
         expect(find.text('Song Analysis'), findsOneWidget);
         expect(find.text('No result available.'), findsOneWidget);
         expect(find.byType(MoodHeroCard), findsNothing);
+        expect(find.byKey(const Key('results_share_button')), findsNothing);
 
         await tester.tap(find.text('Analyze a new song'));
         await tester.pumpAndSettle();
@@ -151,6 +152,7 @@ void main() {
           findsOneWidget,
         );
         expect(find.text('Audio details'), findsOneWidget);
+        await tester.scrollUntilVisible(find.text('Analyze another song'), 200);
         expect(find.text('Analyze another song'), findsOneWidget);
         expect(find.byType(SignUpStrip), findsOneWidget);
         expect(find.text('Go to Home'), findsNothing);
@@ -290,6 +292,46 @@ void main() {
         );
       });
 
+      // R1 / AC1: a loaded result shows Share, which opens the share sheet.
+      testWidgets('"Share" opens the share sheet for the result', (
+        tester,
+      ) async {
+        registerSharingMocks();
+        await pumpResults(
+          tester,
+          analysisState: AnalysisState(
+            currentUploadAnalysis: testUploadAnalysis(),
+          ),
+        );
+
+        final share = find.byKey(const Key('results_share_button'));
+        await tester.ensureVisible(share);
+        expect(find.text('Share'), findsOneWidget);
+        await tester.tap(share);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Share your result'), findsOneWidget);
+        expect(find.text('Instagram Stories'), findsOneWidget);
+        expect(find.text('More…'), findsOneWidget);
+      });
+
+      testWidgets('"Share" is also offered for catalog results', (
+        tester,
+      ) async {
+        registerSharingMocks();
+        await pumpResults(
+          tester,
+          source: AnalysisSource.catalog,
+          analysisState: AnalysisState(
+            currentCatalogAnalysis: testUploadAnalysis(
+              jamendoTrackUrl: 'https://jamendo.com/track/1',
+            ),
+          ),
+        );
+
+        expect(find.byKey(const Key('results_share_button')), findsOneWidget);
+      });
+
       testWidgets('"Analyze another song" opens the source sheet', (
         tester,
       ) async {
@@ -300,7 +342,7 @@ void main() {
           ),
         );
 
-        await tester.ensureVisible(find.text('Analyze another song'));
+        await tester.scrollUntilVisible(find.text('Analyze another song'), 200);
         await tester.tap(find.text('Analyze another song'));
         await tester.pumpAndSettle();
 
@@ -356,7 +398,7 @@ void main() {
 
         expect(find.byType(SignUpStrip), findsNothing);
 
-        await tester.ensureVisible(find.text('Go to Home'));
+        await tester.scrollUntilVisible(find.text('Go to Home'), 200);
         await tester.tap(find.text('Go to Home'));
         await tester.pumpAndSettle();
 
@@ -384,8 +426,12 @@ void main() {
               .first,
         );
         expect(opacity.opacity.value, 1);
-        // Non-blocking: the page underneath still takes taps.
-        expect(find.text('Go to Home'), findsOneWidget);
+        // Non-blocking: the page underneath still takes taps. The Share
+        // action pushes "Go to Home" below the fold; scrolling to it doesn't
+        // advance the clock, so the notice is still up.
+        await tester.scrollUntilVisible(find.text('Go to Home'), 200);
+        expect(find.text('Saved to history'), findsOneWidget);
+        expect(find.text('Go to Home').hitTestable(), findsOneWidget);
 
         await tester.pump(const Duration(seconds: 2));
         await tester.pumpAndSettle();

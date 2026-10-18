@@ -61,6 +61,7 @@ Clean architecture, three layers per feature under `lib/features/<feature>/`: `d
 | `narration` | One- or two-sentence mood narration from Apple's on-device Foundation Models, validated by `MoodNarrator.isGrounded`. |
 | `mood_feedback` | Records what each result showed (both engines) and the "Does this feel right?" answer; remote kill switch via `GET /config`. |
 | `catalog` | Jamendo search (client calls Jamendo directly with `JAMENDO_CLIENT_ID`). |
+| `sharing` | Share a result as a branded card to Instagram Stories (own `moodtune/share` platform channel), X and the system sheet (`share_plus`). `ShareRepository` hides the plugin layer; `MoodShareCard` is rasterized offscreen. |
 | `auth` | Supabase email/password. |
 | `spotify` | Spotify OAuth, profile, playlists. |
 
@@ -110,6 +111,7 @@ Copy `env.example` to `.env` / `dev.env`.
 | `JAMENDO_CLIENT_ID` | Jamendo catalog search |
 | `GOOGLE_WEB_CLIENT_ID`, `GOOGLE_IOS_CLIENT_ID` | Google Sign-In OAuth clients; the Google button is hidden until they're set (iOS needs both, Android the web one) |
 | `SENTRY_DSN` | Optional; monitoring is skipped when empty |
+| `META_APP_ID` | Meta App ID for Instagram Stories sharing (public, not a secret); Instagram Stories is hidden from the share sheet when empty |
 
 ## Backend API surface
 

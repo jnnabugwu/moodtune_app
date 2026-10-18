@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:moodtune_app/app/theme/mood_theme.dart';
 import 'package:moodtune_app/features/analysis/domain/entities/entities.dart';
+import 'package:moodtune_app/l10n/l10n.dart';
 
 /// A tappable row that represents a single history entry (playlist or song).
 ///
@@ -13,12 +14,16 @@ class HistoryRowItem extends StatelessWidget {
   const HistoryRowItem({
     required this.item,
     required this.onTap,
+    this.onShare,
     this.showComparison = false,
     super.key,
   });
 
   final HistoryEntry item;
   final VoidCallback onTap;
+
+  /// Shows a trailing Share button when set (R12).
+  final VoidCallback? onShare;
   final bool showComparison;
 
   @override
@@ -110,6 +115,22 @@ class HistoryRowItem extends StatelessWidget {
                   color: colors.accent,
                 ),
               ),
+            if (onShare case final onShare?) ...[
+              const SizedBox(width: 4),
+              CupertinoButton(
+                key: ValueKey('history_share_${item.id}'),
+                padding: EdgeInsets.zero,
+                // 44 pt: the minimum comfortable touch target.
+                minimumSize: const Size.square(44),
+                onPressed: onShare,
+                child: Icon(
+                  CupertinoIcons.share,
+                  size: 20,
+                  color: CupertinoColors.secondaryLabel,
+                  semanticLabel: context.l10n.shareButton,
+                ),
+              ),
+            ],
           ],
         ),
       ),

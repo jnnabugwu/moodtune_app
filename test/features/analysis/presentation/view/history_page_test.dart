@@ -85,6 +85,35 @@ void main() {
       });
     });
 
+    // R12 / AC10: every saved song row can be shared.
+    group('share', () {
+      testWidgets('song rows show Share and open the share sheet', (
+        tester,
+      ) async {
+        registerSharingMocks();
+        final history = [
+          testHistoryEntry(0, subtitle: 'Artist A'),
+          testHistoryEntry(1, type: HistoryEntryType.playlist),
+        ];
+        final bloc = mockAnalysisBloc(
+          AnalysisState(history: history, filteredHistory: history),
+        );
+
+        await tester.pumpApp(const HistoryPage(), analysisBloc: bloc);
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(const ValueKey('history_share_h0')), findsOneWidget);
+        // Playlist analyses are not shareable.
+        expect(find.byKey(const ValueKey('history_share_h1')), findsNothing);
+
+        await tester.tap(find.byKey(const ValueKey('history_share_h0')));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Share your result'), findsOneWidget);
+        expect(find.text('More…'), findsOneWidget);
+      });
+    });
+
     group('error state', () {
       testWidgets('shows error and retries on "Try again"', (tester) async {
         final history = testHistory(1);

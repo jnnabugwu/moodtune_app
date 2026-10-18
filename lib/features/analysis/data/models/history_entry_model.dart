@@ -14,6 +14,7 @@ class SongHistoryEntryModel {
     required this.confidence,
     required this.createdAt,
     this.comparison,
+    this.titleFromFilename = false,
   });
 
   factory SongHistoryEntryModel.fromJson(Map<String, dynamic> json) {
@@ -29,6 +30,7 @@ class SongHistoryEntryModel {
           DateTime.tryParse(json['created_at'] as String? ?? '') ??
           DateTime.now(),
       comparison: _comparison(json, moodResults),
+      titleFromFilename: moodResults['title_from_filename'] == true,
     );
   }
 
@@ -56,6 +58,7 @@ class SongHistoryEntryModel {
   final double? confidence;
   final DateTime createdAt;
   final EngineComparison? comparison;
+  final bool titleFromFilename;
 
   HistoryEntry toDomain() => HistoryEntry(
     id: id,
@@ -67,5 +70,6 @@ class SongHistoryEntryModel {
     createdAt: createdAt,
     type: HistoryEntryType.song,
     comparison: comparison,
+    titleFromFilename: titleFromFilename,
   );
 }

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Backs the <applicationId>.moodtune.share FileProvider used by
+     ShareChannel.kt to hand share cards to Instagram and X (issue #35). -->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path name="moodtune_share" path="moodtune_share/" />
+</paths>

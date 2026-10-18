@@ -16,6 +16,7 @@ class HistoryEntry extends Equatable {
     required this.type,
     this.subtitle,
     this.comparison,
+    this.titleFromFilename = false,
   });
 
   final String id;
@@ -39,6 +40,10 @@ class HistoryEntry extends Equatable {
   /// Null for playlists and older rows.
   final EngineComparison? comparison;
 
+  /// True when [title] is an upload's filename because the user typed no
+  /// title. Shares leave such titles out.
+  final bool titleFromFilename;
+
   @override
   List<Object?> get props => [
     id,
@@ -49,6 +54,7 @@ class HistoryEntry extends Equatable {
     createdAt,
     type,
     comparison,
+    titleFromFilename,
   ];
 }
 

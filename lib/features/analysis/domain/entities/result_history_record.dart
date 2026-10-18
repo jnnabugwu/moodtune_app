@@ -18,6 +18,7 @@ class ResultHistoryRecord extends Equatable {
     this.onDeviceMood,
     this.confidence,
     this.observationId,
+    this.titleFromFilename = false,
   });
 
   /// Builds the record from the backend's own [backend] result and the
@@ -31,6 +32,7 @@ class ResultHistoryRecord extends Equatable {
     String? artist,
     String? trackId,
     String? observationId,
+    bool titleFromFilename = false,
   }) {
     final shownOnDevice = displayed.mood.source == MoodSource.onDevice;
     return ResultHistoryRecord(
@@ -45,6 +47,7 @@ class ResultHistoryRecord extends Equatable {
       // Only the backend's confidence is shown anywhere.
       confidence: shownOnDevice ? null : backend.mood.confidence,
       observationId: observationId,
+      titleFromFilename: titleFromFilename,
     );
   }
 
@@ -59,6 +62,10 @@ class ResultHistoryRecord extends Equatable {
   final double? confidence;
   final String? observationId;
 
+  /// True when [title] is the upload's filename because the user typed no
+  /// title. Shares leave such titles out.
+  final bool titleFromFilename;
+
   @override
   List<Object?> get props => [
     source,
@@ -71,5 +78,6 @@ class ResultHistoryRecord extends Equatable {
     onDeviceMood,
     confidence,
     observationId,
+    titleFromFilename,
   ];
 }

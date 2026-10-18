@@ -219,6 +219,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
           ResultHistoryRecord.fromResult(
             source: ResultHistorySource.upload,
             title: _uploadTitle(event),
+            titleFromFilename: _titleFromFilename(event),
             artist: event.artist,
             backend: analysis,
             displayed: displayed,
@@ -376,4 +377,9 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
     final dot = name.lastIndexOf('.');
     return dot > 0 ? name.substring(0, dot) : name;
   }
+
+  /// Whether the user typed no title, so [_uploadTitle] fell back to the
+  /// filename.
+  static bool _titleFromFilename(AudioUploadRequested event) =>
+      event.title?.trim().isEmpty ?? true;
 }
