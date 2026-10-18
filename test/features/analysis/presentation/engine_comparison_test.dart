@@ -97,6 +97,30 @@ void main() {
 
       expect(reloaded.enabled.value, isTrue);
     });
+
+    // #49 AC5
+    test('clear removes the stored value and turns it off', () async {
+      SharedPreferences.setMockInitialValues({
+        'history.showEngineComparison': true,
+      });
+      final preference = EngineComparisonPreference();
+      await preference.load();
+      expect(preference.enabled.value, isTrue);
+
+      await preference.clear();
+
+      expect(preference.enabled.value, isFalse);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.containsKey('history.showEngineComparison'), isFalse);
+    });
+
+    test('clear survives unavailable storage', () async {
+      final preference = EngineComparisonPreference(
+        prefs: () => Future.error(Exception('no storage')),
+      );
+      await preference.clear();
+      expect(preference.enabled.value, isFalse);
+    });
   });
 
   group('EngineComparisonPreference load race', () {

@@ -6,6 +6,7 @@ import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/analysis/presentation/view/history_page.dart';
 import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:moodtune_app/l10n/l10n.dart';
 import 'package:moodtune_app/shared/widgets/analysis_source_sheet.dart';
 import 'package:moodtune_app/shared/widgets/history_row_item.dart';
 
@@ -18,25 +19,33 @@ class HomeAuthPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoTabScaffold(
-      tabBar: CupertinoTabBar(
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.clock),
-            label: 'History',
-          ),
-        ],
+    // The router has no auth redirect, so leave Home once the account is
+    // deleted. (Sign-out doesn't navigate either; see #49.)
+    return BlocListener<AuthBloc, AuthState>(
+      listenWhen: (previous, current) =>
+          previous.deleteAccountStatus != DeleteAccountStatus.succeeded &&
+          current.deleteAccountStatus == DeleteAccountStatus.succeeded,
+      listener: (context, _) => context.go(RouteNames.landing),
+      child: CupertinoTabScaffold(
+        tabBar: CupertinoTabBar(
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.clock),
+              label: 'History',
+            ),
+          ],
+        ),
+        tabBuilder: (context, index) {
+          return switch (index) {
+            0 => const _HomeTab(),
+            _ => const HistoryPage(isEmbedded: true),
+          };
+        },
       ),
-      tabBuilder: (context, index) {
-        return switch (index) {
-          0 => const _HomeTab(),
-          _ => const HistoryPage(isEmbedded: true),
-        };
-      },
     );
   }
 }
@@ -227,6 +236,19 @@ class _HomeTabState extends State<_HomeTab> {
               },
               child: const Text('Sign out'),
             ),
+            CupertinoActionSheetAction(
+              isDestructiveAction: true,
+              onPressed: () {
+                context.pop();
+                unawaited(
+                  showCupertinoDialog<void>(
+                    context: context,
+                    builder: (_) => const _DeleteAccountDialog(),
+                  ),
+                );
+              },
+              child: Text(context.l10n.deleteAccountAction),
+            ),
           ],
           cancelButton: CupertinoActionSheetAction(
             onPressed: () => Navigator.of(context).pop(),
@@ -234,6 +256,86 @@ class _HomeTabState extends State<_HomeTab> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ── Delete account ────────────────────────────────────────────────────
+
+/// Confirms account deletion (#49). Stays open while the request runs, shows
+/// the failure if it fails, and closes once the account is deleted.
+class _DeleteAccountDialog extends StatefulWidget {
+  const _DeleteAccountDialog();
+
+  @override
+  State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
+}
+
+class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
+  /// Whether Delete was tapped in this dialog, so an earlier attempt's
+  /// failure isn't shown when the dialog opens.
+  bool _submitted = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return BlocConsumer<AuthBloc, AuthState>(
+      listenWhen: (previous, current) =>
+          current.deleteAccountStatus == DeleteAccountStatus.succeeded &&
+          previous.deleteAccountStatus != DeleteAccountStatus.succeeded,
+      listener: (context, _) => Navigator.of(context).pop(),
+      builder: (context, state) {
+        final busy =
+            state.deleteAccountStatus == DeleteAccountStatus.inProgress;
+        final failed =
+            _submitted &&
+            state.deleteAccountStatus == DeleteAccountStatus.failed;
+        return PopScope(
+          canPop: !busy,
+          child: CupertinoAlertDialog(
+            title: Text(l10n.deleteAccountTitle),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(l10n.deleteAccountMessage),
+                if (busy) ...[
+                  const SizedBox(height: 12),
+                  const CupertinoActivityIndicator(),
+                  const SizedBox(height: 4),
+                  Text(l10n.deleteAccountInProgress),
+                ],
+                if (failed) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    l10n.deleteAccountFailed,
+                    style: const TextStyle(
+                      color: CupertinoColors.destructiveRed,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: busy ? null : () => Navigator.of(context).pop(),
+                child: Text(l10n.deleteAccountCancel),
+              ),
+              CupertinoDialogAction(
+                isDestructiveAction: true,
+                onPressed: busy
+                    ? null
+                    : () {
+                        setState(() => _submitted = true);
+                        context.read<AuthBloc>().add(
+                          const AuthDeleteAccountRequested(),
+                        );
+                      },
+                child: Text(l10n.deleteAccountConfirm),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

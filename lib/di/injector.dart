@@ -3,6 +3,7 @@ import 'package:get_it/get_it.dart';
 import 'package:moodtune_app/features/analysis/data/data.dart';
 import 'package:moodtune_app/features/analysis/domain/repositories/analysis_repository.dart';
 import 'package:moodtune_app/features/analysis/presentation/engine_comparison.dart';
+import 'package:moodtune_app/features/auth/data/datasources/account_remote_datasource.dart';
 import 'package:moodtune_app/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:moodtune_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:moodtune_app/features/catalog/data/datasources/jamendo_remote_datasource.dart';
@@ -36,7 +37,15 @@ Future<void> configureDependencies({
 }) async {
   // Repositories
   getIt
-    ..registerLazySingleton<AuthRepository>(AuthRepositoryImpl.new)
+    ..registerLazySingleton<AuthRepository>(
+      () => AuthRepositoryImpl(
+        accountDataSource: AccountRemoteDataSource(
+          baseUrl: apiBaseUrl,
+          tokenProvider: tokenProvider,
+        ),
+        clearLocalData: () => getIt<EngineComparisonPreference>().clear(),
+      ),
+    )
     ..registerLazySingleton<SpotifyRepository>(
       () => SpotifyRepositoryImpl(
         baseUrl: apiBaseUrl,

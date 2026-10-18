@@ -44,6 +44,11 @@ class AuthSignOutRequested extends AuthEvent {
   const AuthSignOutRequested();
 }
 
+/// Deletes the signed-in user's account (`DELETE /account`), then signs out.
+class AuthDeleteAccountRequested extends AuthEvent {
+  const AuthDeleteAccountRequested();
+}
+
 class ResendVerificationRequested extends AuthEvent {
   const ResendVerificationRequested(this.email);
 

@@ -20,6 +20,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthSocialSignInRequested>(_onSocialSignInRequested);
     on<AuthSignUpRequested>(_onAuthSignUpRequested);
     on<AuthSignOutRequested>(_onAuthSignOutRequested);
+    on<AuthDeleteAccountRequested>(_onDeleteAccountRequested);
     on<ResendVerificationRequested>(_onResendVerification);
     on<ForgotPasswordRequested>(_onForgotPassword);
     on<PasswordUpdateRequested>(_onPasswordUpdate);
@@ -207,6 +208,37 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           error: null,
           justSignedUp: false,
           passwordRecovery: false,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _onDeleteAccountRequested(
+    AuthDeleteAccountRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    // Calls DELETE /account once, even if the request is sent twice.
+    if (state.deleteAccountStatus == DeleteAccountStatus.inProgress) return;
+    emit(
+      state.copyWith(
+        deleteAccountStatus: DeleteAccountStatus.inProgress,
+        deleteAccountError: null,
+      ),
+    );
+    final result = await _repository.deleteAccount();
+    result.fold(
+      // The user stays signed in so they can try again.
+      (failure) => emit(
+        state.copyWith(
+          deleteAccountStatus: DeleteAccountStatus.failed,
+          deleteAccountError: failure.message,
+        ),
+      ),
+      (_) => emit(
+        AuthState(
+          status: AuthStatus.unauthenticated,
+          socialProviders: state.socialProviders,
+          deleteAccountStatus: DeleteAccountStatus.succeeded,
         ),
       ),
     );

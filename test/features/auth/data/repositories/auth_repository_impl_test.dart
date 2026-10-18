@@ -1,7 +1,9 @@
 import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:moodtune_app/core/error/failures.dart';
+import 'package:moodtune_app/features/auth/data/datasources/account_remote_datasource.dart';
 import 'package:moodtune_app/features/auth/data/datasources/supabase_auth_datasource.dart';
 import 'package:moodtune_app/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:moodtune_app/features/auth/domain/entities/app_user.dart';
@@ -12,6 +14,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../blocs_fixtures.dart';
 
 class _MockDatasource extends Mock implements SupabaseAuthDatasource {}
+
+class _MockAccountDataSource extends Mock implements AccountRemoteDataSource {}
 
 void main() {
   late _MockDatasource datasource;
@@ -126,6 +130,156 @@ void main() {
         () => when(() => datasource.signOut()).thenThrow(e),
     call: () => repository.signOut(),
   );
+
+  group('deleteAccount', () {
+    late _MockAccountDataSource account;
+    late List<String> calls;
+
+    AuthRepositoryImpl build({Future<void> Function()? clearLocalData}) =>
+        AuthRepositoryImpl(
+          datasource: datasource,
+          accountDataSource: account,
+          clearLocalData:
+              clearLocalData ?? () async => calls.add('clearLocalData'),
+        );
+
+    DioException dioError({
+      int? status,
+      Object? data,
+      DioExceptionType type = DioExceptionType.badResponse,
+    }) {
+      final options = RequestOptions(path: '/account', method: 'DELETE');
+      return DioException(
+        requestOptions: options,
+        type: type,
+        message: 'dio message',
+        response: status == null
+            ? null
+            : Response<Object?>(
+                requestOptions: options,
+                statusCode: status,
+                data: data,
+              ),
+      );
+    }
+
+    setUp(() {
+      account = _MockAccountDataSource();
+      calls = [];
+      when(() => account.deleteAccount()).thenAnswer((_) async {
+        calls.add('delete');
+      });
+      when(() => datasource.signOut()).thenAnswer((_) async {
+        calls.add('signOut');
+      });
+    });
+
+    test('deletes remotely, then signs out and clears local data', () async {
+      expect(await build().deleteAccount(), const Right<Failure, void>(null));
+      expect(calls, ['delete', 'signOut', 'clearLocalData']);
+      verify(() => account.deleteAccount()).called(1);
+    });
+
+    test('still succeeds when sign-out or clearing fails afterwards', () async {
+      when(
+        () => datasource.signOut(),
+      ).thenThrow(const AuthException('offline'));
+
+      final repository = build(
+        clearLocalData: () async => throw Exception('prefs'),
+      );
+
+      expect(
+        await repository.deleteAccount(),
+        const Right<Failure, void>(null),
+      );
+      verify(() => datasource.signOut()).called(1);
+    });
+
+    test('works without a clearLocalData callback', () async {
+      final repository = AuthRepositoryImpl(
+        datasource: datasource,
+        accountDataSource: account,
+      );
+      expect(
+        await repository.deleteAccount(),
+        const Right<Failure, void>(null),
+      );
+    });
+
+    test('maps a 500 to ServerFailure(detail) without signing out', () async {
+      when(() => account.deleteAccount()).thenThrow(
+        dioError(status: 500, data: {'detail': 'Account deletion failed'}),
+      );
+
+      expect(
+        await build().deleteAccount(),
+        const Left<Failure, void>(ServerFailure('Account deletion failed')),
+      );
+      verifyNever(() => datasource.signOut());
+      expect(calls, isEmpty);
+    });
+
+    test('falls back to the Dio message when there is no detail', () async {
+      when(
+        () => account.deleteAccount(),
+      ).thenThrow(dioError(status: 401, data: ''));
+
+      expect(
+        await build().deleteAccount(),
+        const Left<Failure, void>(ServerFailure('dio message')),
+      );
+      verifyNever(() => datasource.signOut());
+    });
+
+    test('maps network errors to NetworkFailure', () async {
+      for (final type in [
+        DioExceptionType.connectionError,
+        DioExceptionType.connectionTimeout,
+        DioExceptionType.sendTimeout,
+        DioExceptionType.receiveTimeout,
+      ]) {
+        when(() => account.deleteAccount()).thenThrow(dioError(type: type));
+        expect(
+          await build().deleteAccount(),
+          const Left<Failure, void>(NetworkFailure('dio message')),
+          reason: '$type',
+        );
+      }
+      verifyNever(() => datasource.signOut());
+    });
+
+    test('uses fixed messages when Dio has none', () async {
+      final options = RequestOptions(path: '/account');
+      when(() => account.deleteAccount()).thenThrow(
+        DioException(requestOptions: options, type: DioExceptionType.unknown),
+      );
+      expect(
+        await build().deleteAccount(),
+        const Left<Failure, void>(ServerFailure('Server error')),
+      );
+
+      when(() => account.deleteAccount()).thenThrow(
+        DioException.connectionTimeout(
+          requestOptions: options,
+          timeout: Duration.zero,
+        ),
+      );
+      final result = await build().deleteAccount();
+      expect(result.isLeft(), isTrue);
+      result.leftMap((f) => expect(f, isA<NetworkFailure>()));
+    });
+
+    test('maps other Exceptions to ServerFailure(toString)', () async {
+      final error = Exception('boom');
+      when(() => account.deleteAccount()).thenThrow(error);
+      expect(
+        await build().deleteAccount(),
+        Left<Failure, void>(ServerFailure(error.toString())),
+      );
+      verifyNever(() => datasource.signOut());
+    });
+  });
 
   test('resendVerificationEmail returns Right(null)', () async {
     when(
