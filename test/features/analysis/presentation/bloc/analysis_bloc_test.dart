@@ -1464,6 +1464,121 @@ void main() {
       ],
     );
 
+    // A failed retry keeps the request, so "Try again" works repeatedly.
+    blocTest<AnalysisBloc, AnalysisState>(
+      'a retry that fails again can be retried with the same input',
+      setUp: () => stubUploads([
+        const Left(ServerFailure('down')),
+        const Left(ServerFailure('still down')),
+        Right(tUpload),
+      ]),
+      build: buildBloc,
+      act: (bloc) async {
+        bloc.add(upload);
+        await Future<void>.delayed(Duration.zero);
+        bloc.add(const AnalysisRetryRequested(AnalysisRetryTarget.upload));
+        await Future<void>.delayed(Duration.zero);
+        bloc.add(const AnalysisRetryRequested(AnalysisRetryTarget.upload));
+      },
+      skip: 4,
+      expect: () => [
+        const AnalysisState(uploadStatus: UploadStatus.uploading),
+        AnalysisState(
+          uploadStatus: UploadStatus.success,
+          currentUploadAnalysis: tUpload,
+        ),
+      ],
+      verify: (_) => verify(
+        () => repository.analyzeUploadedAudio(
+          bytes: Uint8List.fromList([1, 2, 3]),
+          filename: 'song.mp3',
+          title: 'T',
+          artist: 'A',
+          album: 'B',
+        ),
+      ).called(3),
+    );
+
+    blocTest<AnalysisBloc, AnalysisState>(
+      'a second tap while the upload retry runs sends it only once',
+      setUp: () =>
+          stubUploads([const Left(ServerFailure('down')), Right(tUpload)]),
+      build: buildBloc,
+      act: (bloc) async {
+        bloc.add(upload);
+        await Future<void>.delayed(Duration.zero);
+        bloc
+          ..add(const AnalysisRetryRequested(AnalysisRetryTarget.upload))
+          ..add(const AnalysisRetryRequested(AnalysisRetryTarget.upload));
+      },
+      verify: (_) => verify(
+        () => repository.analyzeUploadedAudio(
+          bytes: any(named: 'bytes'),
+          filename: any(named: 'filename'),
+          title: any(named: 'title'),
+          artist: any(named: 'artist'),
+          album: any(named: 'album'),
+        ),
+      ).called(2),
+    );
+
+    blocTest<AnalysisBloc, AnalysisState>(
+      'a second tap while the catalog retry runs sends it only once',
+      setUp: () =>
+          stubCatalogs([const Left(ServerFailure('down')), Right(tCatalog)]),
+      build: buildBloc,
+      act: (bloc) async {
+        bloc.add(catalog);
+        await Future<void>.delayed(Duration.zero);
+        bloc
+          ..add(const AnalysisRetryRequested(AnalysisRetryTarget.catalog))
+          ..add(const AnalysisRetryRequested(AnalysisRetryTarget.catalog));
+      },
+      verify: (_) => verify(
+        () => repository.analyzeCatalogTrack(
+          audioUrl: any(named: 'audioUrl'),
+          trackId: any(named: 'trackId'),
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          jamendoPageUrl: any(named: 'jamendoPageUrl'),
+        ),
+      ).called(2),
+    );
+
+    // Leaving the loading page drops the remembered requests and their bytes.
+    for (final target in AnalysisRetryTarget.values) {
+      blocTest<AnalysisBloc, AnalysisState>(
+        'AnalysisRetryDiscarded forgets the failed ${target.name}',
+        setUp: () {
+          stubUploads([const Left(ServerFailure('down'))]);
+          stubCatalogs([const Left(ServerFailure('down'))]);
+        },
+        build: buildBloc,
+        act: (bloc) async {
+          bloc.add(target == AnalysisRetryTarget.upload ? upload : catalog);
+          await Future<void>.delayed(Duration.zero);
+          bloc
+            ..add(const AnalysisRetryDiscarded())
+            ..add(AnalysisRetryRequested(target));
+        },
+        skip: 2,
+        expect: () => [
+          if (target == AnalysisRetryTarget.upload)
+            const AnalysisState(
+              uploadStatus: UploadStatus.error,
+              uploadError: AnalysisBloc.retryUnavailableMessage,
+              uploadErrorKind: AnalysisErrorKind.retryUnavailable,
+            )
+          else
+            const AnalysisState(
+              catalogStatus: CatalogAnalysisStatus.error,
+              catalogError: AnalysisBloc.retryUnavailableMessage,
+              catalogErrorKind: AnalysisErrorKind.retryUnavailable,
+            ),
+        ],
+      );
+    }
+
     test('props', () {
       expect(const AnalysisRetryRequested(AnalysisRetryTarget.upload).props, [
         AnalysisRetryTarget.upload,

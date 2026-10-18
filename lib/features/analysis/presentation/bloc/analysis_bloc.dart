@@ -32,6 +32,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
     on<AudioUploadRequested>(_onAudioUploadRequested);
     on<CatalogTrackAnalyzeRequested>(_onCatalogTrackAnalyzeRequested);
     on<AnalysisRetryRequested>(_onRetryRequested);
+    on<AnalysisRetryDiscarded>(_onRetryDiscarded);
   }
 
   /// Shown when "Try again" has nothing to re-send.
@@ -341,6 +342,8 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
   ) async {
     switch (event.target) {
       case AnalysisRetryTarget.upload:
+        // A second tap while the retry is running must not send it twice.
+        if (state.uploadStatus == UploadStatus.uploading) return;
         final last = _lastUpload;
         if (last != null) {
           await _onAudioUploadRequested(last, emit);
@@ -354,6 +357,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
           ),
         );
       case AnalysisRetryTarget.catalog:
+        if (state.catalogStatus == CatalogAnalysisStatus.analyzing) return;
         final last = _lastCatalog;
         if (last != null) {
           await _onCatalogTrackAnalyzeRequested(last, emit);
@@ -367,6 +371,14 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
           ),
         );
     }
+  }
+
+  void _onRetryDiscarded(
+    AnalysisRetryDiscarded event,
+    Emitter<AnalysisState> emit,
+  ) {
+    _lastUpload = null;
+    _lastCatalog = null;
   }
 
   /// Waits up to [onDeviceGrace] for on-device classification that is

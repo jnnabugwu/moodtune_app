@@ -6,13 +6,15 @@ enum UploadStatus { initial, uploading, success, error }
 
 enum CatalogAnalysisStatus { initial, analyzing, success, error }
 
-/// What kind of failure an upload or catalog analysis hit, so the UI can pick
-/// its error screen from the failure type rather than its message text.
+/// Why an upload or catalog analysis is showing an error, so the UI can pick
+/// its error screen from the kind rather than the message text. Usually the
+/// failure the request hit; [retryUnavailable] is the one that isn't.
 enum AnalysisErrorKind {
   network,
   rateLimit,
 
-  /// "Try again" had no request to re-send (none since the app started).
+  /// "Try again" had no request to re-send: none was made, the last one
+  /// succeeded, or the user left the loading page.
   retryUnavailable,
   other;
 

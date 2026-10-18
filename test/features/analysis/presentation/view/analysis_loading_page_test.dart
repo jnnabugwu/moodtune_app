@@ -235,6 +235,16 @@ void main() {
         expect(find.text(navigatedTo(RouteNames.uploadMusic)), findsOneWidget);
       });
 
+      testWidgets('tells the bloc to forget the request', (tester) async {
+        final bloc = mockAnalysisBloc();
+        await _pumpLoading(tester, analysisBloc: bloc);
+
+        await tester.tap(find.text('Cancel'));
+        await tester.pump();
+
+        verify(() => bloc.add(const AnalysisRetryDiscarded())).called(1);
+      });
+
       testWidgets('returns to catalog for catalog source', (tester) async {
         await _pumpLoading(tester, source: AnalysisSource.catalog);
 

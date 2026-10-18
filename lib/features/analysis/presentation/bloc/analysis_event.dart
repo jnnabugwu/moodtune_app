@@ -127,3 +127,9 @@ class AnalysisRetryRequested extends AnalysisEvent {
   @override
   List<Object?> get props => [target];
 }
+
+/// Forgets the requests [AnalysisRetryRequested] would re-send, so a failed
+/// upload's bytes aren't kept once the user leaves the loading page.
+class AnalysisRetryDiscarded extends AnalysisEvent {
+  const AnalysisRetryDiscarded();
+}

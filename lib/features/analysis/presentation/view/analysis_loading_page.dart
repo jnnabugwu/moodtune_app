@@ -147,6 +147,8 @@ class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
   // ── Actions ─────────────────────────────────────────────────────────
 
   void _cancel() {
+    // Leaving means no retry from here, so let go of the request.
+    context.read<AnalysisBloc>().add(const AnalysisRetryDiscarded());
     final dest = widget.source == AnalysisSource.upload
         ? RouteNames.uploadMusic
         : RouteNames.catalog;
