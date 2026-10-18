@@ -14,6 +14,7 @@ import 'package:moodtune_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:moodtune_app/features/mood_feedback/mood_feedback.dart';
 import 'package:moodtune_app/features/mood_feedback/presentation/mood_observation_recorder.dart';
 import 'package:moodtune_app/features/narration/presentation/mood_narration_text.dart';
+import 'package:moodtune_app/features/sharing/domain/entities/share_content.dart';
 import 'package:moodtune_app/features/sharing/domain/share_content_mapper.dart';
 import 'package:moodtune_app/features/sharing/presentation/widgets/share_sheet.dart';
 import 'package:moodtune_app/l10n/l10n.dart';
@@ -288,37 +289,9 @@ class _ResultsPageState extends State<ResultsPage>
                       // Share — outlined button opening the share sheet (R1)
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: _textPrimary),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: CupertinoButton(
-                            key: const Key('results_share_button'),
-                            padding: const EdgeInsets.symmetric(vertical: 13),
-                            onPressed: () => showShareSheet(
-                              context,
-                              ShareContentMapper.fromAnalysis(analysis),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  CupertinoIcons.share,
-                                  size: 18,
-                                  color: _textPrimary,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  context.l10n.shareButton,
-                                  style: const TextStyle(
-                                    color: _textPrimary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                        child: _ShareButton(
+                          key: const Key('results_share_button'),
+                          content: ShareContentMapper.fromAnalysis(analysis),
                         ),
                       ),
 
@@ -584,6 +557,14 @@ class _SavedResult extends StatelessWidget {
                     : _moodLabel(onDeviceMood),
               ),
             ],
+            // Song rows share from History too (R12); same card, same rules.
+            if (entry.type == HistoryEntryType.song) ...[
+              const SizedBox(height: 20),
+              _ShareButton(
+                key: const Key('saved_result_share_button'),
+                content: ShareContentMapper.fromHistoryEntry(entry),
+              ),
+            ],
           ],
         ),
       ),
@@ -592,4 +573,39 @@ class _SavedResult extends StatelessWidget {
 
   static String _moodLabel(String mood) =>
       MoodTheme.shortLabel(MoodTheme.fromString(mood));
+}
+
+/// Outlined button that opens the share sheet for [content] (R1).
+class _ShareButton extends StatelessWidget {
+  const _ShareButton({required this.content, super.key});
+
+  final ShareContent content;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border.all(color: _textPrimary),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: CupertinoButton(
+        padding: const EdgeInsets.symmetric(vertical: 13),
+        onPressed: () => showShareSheet(context, content),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(CupertinoIcons.share, size: 18, color: _textPrimary),
+            const SizedBox(width: 8),
+            Text(
+              context.l10n.shareButton,
+              style: const TextStyle(
+                color: _textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
