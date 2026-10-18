@@ -17,7 +17,7 @@ workflows:
       groups:
         - Supabase   # must contain: SUPABASE_URL, SUPABASE_ANON_KEY
         - Sentry     # must contain: SENTRY_DSN
-        - MoodTune   # must contain: API_BASE_URL, JAMENDO_CLIENT_ID, GOOGLE_WEB_CLIENT_ID, GOOGLE_IOS_CLIENT_ID
+        - MoodTune   # must contain: API_BASE_URL, JAMENDO_CLIENT_ID, GOOGLE_WEB_CLIENT_ID, GOOGLE_IOS_CLIENT_ID, META_APP_ID
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -54,6 +54,7 @@ workflows:
             --dart-define=JAMENDO_CLIENT_ID=$JAMENDO_CLIENT_ID \
             --dart-define=GOOGLE_WEB_CLIENT_ID=$GOOGLE_WEB_CLIENT_ID \
             --dart-define=GOOGLE_IOS_CLIENT_ID=$GOOGLE_IOS_CLIENT_ID \
+            --dart-define=META_APP_ID=$META_APP_ID \
             --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
