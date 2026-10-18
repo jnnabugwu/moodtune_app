@@ -104,5 +104,9 @@
     "deleteAccountFailed": "No se pudo eliminar tu cuenta. Revisa tu conexión e inténtalo de nuevo.",
     "@deleteAccountFailed": {
         "description": "Se muestra en el diálogo cuando la eliminación falla; el usuario sigue con la sesión iniciada"
+    },
+    "deleteAccountSessionExpired": "Tu sesión ha caducado. Cierra sesión, vuelve a iniciarla y luego elimina tu cuenta.",
+    "@deleteAccountSessionExpired": {
+        "description": "Se muestra en el diálogo cuando la sesión caducó, así que la cuenta no se eliminó"
     }
 }

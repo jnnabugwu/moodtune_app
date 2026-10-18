@@ -104,5 +104,9 @@
     "deleteAccountFailed": "Couldn't delete your account. Check your connection and try again.",
     "@deleteAccountFailed": {
         "description": "Shown in the delete-account dialog when deletion fails; the user stays signed in"
+    },
+    "deleteAccountSessionExpired": "Your session has expired. Sign out, sign in again, then delete your account.",
+    "@deleteAccountSessionExpired": {
+        "description": "Shown in the delete-account dialog when the session expired, so the account wasn't deleted"
     }
 }

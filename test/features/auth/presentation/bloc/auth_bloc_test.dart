@@ -361,6 +361,23 @@ void main() {
     );
 
     blocTest<AuthBloc, AuthState>(
+      'an expired session stays signed in with sessionExpired',
+      setUp: () => when(
+        () => repository.deleteAccount(),
+      ).thenAnswer((_) async => const Left(SessionExpiredFailure('expired'))),
+      build: buildBloc,
+      seed: () => signedIn,
+      act: (bloc) => bloc.add(const AuthDeleteAccountRequested()),
+      expect: () => [
+        signedIn.copyWith(deleteAccountStatus: DeleteAccountStatus.inProgress),
+        signedIn.copyWith(
+          deleteAccountStatus: DeleteAccountStatus.sessionExpired,
+          deleteAccountError: 'expired',
+        ),
+      ],
+    );
+
+    blocTest<AuthBloc, AuthState>(
       'a retry clears the previous failure',
       setUp: () => when(
         () => repository.deleteAccount(),

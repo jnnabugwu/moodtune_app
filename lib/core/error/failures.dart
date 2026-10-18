@@ -25,6 +25,12 @@ class RateLimitFailure extends Failure {
   const RateLimitFailure(super.message);
 }
 
+/// Failure for HTTP 401 when the session can't be refreshed: the user has to
+/// sign in again before retrying
+class SessionExpiredFailure extends Failure {
+  const SessionExpiredFailure(super.message);
+}
+
 /// Failure for local storage/cache errors
 class CacheFailure extends Failure {
   const CacheFailure(super.message);

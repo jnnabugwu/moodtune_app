@@ -208,17 +208,88 @@ void main() {
     });
 
     // moodtune-backend#15: a deleted user's token no longer validates, so a
-    // retry after a successful delete gets 401 (after AuthInterceptor's
-    // refresh fails). The account is gone: finish signing out.
-    test('treats 401 as already deleted: signs out and clears', () async {
-      when(() => account.deleteAccount()).thenAnswer((_) async {
-        calls.add('delete');
-        throw dioError(status: 401, data: {'detail': 'Not authenticated'});
-      });
+    // retry after a delete that may have succeeded gets 401 (after
+    // AuthInterceptor's refresh fails). The account is gone: finish signing
+    // out.
+    for (final type in [
+      DioExceptionType.receiveTimeout,
+      DioExceptionType.sendTimeout,
+      DioExceptionType.connectionError,
+      DioExceptionType.unknown,
+    ]) {
+      test('a 401 after a ${type.name} counts as already deleted', () async {
+        final repository = build();
+        when(() => account.deleteAccount()).thenThrow(dioError(type: type));
+        expect(await repository.deleteAccount(), isA<Left<Failure, void>>());
 
-      expect(await build().deleteAccount(), const Right<Failure, void>(null));
-      expect(calls, ['delete', 'signOut', 'clearLocalData']);
-    });
+        when(() => account.deleteAccount()).thenAnswer((_) async {
+          calls.add('delete');
+          throw dioError(status: 401, data: {'detail': 'Not authenticated'});
+        });
+        expect(
+          await repository.deleteAccount(),
+          const Right<Failure, void>(null),
+        );
+        expect(calls, ['delete', 'signOut', 'clearLocalData']);
+      });
+    }
+
+    // Without an earlier attempt that may have deleted the account, a 401
+    // only means the session expired: the account still exists.
+    test(
+      'a 401 on a first attempt is SessionExpiredFailure, no sign-out',
+      () async {
+        when(() => account.deleteAccount()).thenThrow(
+          dioError(status: 401, data: {'detail': 'Not authenticated'}),
+        );
+
+        expect(
+          await build().deleteAccount(),
+          const Left<Failure, void>(
+            SessionExpiredFailure('Session expired. Sign in again.'),
+          ),
+        );
+        verifyNever(() => datasource.signOut());
+        expect(calls, isEmpty);
+      },
+    );
+
+    // A connect timeout never reached the backend, and any response other
+    // than 401 proves the user still exists.
+    for (final (name, first) in [
+      ('connect timeout', dioError(type: DioExceptionType.connectionTimeout)),
+      ('500 after a timeout', null),
+    ]) {
+      test('a 401 after a $name is still SessionExpiredFailure', () async {
+        final repository = build();
+        if (first == null) {
+          when(
+            () => account.deleteAccount(),
+          ).thenThrow(dioError(type: DioExceptionType.receiveTimeout));
+          await repository.deleteAccount();
+          when(() => account.deleteAccount()).thenThrow(
+            dioError(status: 500, data: {'detail': 'Could not delete account'}),
+          );
+          await repository.deleteAccount();
+        } else {
+          when(() => account.deleteAccount()).thenThrow(first);
+          await repository.deleteAccount();
+        }
+
+        when(() => account.deleteAccount()).thenThrow(
+          dioError(status: 401, data: {'detail': 'Not authenticated'}),
+        );
+        expect(
+          await repository.deleteAccount(),
+          isA<Left<Failure, void>>().having(
+            (l) => l.value,
+            'failure',
+            isA<SessionExpiredFailure>(),
+          ),
+        );
+        verifyNever(() => datasource.signOut());
+      });
+    }
 
     test('maps a 500 to ServerFailure(detail) without signing out', () async {
       when(() => account.deleteAccount()).thenThrow(

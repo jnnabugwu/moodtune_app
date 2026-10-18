@@ -382,6 +382,35 @@ void main() {
         expect(find.text('JD'), findsOneWidget);
       });
 
+      testWidgets('an expired session asks the user to sign in again', (
+        tester,
+      ) async {
+        final states = StreamController<AuthState>();
+        final authBloc = streamingBloc(states);
+        await tester.pumpApp(const HomeAuthPage(), authBloc: authBloc);
+        await tester.pumpAndSettle();
+        await openDialog(tester);
+        await tester.tap(find.text('Delete'));
+
+        states.add(
+          signedIn.copyWith(
+            deleteAccountStatus: DeleteAccountStatus.sessionExpired,
+            deleteAccountError: 'expired',
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text(
+            'Your session has expired. Sign out, sign in again, then delete '
+            'your account.',
+          ),
+          findsOneWidget,
+        );
+        expect(find.text(deleteFailed), findsNothing);
+        expect(find.text('JD'), findsOneWidget);
+      });
+
       testWidgets("doesn't show an earlier attempt's failure", (tester) async {
         await tester.pumpApp(
           const HomeAuthPage(),

@@ -96,19 +96,40 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  /// Whether an earlier [deleteAccount] attempt ended without a response
+  /// after the request may have reached the backend, so the account may
+  /// already be deleted.
+  bool _deleteMayHaveSucceeded = false;
+
   @override
   ResultFuture<void> deleteAccount() async {
     try {
       await _accountDataSource.deleteAccount();
     } on DioException catch (e) {
-      // 401 means the token no longer validates (AuthInterceptor's refresh
-      // failed too). That is what a retry after a successful delete gets,
-      // because a deleted user's token is rejected: treat the account as
-      // gone and finish signing out (moodtune-backend#15).
-      if (e.response?.statusCode != 401) return Left(_mapDioError(e));
+      final status = e.response?.statusCode;
+      if (status == 401) {
+        // The token no longer validates (AuthInterceptor's refresh failed
+        // too). A deleted user's token is rejected, so after an attempt that
+        // may have deleted the account this means it's gone: finish signing
+        // out (moodtune-backend#15). Otherwise the session simply expired
+        // and the account still exists.
+        if (!_deleteMayHaveSucceeded) {
+          return const Left(
+            SessionExpiredFailure('Session expired. Sign in again.'),
+          );
+        }
+      } else {
+        // No response, but the request may have reached the backend (only a
+        // connect timeout proves it didn't): the account may already be
+        // gone. Any response other than 401 proves the user still exists.
+        _deleteMayHaveSucceeded =
+            e.response == null && e.type != DioExceptionType.connectionTimeout;
+        return Left(_mapDioError(e));
+      }
     } on Exception catch (e) {
       return Left(ServerFailure(e.toString()));
     }
+    _deleteMayHaveSucceeded = false;
 
     // The account is gone. Supabase drops the local session before it calls
     // the server, so a failure here still leaves the device signed out.

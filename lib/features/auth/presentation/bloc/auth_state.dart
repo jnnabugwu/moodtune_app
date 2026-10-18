@@ -4,7 +4,15 @@ enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
 
 /// Progress of [AuthDeleteAccountRequested]. The user stays signed in until
 /// it reaches [succeeded].
-enum DeleteAccountStatus { idle, inProgress, succeeded, failed }
+enum DeleteAccountStatus {
+  idle,
+  inProgress,
+  succeeded,
+  failed,
+
+  /// The session expired; the user has to sign in again to delete.
+  sessionExpired,
+}
 
 class AuthState extends Equatable {
   const AuthState({

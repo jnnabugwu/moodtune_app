@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:moodtune_app/core/error/failures.dart';
 import 'package:moodtune_app/features/auth/domain/entities/app_user.dart';
 import 'package:moodtune_app/features/auth/domain/entities/auth_change.dart';
 import 'package:moodtune_app/features/auth/domain/entities/social_provider.dart';
@@ -230,7 +231,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       // The user stays signed in so they can try again.
       (failure) => emit(
         state.copyWith(
-          deleteAccountStatus: DeleteAccountStatus.failed,
+          deleteAccountStatus: failure is SessionExpiredFailure
+              ? DeleteAccountStatus.sessionExpired
+              : DeleteAccountStatus.failed,
           deleteAccountError: failure.message,
         ),
       ),

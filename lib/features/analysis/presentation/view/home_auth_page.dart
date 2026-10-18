@@ -290,6 +290,9 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
         final failed =
             _submitted &&
             state.deleteAccountStatus == DeleteAccountStatus.failed;
+        final sessionExpired =
+            _submitted &&
+            state.deleteAccountStatus == DeleteAccountStatus.sessionExpired;
         return PopScope(
           canPop: !busy,
           child: CupertinoAlertDialog(
@@ -304,10 +307,12 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
                   const SizedBox(height: 4),
                   Text(l10n.deleteAccountInProgress),
                 ],
-                if (failed) ...[
+                if (failed || sessionExpired) ...[
                   const SizedBox(height: 12),
                   Text(
-                    l10n.deleteAccountFailed,
+                    sessionExpired
+                        ? l10n.deleteAccountSessionExpired
+                        : l10n.deleteAccountFailed,
                     style: const TextStyle(
                       color: CupertinoColors.destructiveRed,
                     ),
