@@ -153,7 +153,16 @@ class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
     context.go(dest);
   }
 
+  /// Re-sends the failed request with the same input and restarts the
+  /// progress from the first phase.
   void _retry() {
+    context.read<AnalysisBloc>().add(
+      AnalysisRetryRequested(
+        widget.source == AnalysisSource.upload
+            ? AnalysisRetryTarget.upload
+            : AnalysisRetryTarget.catalog,
+      ),
+    );
     setState(() {
       _slow = false;
       _currentPhase = 0;
@@ -171,6 +180,8 @@ class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
   String _errorTitle(AnalysisErrorKind? kind) => switch (kind) {
     AnalysisErrorKind.network => 'Looks like you went offline.',
     AnalysisErrorKind.rateLimit => "You've done a lot of listening today.",
+    AnalysisErrorKind.retryUnavailable =>
+      'We lost track of that song. Go back and pick it again.',
     _ => "Something went wrong. It's not your file — try again.",
   };
 
@@ -244,7 +255,11 @@ class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
                       _ErrorState(
                         icon: _errorIcon(errorKind),
                         title: _errorTitle(errorKind),
-                        isRateLimit: errorKind == AnalysisErrorKind.rateLimit,
+                        // Retrying can't help when rate limited or when
+                        // there's nothing left to re-send.
+                        canRetry:
+                            errorKind != AnalysisErrorKind.rateLimit &&
+                            errorKind != AnalysisErrorKind.retryUnavailable,
                         onRetry: _retry,
                         onCancel: _cancel,
                       )
@@ -417,14 +432,14 @@ class _ErrorState extends StatelessWidget {
   const _ErrorState({
     required this.icon,
     required this.title,
-    required this.isRateLimit,
+    required this.canRetry,
     required this.onRetry,
     required this.onCancel,
   });
 
   final IconData icon;
   final String title;
-  final bool isRateLimit;
+  final bool canRetry;
   final VoidCallback onRetry;
   final VoidCallback onCancel;
 
@@ -445,7 +460,7 @@ class _ErrorState extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 32),
-        if (isRateLimit)
+        if (!canRetry)
           CupertinoButton.filled(onPressed: onCancel, child: const Text('OK'))
         else
           Row(

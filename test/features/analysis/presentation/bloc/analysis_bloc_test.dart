@@ -1237,4 +1237,237 @@ void main() {
       ],
     );
   });
+
+  // #41: "Try again" re-sends the failed request.
+  group('AnalysisRetryRequested', () {
+    const upload = AudioUploadRequested(
+      bytes: [1, 2, 3],
+      filename: 'song.mp3',
+      title: 'T',
+      artist: 'A',
+      album: 'B',
+    );
+    const catalog = CatalogTrackAnalyzeRequested(
+      audioUrl: 'https://audio',
+      trackId: 'j1',
+      trackName: 'Track',
+      artistName: 'Artist',
+      jamendoPageUrl: 'https://jamendo.com/track/1',
+    );
+
+    /// Answers each upload with the next of [results].
+    void stubUploads(List<Either<Failure, AudioUploadAnalysis>> results) {
+      var call = 0;
+      when(
+        () => repository.analyzeUploadedAudio(
+          bytes: any(named: 'bytes'),
+          filename: any(named: 'filename'),
+          title: any(named: 'title'),
+          artist: any(named: 'artist'),
+          album: any(named: 'album'),
+        ),
+      ).thenAnswer((_) async => results[call++]);
+    }
+
+    /// Answers each catalog analysis with the next of [results].
+    void stubCatalogs(List<Either<Failure, AudioUploadAnalysis>> results) {
+      var call = 0;
+      when(
+        () => repository.analyzeCatalogTrack(
+          audioUrl: any(named: 'audioUrl'),
+          trackId: any(named: 'trackId'),
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          jamendoPageUrl: any(named: 'jamendoPageUrl'),
+        ),
+      ).thenAnswer((_) async => results[call++]);
+    }
+
+    // R1, R2, AC1
+    blocTest<AnalysisBloc, AnalysisState>(
+      'after a failed upload, re-sends it once with the same input',
+      setUp: () =>
+          stubUploads([const Left(ServerFailure('down')), Right(tUpload)]),
+      build: buildBloc,
+      act: (bloc) async {
+        bloc.add(upload);
+        await Future<void>.delayed(Duration.zero);
+        bloc.add(const AnalysisRetryRequested(AnalysisRetryTarget.upload));
+      },
+      expect: () => [
+        const AnalysisState(uploadStatus: UploadStatus.uploading),
+        const AnalysisState(
+          uploadStatus: UploadStatus.error,
+          uploadError: 'down',
+          uploadErrorKind: AnalysisErrorKind.other,
+        ),
+        // The retry clears the old error before the request goes out.
+        const AnalysisState(uploadStatus: UploadStatus.uploading),
+        AnalysisState(
+          uploadStatus: UploadStatus.success,
+          currentUploadAnalysis: tUpload,
+        ),
+      ],
+      verify: (_) {
+        final captured = verify(
+          () => repository.analyzeUploadedAudio(
+            bytes: captureAny(named: 'bytes'),
+            filename: 'song.mp3',
+            title: 'T',
+            artist: 'A',
+            album: 'B',
+          ),
+        ).captured;
+        expect(captured, [
+          Uint8List.fromList([1, 2, 3]),
+          Uint8List.fromList([1, 2, 3]),
+        ]);
+      },
+    );
+
+    // R1, R2, AC2
+    blocTest<AnalysisBloc, AnalysisState>(
+      'after a failed catalog analysis, re-sends it once with the same input',
+      setUp: () => stubCatalogs([
+        const Left(NetworkFailure('offline')),
+        Right(tCatalog),
+      ]),
+      build: buildBloc,
+      act: (bloc) async {
+        bloc.add(catalog);
+        await Future<void>.delayed(Duration.zero);
+        bloc.add(const AnalysisRetryRequested(AnalysisRetryTarget.catalog));
+      },
+      expect: () => [
+        const AnalysisState(catalogStatus: CatalogAnalysisStatus.analyzing),
+        const AnalysisState(
+          catalogStatus: CatalogAnalysisStatus.error,
+          catalogError: 'offline',
+          catalogErrorKind: AnalysisErrorKind.network,
+        ),
+        const AnalysisState(catalogStatus: CatalogAnalysisStatus.analyzing),
+        AnalysisState(
+          catalogStatus: CatalogAnalysisStatus.success,
+          currentCatalogAnalysis: tCatalog,
+        ),
+      ],
+      verify: (_) => verify(
+        () => repository.analyzeCatalogTrack(
+          audioUrl: 'https://audio',
+          trackId: 'j1',
+          trackName: 'Track',
+          artistName: 'Artist',
+          jamendoPageUrl: 'https://jamendo.com/track/1',
+        ),
+      ).called(2),
+    );
+
+    blocTest<AnalysisBloc, AnalysisState>(
+      're-sends the latest upload, not an earlier one',
+      setUp: () => stubUploads([
+        const Left(ServerFailure('down')),
+        const Left(ServerFailure('down')),
+        Right(tUpload),
+      ]),
+      build: buildBloc,
+      act: (bloc) async {
+        bloc.add(const AudioUploadRequested(bytes: [9], filename: 'old.mp3'));
+        await Future<void>.delayed(Duration.zero);
+        bloc.add(upload);
+        await Future<void>.delayed(Duration.zero);
+        bloc.add(const AnalysisRetryRequested(AnalysisRetryTarget.upload));
+      },
+      skip: 5,
+      expect: () => [
+        AnalysisState(
+          uploadStatus: UploadStatus.success,
+          currentUploadAnalysis: tUpload,
+        ),
+      ],
+      verify: (_) => verify(
+        () => repository.analyzeUploadedAudio(
+          bytes: any(named: 'bytes'),
+          filename: 'song.mp3',
+          title: 'T',
+          artist: 'A',
+          album: 'B',
+        ),
+      ).called(2),
+    );
+
+    // R3
+    for (final (target, expected) in [
+      (
+        AnalysisRetryTarget.upload,
+        const AnalysisState(
+          uploadStatus: UploadStatus.error,
+          uploadError: AnalysisBloc.retryUnavailableMessage,
+          uploadErrorKind: AnalysisErrorKind.retryUnavailable,
+        ),
+      ),
+      (
+        AnalysisRetryTarget.catalog,
+        const AnalysisState(
+          catalogStatus: CatalogAnalysisStatus.error,
+          catalogError: AnalysisBloc.retryUnavailableMessage,
+          catalogErrorKind: AnalysisErrorKind.retryUnavailable,
+        ),
+      ),
+    ]) {
+      blocTest<AnalysisBloc, AnalysisState>(
+        'with no ${target.name} request to re-send, shows an error',
+        build: buildBloc,
+        act: (bloc) => bloc.add(AnalysisRetryRequested(target)),
+        expect: () => [expected],
+        verify: (_) => verifyZeroInteractions(repository),
+      );
+    }
+
+    // R3: a successful request is released, so there's nothing to re-send.
+    blocTest<AnalysisBloc, AnalysisState>(
+      'forgets an upload once it succeeds',
+      setUp: () => stubUploads([Right(tUpload)]),
+      build: buildBloc,
+      act: (bloc) async {
+        bloc.add(upload);
+        await Future<void>.delayed(Duration.zero);
+        bloc.add(const AnalysisRetryRequested(AnalysisRetryTarget.upload));
+      },
+      skip: 2,
+      expect: () => [
+        AnalysisState(
+          uploadStatus: UploadStatus.error,
+          uploadError: AnalysisBloc.retryUnavailableMessage,
+          uploadErrorKind: AnalysisErrorKind.retryUnavailable,
+          currentUploadAnalysis: tUpload,
+        ),
+      ],
+    );
+
+    blocTest<AnalysisBloc, AnalysisState>(
+      'forgets a catalog track once it succeeds',
+      setUp: () => stubCatalogs([Right(tCatalog)]),
+      build: buildBloc,
+      act: (bloc) async {
+        bloc.add(catalog);
+        await Future<void>.delayed(Duration.zero);
+        bloc.add(const AnalysisRetryRequested(AnalysisRetryTarget.catalog));
+      },
+      skip: 2,
+      expect: () => [
+        AnalysisState(
+          catalogStatus: CatalogAnalysisStatus.error,
+          catalogError: AnalysisBloc.retryUnavailableMessage,
+          catalogErrorKind: AnalysisErrorKind.retryUnavailable,
+          currentCatalogAnalysis: tCatalog,
+        ),
+      ],
+    );
+
+    test('props', () {
+      expect(const AnalysisRetryRequested(AnalysisRetryTarget.upload).props, [
+        AnalysisRetryTarget.upload,
+      ]);
+    });
+  });
 }

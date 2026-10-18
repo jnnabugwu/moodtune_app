@@ -11,6 +11,9 @@ enum CatalogAnalysisStatus { initial, analyzing, success, error }
 enum AnalysisErrorKind {
   network,
   rateLimit,
+
+  /// "Try again" had no request to re-send (none since the app started).
+  retryUnavailable,
   other;
 
   static AnalysisErrorKind fromFailure(Failure failure) => switch (failure) {

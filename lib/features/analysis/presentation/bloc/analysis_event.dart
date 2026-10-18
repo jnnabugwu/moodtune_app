@@ -112,3 +112,18 @@ class AudioUploadRequested extends AnalysisEvent {
   @override
   List<Object?> get props => [bytes, filename, path, title, artist, album];
 }
+
+/// Which request [AnalysisRetryRequested] re-sends.
+enum AnalysisRetryTarget { upload, catalog }
+
+/// Re-sends the last [AudioUploadRequested] or
+/// [CatalogTrackAnalyzeRequested] with the same input, for "Try again" on
+/// the loading page's error screen.
+class AnalysisRetryRequested extends AnalysisEvent {
+  const AnalysisRetryRequested(this.target);
+
+  final AnalysisRetryTarget target;
+
+  @override
+  List<Object?> get props => [target];
+}
