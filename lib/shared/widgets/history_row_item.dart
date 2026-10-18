@@ -119,8 +119,9 @@ class HistoryRowItem extends StatelessWidget {
               const SizedBox(width: 4),
               CupertinoButton(
                 key: ValueKey('history_share_${item.id}'),
-                padding: const EdgeInsets.all(6),
-                minimumSize: Size.zero,
+                padding: EdgeInsets.zero,
+                // 44 pt: the minimum comfortable touch target.
+                minimumSize: const Size.square(44),
                 onPressed: onShare,
                 child: Icon(
                   CupertinoIcons.share,

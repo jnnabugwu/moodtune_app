@@ -17,7 +17,8 @@ ShareContent testShareContent({
   descriptors: descriptors,
 );
 
-/// A tiny but valid PNG stand-in; the repository only writes the bytes.
+/// Opaque placeholder bytes, not a decodable PNG; the repository only
+/// writes them.
 final testShareImage = ShareImage(
   pngBytes: Uint8List.fromList(const [0x89, 0x50, 0x4E, 0x47, 1, 2, 3]),
   width: 1080,

@@ -4,7 +4,6 @@ library;
 
 export 'data/repositories/share_repository_impl.dart';
 export 'data/services/share_channel.dart';
-export 'data/services/widget_rasterizer.dart';
 export 'domain/entities/share_caption.dart';
 export 'domain/entities/share_content.dart';
 export 'domain/entities/share_image.dart';
@@ -18,6 +17,7 @@ export 'domain/share_failures.dart';
 export 'domain/share_links.dart';
 export 'presentation/bloc/share_bloc.dart';
 export 'presentation/mood_share_card_renderer.dart';
+export 'presentation/services/widget_rasterizer.dart';
 export 'presentation/share_caption.dart';
 export 'presentation/widgets/mood_share_card.dart';
 export 'presentation/widgets/share_sheet.dart';
