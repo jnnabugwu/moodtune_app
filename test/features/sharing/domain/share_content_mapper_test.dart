@@ -112,6 +112,19 @@ void main() {
       );
       expect(content.descriptors, isEmpty);
     });
+
+    test('leaves out a title made from the filename', () {
+      const record = ResultHistoryRecord(
+        source: ResultHistorySource.upload,
+        title: 'Summer Vibes',
+        titleFromFilename: true,
+        displayedMood: 'happy',
+        displayedSource: MoodSource.backend,
+        backendMood: 'happy',
+      );
+
+      expect(ShareContentMapper.fromHistoryRecord(record).title, isNull);
+    });
   });
 
   group('ShareContentMapper.fromHistoryEntry', () {
@@ -124,6 +137,20 @@ void main() {
       expect(content.title, 'Entry 3');
       expect(content.artist, 'Artist Z');
       expect(content.descriptors, isEmpty);
+    });
+
+    test('leaves out a title made from the filename', () {
+      final entry = HistoryEntry(
+        id: 'h1',
+        title: 'Summer Vibes',
+        primaryMood: 'happy',
+        confidence: null,
+        createdAt: DateTime(2026, 10, 18),
+        type: HistoryEntryType.song,
+        titleFromFilename: true,
+      );
+
+      expect(ShareContentMapper.fromHistoryEntry(entry).title, isNull);
     });
 
     test('leaves the artist null when there is no subtitle', () {

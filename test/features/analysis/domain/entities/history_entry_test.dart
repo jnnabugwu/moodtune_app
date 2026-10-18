@@ -11,6 +11,7 @@ HistoryEntry _entry({
   double confidence = 0.5,
   DateTime? createdAt,
   HistoryEntryType type = HistoryEntryType.song,
+  bool titleFromFilename = false,
 }) => HistoryEntry(
   id: id,
   title: title,
@@ -19,6 +20,7 @@ HistoryEntry _entry({
   confidence: confidence,
   createdAt: createdAt ?? _date,
   type: type,
+  titleFromFilename: titleFromFilename,
 );
 
 void main() {
@@ -60,6 +62,7 @@ void main() {
         _date,
         HistoryEntryType.song,
         null,
+        false,
       ]);
     });
 
@@ -72,6 +75,7 @@ void main() {
         _entry(confidence: 0.9),
         _entry(createdAt: DateTime.utc(2000)),
         _entry(type: HistoryEntryType.playlist),
+        _entry(titleFromFilename: true),
       ];
       for (final v in variants) {
         expect(v, isNot(_entry()));

@@ -27,19 +27,19 @@ abstract final class ShareContentMapper {
       );
 
   /// From a saved result. Records keep no descriptors, so the card gets
-  /// no tag row (R12).
+  /// no tag row (R12). A title made from the filename is left out.
   static ShareContent fromHistoryRecord(ResultHistoryRecord record) =>
       ShareContent(
         mood: MoodTheme.fromString(record.displayedMood),
-        title: cleanTitle(record.title),
+        title: record.titleFromFilename ? null : cleanTitle(record.title),
         artist: cleanArtist(record.artist),
       );
 
   /// From a History screen row. [HistoryEntry.subtitle] is the artist for
-  /// song rows.
+  /// song rows. A title made from the filename is left out.
   static ShareContent fromHistoryEntry(HistoryEntry entry) => ShareContent(
     mood: MoodTheme.fromString(entry.primaryMood),
-    title: cleanTitle(entry.title),
+    title: entry.titleFromFilename ? null : cleanTitle(entry.title),
     artist: cleanArtist(entry.subtitle),
   );
 

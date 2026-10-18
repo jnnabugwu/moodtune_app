@@ -751,6 +751,7 @@ void main() {
         const ResultHistoryRecord(
           source: ResultHistorySource.upload,
           title: 'Inside Outside',
+          titleFromFilename: true,
           displayedMood: 'sad',
           displayedSource: MoodSource.onDevice,
           backendMood: 'energetic',
@@ -773,6 +774,7 @@ void main() {
       verify: (_) {
         final record = saved();
         expect(record.title, 'My Song');
+        expect(record.titleFromFilename, isFalse);
         expect(record.artist, 'Me');
         expect(record.displayedSource, MoodSource.backend);
         expect(record.onDeviceMood, isNull);

@@ -15,5 +15,6 @@ extension ResultHistoryRecordJson on ResultHistoryRecord {
     'on_device_mood': onDeviceMood,
     'confidence': confidence,
     'observation_id': observationId,
+    'title_from_filename': titleFromFilename,
   };
 }
