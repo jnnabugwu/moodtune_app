@@ -106,45 +106,6 @@ void main() {
       });
     });
 
-    group('getHistory', () {
-      test('GETs /analysis/history and unwraps analyses', () async {
-        adapter.body = <String, dynamic>{
-          'analyses': [playlistHistoryJson()],
-        };
-
-        final result = await build().getHistory();
-
-        expect(adapter.lastRequest.method, 'GET');
-        expect(adapter.lastRequest.path, '/analysis/history');
-        expect(adapter.lastRequest.queryParameters, {'limit': 3, 'offset': 0});
-        expect(result, hasLength(1));
-        expect(result.single['playlist_name'], 'Chill');
-      });
-
-      test('forwards limit and offset', () async {
-        adapter.body = <String, dynamic>{'analyses': <dynamic>[]};
-
-        await build().getHistory(limit: 10, offset: 20);
-
-        expect(adapter.lastRequest.queryParameters, {
-          'limit': 10,
-          'offset': 20,
-        });
-      });
-
-      test('returns empty list when analyses key is missing', () async {
-        adapter.body = <String, dynamic>{};
-
-        expect(await build().getHistory(), isEmpty);
-      });
-
-      test('returns empty list when body is empty', () async {
-        adapter.body = null;
-
-        expect(await build().getHistory(), isEmpty);
-      });
-    });
-
     group('getAnalysisById', () {
       test('GETs /analysis/{id}', () async {
         adapter.body = playlistAnalysisJson();

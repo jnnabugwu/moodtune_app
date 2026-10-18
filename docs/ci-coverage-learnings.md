@@ -79,7 +79,7 @@ Writing tests against real behaviour exposed 17 bugs. Most open ones are in stat
 | The "Saved" notice is an empty stub | `results_page.dart:312` | Open |
 | Repositories catch only `Exception`; a malformed payload's `TypeError` escapes | `analysis_repository_impl.dart:34` | Open |
 | `sendTimeout` maps to a server error, not a network error | `analysis_repository_impl.dart:96` | Open |
-| `getHistory` ignores playlist history and doesn't sort | `analysis_repository_impl.dart:40` | Open |
+| `getHistory` doesn't sort song history (song-only history is by design, #45) | `analysis_repository_impl.dart:40`, #45 | Fixed |
 | 401 retry uses a bare `Dio`: no logging or Sentry, multipart can't be re-sent | `auth_interceptor.dart:27` | Open |
 | Leftover debug code writes `debug_connect.log` | `connect_spotify_page.dart:26` | Open |
 | Mood-only Jamendo search skipped error mapping (missing `await`) | `jamendo_remote_datasource.dart:59`, #17 | Fixed |

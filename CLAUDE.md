@@ -22,6 +22,7 @@ flutter run --flavor development --target lib/main_development.dart --dart-defin
 # Everything CI checks, locally: deps, format, analyze, tests at 80% coverage, cspell on Markdown, PR title
 tool/ci_check.sh
 tool/ci_check.sh format analyze test   # just these steps
+tool/ci_check.sh test coverage         # coverage of each lib/ file this branch touches (for the PR)
 
 # One test file
 flutter test test/path/to/file_test.dart
@@ -41,6 +42,13 @@ flutter gen-l10n --arb-dir="lib/l10n/arb"
 - **Parallel work uses sibling git worktrees** (`../moodtune_app-<topic>`). A new worktree needs `flutter pub get` before anything else, plus copies of the gitignored `dev.env` / `.env`. Run `dart format` only after `pub get`: without package resolution the formatter picks the wrong language version and reformats files you never touched.
 - **Stacked PRs** (base is another feature branch) get the same CI as PRs into `main`. Once the lower PR merges, merge `origin/main` into the upper branch and retarget it to `main`.
 - **Keep diffs to the change.** Format only the files you edited; formatting sweeps go in their own `chore` PR.
+
+### Cloud sessions (claude.ai/code)
+
+- Flutter (3.47.5, Dart 3.13.4) is preinstalled and runs as root; ignore the root warning. `tool/ci_check.sh` runs as-is, with no `dev.env` / `.env`.
+- The repo must be attached with push access. An anonymous clone reads code but can't push, and the GitHub API returns 403 for it.
+- GitHub GraphQL is blocked, so `gh pr view`, `gh pr list` and `gh pr create` fail. Use REST: `gh api repos/{owner}/{repo}/pulls -f title=… -f head=<branch> -f base=main -f body=…` to open a PR, `gh api repos/{owner}/{repo}/pulls/<n>` to read one.
+- There is no iOS simulator or Xcode, so `integration_test/` and anything under `ios/` can't be run; say so in the PR.
 
 ## Architecture
 
@@ -111,7 +119,7 @@ Paths are relative to `API_BASE_URL`; the datasources in each feature's `data/da
 
 | Area | Endpoints |
 |---|---|
-| Analysis | `POST /audio-upload/analyze` (multipart), `POST /catalog/analyze`, `POST /song/analyze/{trackId}`, `POST /analysis/analyze/{playlistId}`, `GET /analysis/history`, `GET /analysis/{id}`, `GET /song/history` |
+| Analysis | `POST /audio-upload/analyze` (multipart), `POST /catalog/analyze`, `POST /song/analyze/{trackId}`, `POST /analysis/analyze/{playlistId}`, `GET /analysis/{id}`, `GET /song/history` |
 | Mood feedback | `GET /config`, `POST /mood-observations`, `PATCH /mood-observations/{id}/feedback` |
 | Spotify | `/spotify/authorize`, `/spotify/callback`, `/spotify/status`, `/spotify/profile`, `/spotify/playlists`, `/spotify/disconnect`, `/song/playlist/{id}/tracks` |
 

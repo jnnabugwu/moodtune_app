@@ -71,5 +71,10 @@
     "shareMoodReflective": "Reflexiva",
     "@shareMoodReflective": {
         "description": "Palabra de mood usada en el texto para compartir"
+
+    },
+    "resultsSavedToHistory": "Guardado en el historial",
+    "@resultsSavedToHistory": {
+        "description": "Aviso que aparece en la página de resultados cuando un resultado se guarda en el historial"
     }
 }

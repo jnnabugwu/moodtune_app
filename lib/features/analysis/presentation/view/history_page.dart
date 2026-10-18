@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:moodtune_app/app/theme/mood_theme.dart';
+import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/di/injector.dart';
 import 'package:moodtune_app/features/analysis/domain/entities/history_entry.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
@@ -269,7 +271,7 @@ class _HistoryPageState extends State<HistoryPage> {
         final item = items[index];
         return HistoryRowItem(
           item: item,
-          onTap: () {},
+          onTap: () => unawaited(context.push(RouteNames.result, extra: item)),
           // Song rows share like the results screen (R12). Playlist
           // analyses are out of scope for sharing.
           onShare: item.type == HistoryEntryType.song

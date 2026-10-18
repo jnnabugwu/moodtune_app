@@ -50,12 +50,9 @@ Future<void> bootstrap(FutureOr<Widget> Function() builder) async {
         Supabase.instance.client.auth.currentSession?.accessToken,
   );
 
-  final accessToken = Supabase.instance.client.auth.currentSession?.accessToken;
-  if (accessToken != null && accessToken.isNotEmpty) {
-    talker.info('SUPABASE_ACCESS_TOKEN: $accessToken');
-  } else {
-    talker.warning('SUPABASE_ACCESS_TOKEN: null');
-  }
+  // Log only whether a session exists, never the token itself.
+  final hasSession = Supabase.instance.client.auth.currentSession != null;
+  talker.info('session: ${hasSession ? 'present' : 'none'}');
 
   runApp(await builder());
 }

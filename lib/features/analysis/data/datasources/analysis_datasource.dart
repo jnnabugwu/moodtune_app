@@ -50,20 +50,6 @@ class AnalysisRemoteDataSource {
     return response.data ?? <String, dynamic>{};
   }
 
-  Future<List<Map<String, dynamic>>> getHistory({
-    int limit = 3,
-    int offset = 0,
-  }) async {
-    final response = await _dio.get<Map<String, dynamic>>(
-      '/analysis/history',
-      queryParameters: {'limit': limit, 'offset': offset},
-      options: await _options(),
-    );
-    final data = response.data ?? <String, dynamic>{};
-    return (data['analyses'] as List<dynamic>? ?? [])
-        .cast<Map<String, dynamic>>();
-  }
-
   Future<Map<String, dynamic>> getAnalysisById(String analysisId) async {
     final response = await _dio.get<Map<String, dynamic>>(
       '/analysis/$analysisId',

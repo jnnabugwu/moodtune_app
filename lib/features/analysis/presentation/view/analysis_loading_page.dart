@@ -22,17 +22,17 @@ class AnalysisLoadingArgs {
 
   /// Known or estimated track duration in seconds.
   ///
-  /// When > 240 (4 min) the 35-second timeout UI is suppressed — the page
-  /// waits for a BLoC success/error instead and stays pinned to the last
-  /// phase message.
+  /// When > 240 (4 min) the 35-second "taking longer" note is suppressed,
+  /// since long tracks are expected to take a while.
   final int? trackDurationSeconds;
 }
 
 /// Full-screen loading experience shown while a track is being analyzed.
 ///
 /// Cycles through phase messages every 5 seconds, reveals a blurred ghost
-/// result card at ~28 s, and surfaces a timeout UI at 35 s. Listens to
-/// [AnalysisBloc] for errors and success, then navigates automatically.
+/// result card at ~28 s, and from 35 s adds a "taking longer" note while it
+/// keeps waiting. Only an [AnalysisBloc] success or error ends the wait
+/// (Dio's receive timeout is the hard ceiling); Cancel leaves at any time.
 class AnalysisLoadingPage extends StatefulWidget {
   const AnalysisLoadingPage({
     required this.source,
@@ -45,26 +45,31 @@ class AnalysisLoadingPage extends StatefulWidget {
 
   /// Known or estimated track duration in seconds.
   ///
-  /// When > 240 (4 min) the timeout UI is suppressed so long tracks don't
-  /// falsely surface "taking longer than expected."
+  /// When > 240 (4 min) the "taking longer" note is suppressed so long
+  /// tracks don't falsely surface it.
   final int? trackDurationSeconds;
 
   @override
   State<AnalysisLoadingPage> createState() => _AnalysisLoadingPageState();
 }
 
+/// Shown under the loading animation once an analysis runs past 35 s.
+@visibleForTesting
+const slowMessage =
+    "This one's taking longer than usual.\nHang tight, it's still working.";
+
 class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
-  static const _timeoutSecs = 35;
+  static const _slowSecs = 35;
   static const _blurRevealSecs = 28;
   static const _phaseIntervalSecs = 5;
 
   int _currentPhase = 0;
   int _elapsedSecs = 0;
   bool _blurVisible = false;
-  bool _timedOut = false;
+  bool _slow = false;
 
   Timer? _phaseTimer;
-  Timer? _timeoutTimer;
+  Timer? _slowTimer;
 
   // ── Phase messages ──────────────────────────────────────────────────
 
@@ -93,8 +98,8 @@ class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
 
   /// True when the track is longer than 4 minutes.
   ///
-  /// Long tracks skip the timeout UI — the last phase stays pinned until
-  /// the BLoC emits success or error.
+  /// Long tracks skip the "taking longer" note; the last phase stays pinned
+  /// until the BLoC emits success or error.
   bool get _isLongTrack => (widget.trackDurationSeconds ?? 0) > 240;
 
   // ── Lifecycle ───────────────────────────────────────────────────────
@@ -107,7 +112,7 @@ class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
 
   void _startTimers() {
     _phaseTimer?.cancel();
-    _timeoutTimer?.cancel();
+    _slowTimer?.cancel();
 
     _phaseTimer = Timer.periodic(const Duration(seconds: _phaseIntervalSecs), (
       _,
@@ -120,14 +125,14 @@ class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
       });
     });
 
-    // For tracks longer than 4 min, skip the timeout UI entirely.
-    // The BLoC error state handles genuine backend failures, and Dio's own
-    // receive timeout (90 s) acts as the hard ceiling.
+    // Past 35 s, reassure rather than give up: the backend can be slow (a
+    // cold start after a deploy) yet still succeed. The BLoC error state
+    // handles genuine failures, and Dio's receive timeout (90 s) is the
+    // hard ceiling. Long tracks are expected to be slow, so skip the note.
     if (!_isLongTrack) {
-      _timeoutTimer = Timer(const Duration(seconds: _timeoutSecs), () {
+      _slowTimer = Timer(const Duration(seconds: _slowSecs), () {
         if (!mounted) return;
-        _phaseTimer?.cancel();
-        setState(() => _timedOut = true);
+        setState(() => _slow = true);
       });
     }
   }
@@ -135,7 +140,7 @@ class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
   @override
   void dispose() {
     _phaseTimer?.cancel();
-    _timeoutTimer?.cancel();
+    _slowTimer?.cancel();
     super.dispose();
   }
 
@@ -150,7 +155,7 @@ class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
 
   void _retry() {
     setState(() {
-      _timedOut = false;
+      _slow = false;
       _currentPhase = 0;
       _elapsedSecs = 0;
       _blurVisible = false;
@@ -160,28 +165,20 @@ class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
 
   // ── Error helpers ───────────────────────────────────────────────────
 
-  bool _isRateLimit(String msg) =>
-      msg.toLowerCase().contains('rate') ||
-      msg.toLowerCase().contains('limit') ||
-      msg.toLowerCase().contains('429');
+  // The screen follows the failure type the bloc recorded, never the
+  // message text: "size limit" or "failed to generate" is a generic error.
 
-  bool _isOffline(String msg) =>
-      msg.toLowerCase().contains('offline') ||
-      msg.toLowerCase().contains('network') ||
-      msg.toLowerCase().contains('socket') ||
-      msg.toLowerCase().contains('connection');
+  String _errorTitle(AnalysisErrorKind? kind) => switch (kind) {
+    AnalysisErrorKind.network => 'Looks like you went offline.',
+    AnalysisErrorKind.rateLimit => "You've done a lot of listening today.",
+    _ => "Something went wrong. It's not your file — try again.",
+  };
 
-  String _errorTitle(String msg) {
-    if (_isOffline(msg)) return 'Looks like you went offline.';
-    if (_isRateLimit(msg)) return "You've done a lot of listening today.";
-    return "Something went wrong. It's not your file — try again.";
-  }
-
-  IconData _errorIcon(String msg) {
-    if (_isOffline(msg)) return CupertinoIcons.bolt_slash_fill;
-    if (_isRateLimit(msg)) return CupertinoIcons.timer;
-    return CupertinoIcons.xmark_circle_fill;
-  }
+  IconData _errorIcon(AnalysisErrorKind? kind) => switch (kind) {
+    AnalysisErrorKind.network => CupertinoIcons.bolt_slash_fill,
+    AnalysisErrorKind.rateLimit => CupertinoIcons.timer,
+    _ => CupertinoIcons.xmark_circle_fill,
+  };
 
   // ── Build ───────────────────────────────────────────────────────────
 
@@ -194,7 +191,7 @@ class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
             state.uploadStatus == UploadStatus.success &&
             state.currentUploadAnalysis != null) {
           _phaseTimer?.cancel();
-          _timeoutTimer?.cancel();
+          _slowTimer?.cancel();
           context.go(RouteNames.result, extra: AnalysisSource.upload);
           return;
         }
@@ -203,7 +200,7 @@ class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
             state.catalogStatus == CatalogAnalysisStatus.success &&
             state.currentCatalogAnalysis != null) {
           _phaseTimer?.cancel();
-          _timeoutTimer?.cancel();
+          _slowTimer?.cancel();
           context.go(RouteNames.result, extra: AnalysisSource.catalog);
         }
       },
@@ -218,9 +215,9 @@ class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
               state.catalogStatus == CatalogAnalysisStatus.error &&
               state.catalogError != null;
           final hasError = hasUploadError || hasCatalogError;
-          final errorMsg = widget.source == AnalysisSource.upload
-              ? (state.uploadError ?? '')
-              : (state.catalogError ?? '');
+          final errorKind = widget.source == AnalysisSource.upload
+              ? state.uploadErrorKind
+              : state.catalogErrorKind;
 
           return CupertinoPageScaffold(
             child: SafeArea(
@@ -245,19 +242,18 @@ class _AnalysisLoadingPageState extends State<AnalysisLoadingPage> {
 
                     if (hasError)
                       _ErrorState(
-                        icon: _errorIcon(errorMsg),
-                        title: _errorTitle(errorMsg),
-                        isRateLimit: _isRateLimit(errorMsg),
+                        icon: _errorIcon(errorKind),
+                        title: _errorTitle(errorKind),
+                        isRateLimit: errorKind == AnalysisErrorKind.rateLimit,
                         onRetry: _retry,
                         onCancel: _cancel,
                       )
-                    else if (_timedOut)
-                      _TimeoutState(onRetry: _retry, onCancel: _cancel)
                     else
                       _ActiveState(
                         phases: _phases,
                         currentPhase: _currentPhase,
                         blurVisible: _blurVisible,
+                        slow: _slow,
                       ),
 
                     const Spacer(),
@@ -279,11 +275,15 @@ class _ActiveState extends StatelessWidget {
     required this.phases,
     required this.currentPhase,
     required this.blurVisible,
+    required this.slow,
   });
 
   final List<String> phases;
   final int currentPhase;
   final bool blurVisible;
+
+  /// Past the usual time: show a note, keep waiting.
+  final bool slow;
 
   @override
   Widget build(BuildContext context) {
@@ -355,6 +355,22 @@ class _ActiveState extends StatelessWidget {
 
         // Step dots
         _StepDots(total: phases.length, current: currentPhase),
+
+        AnimatedOpacity(
+          opacity: slow ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 400),
+          child: const Padding(
+            padding: EdgeInsets.only(top: 28),
+            child: Text(
+              slowMessage,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: CupertinoColors.secondaryLabel,
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -391,51 +407,6 @@ class _StepDots extends StatelessWidget {
           ),
         );
       }),
-    );
-  }
-}
-
-// ── Timeout state ─────────────────────────────────────────────────────
-
-class _TimeoutState extends StatelessWidget {
-  const _TimeoutState({required this.onRetry, required this.onCancel});
-
-  final VoidCallback onRetry;
-  final VoidCallback onCancel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Icon(
-          CupertinoIcons.exclamationmark_triangle_fill,
-          size: 56,
-          color: CupertinoColors.systemOrange,
-        ),
-        const SizedBox(height: 20),
-        const Text(
-          "This one's taking longer than usual.\nGive it another try.",
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w500,
-            color: CupertinoColors.label,
-          ),
-        ),
-        const SizedBox(height: 32),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CupertinoButton.filled(
-              onPressed: onRetry,
-              child: const Text('Try again'),
-            ),
-            const SizedBox(width: 16),
-            CupertinoButton(onPressed: onCancel, child: const Text('Cancel')),
-          ],
-        ),
-      ],
     );
   }
 }

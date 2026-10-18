@@ -220,6 +220,24 @@ void main() {
       await unmount(tester);
     });
 
+    testWidgets('result route opens a HistoryEntry read-only', (tester) async {
+      final entry = HistoryEntry(
+        id: 'h1',
+        title: 'Saved Song',
+        primaryMood: 'happy',
+        confidence: 0.8,
+        createdAt: DateTime(2026, 10, 17),
+        type: HistoryEntryType.song,
+      );
+      await pumpRouterAt(tester, RouteNames.result, extra: entry);
+
+      final page = tester.widget<ResultsPage>(find.byType(ResultsPage));
+      expect(page.savedEntry, entry);
+      expect(find.text('Saved Song'), findsOneWidget);
+
+      await unmount(tester);
+    });
+
     testWidgets('analysis loading accepts AnalysisLoadingArgs', (tester) async {
       await pumpRouterAt(
         tester,

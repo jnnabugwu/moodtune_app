@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/di/injector.dart';
@@ -54,6 +57,29 @@ void main() {
         authBloc: mockAuthBloc(authState),
       );
       await tester.pumpAndSettle();
+    }
+
+    /// Mounts an upload result whose history save then lands ([saved]) or
+    /// does not.
+    Future<GoRouter> pumpSaved(
+      WidgetTester tester, {
+      bool saved = true,
+      AuthState authState = _authenticated,
+    }) async {
+      final analysisBloc = mockAnalysisBloc();
+      final landed = AnalysisState(currentUploadAnalysis: testUploadAnalysis());
+      whenListen(
+        analysisBloc,
+        Stream<AnalysisState>.value(landed.copyWith(uploadSaved: saved)),
+        initialState: landed,
+      );
+      final router = await tester.pumpApp(
+        const ResultsPage(source: AnalysisSource.upload),
+        analysisBloc: analysisBloc,
+        authBloc: mockAuthBloc(authState),
+      );
+      await tester.pump();
+      return router;
     }
 
     group('without a result', () {
@@ -379,81 +405,100 @@ void main() {
         expect(find.text(navigatedTo(RouteNames.homeAuth)), findsOneWidget);
       });
 
-      testWidgets('handles a newly landed result (saved notice)', (
+      // AC1 (#44): the notice appears once the upload is saved, then goes.
+      testWidgets('shows "Saved to history" once saved, then dismisses it', (
         tester,
       ) async {
-        final analysisBloc = mockAnalysisBloc();
-        final landed = AnalysisState(
-          currentUploadAnalysis: testUploadAnalysis(),
-        );
-        whenListen(
-          analysisBloc,
-          Stream<AnalysisState>.value(landed),
-          initialState: const AnalysisState(),
-        );
-
-        await tester.pumpApp(
-          const ResultsPage(source: AnalysisSource.upload),
-          analysisBloc: analysisBloc,
-          authBloc: mockAuthBloc(_authenticated),
-        );
-        await tester.pump();
+        await pumpSaved(tester);
         expect(find.byType(MoodHeroCard), findsOneWidget);
+        expect(find.text('Saved to history'), findsNothing);
 
-        // Saved notice fires after an 800 ms delay.
+        // The notice is scheduled 800 ms after the save, then fades in.
+        await tester.pump(const Duration(milliseconds: 800));
+        await tester.pumpAndSettle();
+        expect(find.text('Saved to history'), findsOneWidget);
+        final opacity = tester.widget<FadeTransition>(
+          find
+              .ancestor(
+                of: find.text('Saved to history'),
+                matching: find.byType(FadeTransition),
+              )
+              .first,
+        );
+        expect(opacity.opacity.value, 1);
+        // Non-blocking: the page underneath still takes taps.
+        expect(find.text('Go to Home'), findsOneWidget);
+
+        await tester.pump(const Duration(seconds: 2));
+        await tester.pumpAndSettle();
+        expect(find.text('Saved to history'), findsNothing);
+        expect(tester.takeException(), isNull);
+      });
+
+      // AC2 (#44): a result that was not saved gets no notice.
+      testWidgets('no notice when the result was not saved', (tester) async {
+        await pumpSaved(tester, saved: false);
+
         await tester.pump(const Duration(milliseconds: 800));
         await tester.pumpAndSettle();
 
-        await tester.scrollUntilVisible(find.text('Go to Home'), 200);
-        expect(find.text('Go to Home'), findsOneWidget);
-        expect(tester.takeException(), isNull);
+        expect(find.byType(MoodHeroCard), findsOneWidget);
+        expect(find.text('Saved to history'), findsNothing);
+      });
+
+      // AC3 (#44): the notice is localized.
+      testWidgets('shows the Spanish notice in the Spanish locale', (
+        tester,
+      ) async {
+        tester.platformDispatcher.localesTestValue = const [Locale('es')];
+        addTearDown(tester.platformDispatcher.clearLocalesTestValue);
+        await pumpSaved(tester);
+
+        await tester.pump(const Duration(milliseconds: 800));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Guardado en el historial'), findsOneWidget);
+        expect(find.text('Saved to history'), findsNothing);
+        await tester.pump(const Duration(seconds: 2));
+        await tester.pumpAndSettle();
+      });
+
+      testWidgets('no notice over a page pushed on top of the results', (
+        tester,
+      ) async {
+        final router = await pumpSaved(tester);
+        unawaited(router.push(RouteNames.uploadMusic));
+        await tester.pumpAndSettle();
+        expect(find.text(navigatedTo(RouteNames.uploadMusic)), findsOneWidget);
+
+        await tester.pump(const Duration(milliseconds: 800));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Saved to history'), findsNothing);
       });
 
       testWidgets('saved notice is skipped if page is disposed first', (
         tester,
       ) async {
-        final analysisBloc = mockAnalysisBloc();
-        whenListen(
-          analysisBloc,
-          Stream<AnalysisState>.value(
-            AnalysisState(currentUploadAnalysis: testUploadAnalysis()),
-          ),
-          initialState: const AnalysisState(),
-        );
-
-        await tester.pumpApp(
-          const ResultsPage(source: AnalysisSource.upload),
-          analysisBloc: analysisBloc,
-          authBloc: mockAuthBloc(_authenticated),
-        );
-        await tester.pump();
+        await pumpSaved(tester);
 
         await tester.pumpWidget(const SizedBox());
         await tester.pump(const Duration(milliseconds: 800));
 
+        expect(find.text('Saved to history'), findsNothing);
         expect(tester.takeException(), isNull);
       });
 
-      testWidgets('guests do not get the saved notice listener', (
-        tester,
-      ) async {
-        final analysisBloc = mockAnalysisBloc();
-        whenListen(
-          analysisBloc,
-          Stream<AnalysisState>.value(
-            AnalysisState(currentUploadAnalysis: testUploadAnalysis()),
-          ),
-          initialState: const AnalysisState(),
-        );
-
-        await tester.pumpApp(
-          const ResultsPage(source: AnalysisSource.upload),
-          analysisBloc: analysisBloc,
+      testWidgets('guests do not get the saved notice', (tester) async {
+        await pumpSaved(
+          tester,
+          authState: const AuthState(status: AuthStatus.unauthenticated),
         );
         // No 800 ms timer is scheduled, so settling is enough.
         await tester.pumpAndSettle();
 
         expect(find.byType(SignUpStrip), findsOneWidget);
+        expect(find.text('Saved to history'), findsNothing);
       });
     });
 

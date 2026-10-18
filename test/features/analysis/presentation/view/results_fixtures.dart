@@ -1,4 +1,7 @@
+import 'package:go_router/go_router.dart';
+import 'package:moodtune_app/core/routing/route_names.dart';
 import 'package:moodtune_app/features/analysis/domain/entities/entities.dart';
+import 'package:moodtune_app/features/analysis/presentation/view/results_page.dart';
 
 /// Shared domain fixtures for analysis page widget tests.
 
@@ -147,3 +150,10 @@ HistoryEntry testHistoryEntry(
 List<HistoryEntry> testHistory(int count) => [
   for (var i = 0; i < count; i++) testHistoryEntry(i),
 ];
+
+/// The results route as `AppRouter` builds it for a history row, for pages
+/// pumped with `pumpApp(extraRoutes: ...)`.
+final savedResultRoute = GoRoute(
+  path: RouteNames.result,
+  builder: (_, state) => ResultsPage.saved(entry: state.extra! as HistoryEntry),
+);

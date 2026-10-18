@@ -71,5 +71,10 @@
     "shareMoodReflective": "Reflective",
     "@shareMoodReflective": {
         "description": "Mood word used in the share caption"
+
+    },
+    "resultsSavedToHistory": "Saved to history",
+    "@resultsSavedToHistory": {
+        "description": "Notice shown on the results page once a result is saved to history"
     }
 }

@@ -101,8 +101,10 @@ class AppRouter {
       GoRoute(
         path: RouteNames.result,
         builder: (context, state) {
-          final source =
-              state.extra as AnalysisSource? ?? AnalysisSource.upload;
+          final extra = state.extra;
+          // A saved result opened from history, shown read-only.
+          if (extra is HistoryEntry) return ResultsPage.saved(entry: extra);
+          final source = extra as AnalysisSource? ?? AnalysisSource.upload;
           return ResultsPage(source: source);
         },
       ),
