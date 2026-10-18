@@ -8,9 +8,11 @@ import 'package:moodtune_app/features/sharing/sharing.dart';
 import '../../../../helpers/fonts.dart';
 import '../../sharing_fixtures.dart';
 
-/// Text anti-aliasing differs slightly between the macOS and Linux test
-/// renderers, so goldens pass within a small pixel-difference budget
-/// instead of requiring byte equality.
+/// The goldens are generated on Linux, where CI runs (`flutter test
+/// --update-goldens` on Linux). macOS renders text anti-aliasing about 3 %
+/// differently, so regenerate them on Linux, not a Mac. The small budget
+/// below only absorbs renderer noise between Flutter patch releases; it is
+/// far smaller than a missing line of text.
 ///
 /// Wraps whatever comparator is active (the default `LocalFileComparator`,
 /// or the path-aware one `very_good test --optimization` installs) so
@@ -20,8 +22,8 @@ class _TolerantGoldenComparator extends GoldenFileComparator {
 
   final GoldenFileComparator _inner;
 
-  /// Up to this share of pixels may differ (1 %).
-  static const double maxDiffPercent = 1;
+  /// Up to this share of pixels may differ (0.1 %, about 230 px).
+  static const double maxDiffPercent = 0.1;
 
   // flutter_test reports "Pixel test failed, 0.26%, 123px diff detected."
   static final _diffPercent = RegExp(r'Pixel test failed, ([\d.]+)%');

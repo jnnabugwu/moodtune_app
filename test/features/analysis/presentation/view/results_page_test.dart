@@ -426,8 +426,9 @@ void main() {
               .first,
         );
         expect(opacity.opacity.value, 1);
-        // Non-blocking: the page underneath still takes taps.
-        expect(find.text('Go to Home'), findsOneWidget);
+        // Non-blocking: the page underneath is still there. The Share action
+        // pushes "Go to Home" below the fold, so look past the viewport.
+        expect(find.text('Go to Home', skipOffstage: false), findsOneWidget);
 
         await tester.pump(const Duration(seconds: 2));
         await tester.pumpAndSettle();
