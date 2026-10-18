@@ -390,7 +390,9 @@ void main() {
       );
 
       expect(result.swap().toOption().toNullable(), isA<ShareRenderFailure>());
-      expect(reported.single, isA<FileSystemException>());
+      // Reported without the path, which holds the app container ID.
+      expect(reported.single, isNot(isA<FileSystemException>()));
+      expect('${reported.single}', isNot(contains(tempDir.path)));
     });
 
     test('a failing error reporter still returns the failure', () async {
@@ -431,7 +433,10 @@ void main() {
 
       final first = repository.share(testShareRequest(ShareTarget.system));
       final second = repository.share(testShareRequest(ShareTarget.system));
-      await pumpEventQueue();
+      // The card writes are real file I/O: wait for both shares to arrive.
+      for (var i = 0; paths.length < 2 && i < 200; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
       expect(paths, hasLength(2));
       expect(paths.toSet(), hasLength(2));
       expect(tempPngs(), hasLength(2));

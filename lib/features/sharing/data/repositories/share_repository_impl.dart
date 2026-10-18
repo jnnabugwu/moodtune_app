@@ -108,7 +108,12 @@ class ShareRepositoryImpl implements ShareRepository {
       await _report(e, stack);
       return Left(ShareFailure(e.message ?? e.code));
     } on FileSystemException catch (e, stack) {
-      await _report(e, stack);
+      // The exception's path holds the app container ID: report the
+      // category only, like the native side does.
+      await _report(
+        StateError('share: writing the card failed (${e.osError?.errorCode})'),
+        stack,
+      );
       return Left(ShareRenderFailure(e.message));
     } on Exception catch (e, stack) {
       await _report(e, stack);
