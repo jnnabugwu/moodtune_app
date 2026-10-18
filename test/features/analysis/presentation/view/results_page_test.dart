@@ -426,9 +426,12 @@ void main() {
               .first,
         );
         expect(opacity.opacity.value, 1);
-        // Non-blocking: the page underneath is still there. The Share action
-        // pushes "Go to Home" below the fold, so look past the viewport.
-        expect(find.text('Go to Home', skipOffstage: false), findsOneWidget);
+        // Non-blocking: the page underneath still takes taps. The Share
+        // action pushes "Go to Home" below the fold; scrolling to it doesn't
+        // advance the clock, so the notice is still up.
+        await tester.scrollUntilVisible(find.text('Go to Home'), 200);
+        expect(find.text('Saved to history'), findsOneWidget);
+        expect(find.text('Go to Home').hitTestable(), findsOneWidget);
 
         await tester.pump(const Duration(seconds: 2));
         await tester.pumpAndSettle();

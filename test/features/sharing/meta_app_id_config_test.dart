@@ -15,20 +15,22 @@ void main() {
   });
 
   test('no Meta App Secret is in the app or native config (AC9)', () {
-    // A value being set, not a mention ("never put the App Secret here").
-    final secret = RegExp(
-      'app_?secret\\w*["\']?\\s*[:=]',
-      caseSensitive: false,
+    // Any identifier naming an app secret (META_APP_SECRET, appSecret,
+    // <key>FacebookAppSecret</key>, name="meta_app_secret"). Prose such as
+    // "never put the Meta App Secret here" has a space and doesn't match.
+    final secret = RegExp('app_?secret', caseSensitive: false);
+    final config = RegExp(
+      r'\.(dart|swift|kt|kts|gradle|plist|xml|xcconfig|entitlements|properties)$',
     );
+    bool generated(String path) =>
+        RegExp(r'/(build|Pods|\.gradle|\.symlinks)/').hasMatch(path);
     final files = [
       File('env.example'),
-      for (final dir in ['lib', 'ios/Runner', 'android/app/src'])
+      for (final dir in ['lib', 'ios', 'android'])
         ...Directory(dir)
             .listSync(recursive: true)
             .whereType<File>()
-            .where(
-              (f) => RegExp(r'\.(dart|swift|kt|plist|xml)$').hasMatch(f.path),
-            ),
+            .where((f) => config.hasMatch(f.path) && !generated(f.path)),
     ];
     for (final file in files) {
       expect(
