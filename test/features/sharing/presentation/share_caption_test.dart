@@ -50,7 +50,7 @@ void main() {
 
       expect(
         caption.body,
-        'Mi canción "Blinding Lights" suena Reflexiva 🎧 '
+        'Mi canción "Blinding Lights" suena reflexiva 🎧 '
         'Descubre el mood de tu canción en MoodTune',
       );
       expect(caption.link.queryParameters['utm_source'], 'instagram_story');
@@ -65,7 +65,8 @@ void main() {
 
     // AC6: the caption built from a real analysis carries nothing private.
     test('never includes the filename, IDs or engine details', () {
-      final analysis = testUploadAnalysis(id: 'obs-99');
+      // The title is the raw filename, so the leak guard has work to do.
+      final analysis = testUploadAnalysis(id: 'obs-99', title: 'song.mp3');
       final caption = buildShareCaption(
         en,
         ShareContentMapper.fromAnalysis(analysis),
@@ -73,6 +74,7 @@ void main() {
       );
 
       expect(caption.full, isNot(contains(analysis.filename)));
+      expect(caption.full, isNot(contains('song.mp3')));
       expect(caption.full, isNot(contains('obs-99')));
       expect(caption.full, isNot(contains('${analysis.mood.confidence}')));
       expect(caption.full, isNot(contains('%')));

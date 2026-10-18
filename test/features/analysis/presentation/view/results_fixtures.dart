@@ -36,6 +36,7 @@ UploadMoodResult testUploadMood({
 
 AudioUploadAnalysis testUploadAnalysis({
   String id = 'upload-1',
+  String? title = 'Test Song',
   String? artist = 'Test Artist',
   String? jamendoTrackUrl,
   List<String> descriptors = const ['upbeat', 'danceable'],
@@ -45,7 +46,7 @@ AudioUploadAnalysis testUploadAnalysis({
   filename: 'song.mp3',
   fileSizeBytes: 1024,
   durationSeconds: 210,
-  title: 'Test Song',
+  title: title,
   artist: artist,
   album: 'Test Album',
   mood: testUploadMood(descriptors: descriptors, reasoning: reasoning),

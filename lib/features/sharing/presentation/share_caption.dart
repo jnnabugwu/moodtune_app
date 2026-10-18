@@ -22,7 +22,7 @@ ShareCaption buildShareCaption(
   return ShareCaption(body: body, link: ShareLinks.forTarget(target));
 }
 
-/// The mood word as it reads in a sentence ("Charged", "Intensa").
+/// The mood word as it reads in a sentence ("Charged", "intensa").
 String localizedMoodWord(AppLocalizations l10n, MoodIdentity mood) =>
     switch (mood) {
       MoodIdentity.upbeat => l10n.shareMoodUpbeat,

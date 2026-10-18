@@ -42,7 +42,7 @@
             },
             "mood": {
                 "type": "String",
-                "example": "Intensa"
+                "example": "intensa"
             }
         }
     },
@@ -52,23 +52,23 @@
         "placeholders": {
             "mood": {
                 "type": "String",
-                "example": "Intensa"
+                "example": "intensa"
             }
         }
     },
-    "shareMoodUpbeat": "Animada",
+    "shareMoodUpbeat": "animada",
     "@shareMoodUpbeat": {
         "description": "Palabra de mood usada en el texto para compartir"
     },
-    "shareMoodSerene": "Serena",
+    "shareMoodSerene": "serena",
     "@shareMoodSerene": {
         "description": "Palabra de mood usada en el texto para compartir"
     },
-    "shareMoodCharged": "Intensa",
+    "shareMoodCharged": "intensa",
     "@shareMoodCharged": {
         "description": "Palabra de mood usada en el texto para compartir"
     },
-    "shareMoodReflective": "Reflexiva",
+    "shareMoodReflective": "reflexiva",
     "@shareMoodReflective": {
         "description": "Palabra de mood usada en el texto para compartir"
 

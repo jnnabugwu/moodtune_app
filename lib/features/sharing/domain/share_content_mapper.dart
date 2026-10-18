@@ -68,11 +68,15 @@ abstract final class ShareContentMapper {
     caseSensitive: false,
   );
 
+  /// A leading `/`, `~/` or `./`, as in `/Users/me/song`. A slash inside a
+  /// title (`Love/Hate`) is not a path.
+  static final _pathPrefix = RegExp(r'^(/|~/|\./)');
+
   /// True for values that are clearly a file name rather than a song title:
-  /// an audio extension, a path separator, or no spaces plus underscores.
+  /// an audio extension, a path, or no spaces plus underscores.
   static bool looksLikeFilename(String value) {
     if (_audioExtension.hasMatch(value)) return true;
-    if (value.contains('/') || value.contains(r'\')) return true;
+    if (_pathPrefix.hasMatch(value) || value.contains(r'\')) return true;
     return !value.contains(' ') && value.contains('_');
   }
 }

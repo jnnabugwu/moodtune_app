@@ -139,7 +139,8 @@ void main() {
         'track_01.mp3',
         'song.M4A',
         'recording.wav',
-        'Downloads/song',
+        '/Users/me/Music/song',
+        '~/Downloads/song',
         r'C:\music\song',
         'my_song_final',
       ]) {
@@ -158,6 +159,8 @@ void main() {
         'Snake_Eyes (Live)',
         '22',
         'Ænima',
+        'Love/Hate',
+        'AC/DC Live',
       ]) {
         expect(
           ShareContentMapper.looksLikeFilename(value),
