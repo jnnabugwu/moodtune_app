@@ -96,7 +96,8 @@ enum ShareChannel {
       return
     }
     guard let sticker = FileManager.default.contents(atPath: stickerPath) else {
-      result(FlutterError(code: "read_failed", message: "Could not read \(stickerPath)", details: nil))
+      // A fixed message: the path holds the app container ID and goes to Sentry.
+      result(FlutterError(code: "read_failed", message: "Could not read the sticker", details: nil))
       return
     }
     let items: [[String: Any]] = [[
@@ -104,9 +105,11 @@ enum ShareChannel {
       "com.instagram.sharedSticker.backgroundTopColor": topColor,
       "com.instagram.sharedSticker.backgroundBottomColor": bottomColor,
     ]]
-    // Instagram reads the pasteboard once it opens; expire it soon after.
+    // Instagram reads the pasteboard once it opens; expire it soon after
+    // and keep it off Universal Clipboard.
     let options: [UIPasteboard.OptionsKey: Any] = [
       .expirationDate: Date().addingTimeInterval(60 * 5),
+      .localOnly: true,
     ]
     UIPasteboard.general.setItems(items, options: options)
     UIApplication.shared.open(url, options: [:]) { opened in result(opened) }

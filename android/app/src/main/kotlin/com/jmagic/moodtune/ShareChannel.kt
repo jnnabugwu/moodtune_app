@@ -24,6 +24,7 @@ class ShareChannel(private val activity: Activity) {
         const val INSTAGRAM = "com.instagram.android"
         const val X = "com.twitter.android"
         const val CACHE_DIR = "moodtune_share"
+        const val STALE_COPY_MS = 60 * 60 * 1000L
     }
 
     fun register(engine: FlutterEngine) {
@@ -66,15 +67,21 @@ class ShareChannel(private val activity: Activity) {
         false
     }
 
-    /** Copies [path] into the provider's cache folder and returns a content URI. */
+    /**
+     * Copies [path] into the provider's cache folder and returns a content URI.
+     * Copies older than [STALE_COPY_MS] are removed first: the target app has
+     * long finished reading them, and nothing else cleans the folder.
+     */
     private fun contentUri(path: String): Uri {
         val source = File(path)
-        require(source.isFile) { "No file at $path" }
+        // No path in the message: it is reported to Sentry.
+        require(source.isFile) { "No card file to share" }
         val dir = File(activity.cacheDir, CACHE_DIR).apply { mkdirs() }
-        val copy = File(dir, source.name)
-        if (source.canonicalPath != copy.canonicalPath) {
-            source.copyTo(copy, overwrite = true)
-        }
+        val cutoff = System.currentTimeMillis() - STALE_COPY_MS
+        dir.listFiles()?.filter { it.isFile && it.lastModified() < cutoff }?.forEach { it.delete() }
+        // Dart names every card the same, so each share gets a unique copy.
+        val copy = File.createTempFile("moodtune-", ".png", dir)
+        source.copyTo(copy, overwrite = true)
         return FileProvider.getUriForFile(activity, "${activity.packageName}.moodtune.share", copy)
     }
 
