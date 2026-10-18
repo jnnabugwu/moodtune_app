@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:moodtune_app/core/logging/talker.dart';
 
 /// Dart side of the `moodtune/share` platform channel (D2).
 ///
@@ -12,8 +13,9 @@ import 'package:flutter/services.dart';
 ///   the platform can't target X directly (iOS; the caller then uses the
 ///   system sheet)
 ///
-/// A [PlatformException] with code `unavailable` means the target app is
-/// missing; any other code is a real failure.
+/// Native code reports a missing app by returning `false`, never by
+/// throwing; the repository turns that into its `unavailable` failure. A
+/// [PlatformException] from native code is a real failure.
 class ShareChannel {
   ShareChannel({MethodChannel? channel})
     : _channel = channel ?? const MethodChannel(name);
@@ -52,7 +54,10 @@ class ShareChannel {
     try {
       return await _channel.invokeMethod<bool>(method, args) ?? false;
     } on MissingPluginException {
-      // No native handler on this platform (tests, desktop).
+      // No native handler on this platform (tests, desktop). Logged so a
+      // missing registration on a phone build doesn't pass for "not
+      // installed".
+      talker.warning('share: no native handler for $name.$method');
       return false;
     }
   }

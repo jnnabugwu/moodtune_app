@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -15,6 +16,7 @@ void main() {
   late MockShareChannel channel;
   late Directory tempDir;
   late List<ShareParams> systemShares;
+  late List<bool> fileExistedDuringShare;
   late List<Uri> openedUrls;
   late List<Object> reported;
   var systemResult = const ShareResult('x', ShareResultStatus.success);
@@ -28,6 +30,7 @@ void main() {
     channel = MockShareChannel();
     tempDir = Directory.systemTemp.createTempSync('share_repo_test');
     systemShares = [];
+    fileExistedDuringShare = [];
     openedUrls = [];
     reported = [];
     systemResult = const ShareResult('x', ShareResultStatus.success);
@@ -46,8 +49,9 @@ void main() {
     channel: channel,
     systemShare: (params) async {
       systemShares.add(params);
-      // The temp file must still exist while the share call runs.
-      expect(File(params.files!.single.path).existsSync(), isTrue);
+      // Recorded, not asserted here: the repository's try would catch a
+      // failed expect and turn it into a ShareFailure.
+      fileExistedDuringShare.add(File(params.files!.single.path).existsSync());
       return systemResult;
     },
     openUrl: (url) async {
@@ -59,9 +63,11 @@ void main() {
     platform: platform,
   );
 
-  List<File> tempPngs() => Directory(
-    '${tempDir.path}/moodtune_share',
-  ).listSync().whereType<File>().toList();
+  List<File> tempPngs() {
+    final dir = Directory('${tempDir.path}/moodtune_share');
+    if (!dir.existsSync()) return const [];
+    return dir.listSync(recursive: true).whereType<File>().toList();
+  }
 
   group('isAvailable', () {
     test('"More…" and X are always offered', () async {
@@ -244,6 +250,7 @@ void main() {
       expect(result.toOption().toNullable(), ShareOutcome.completed);
       expect(systemShares.single.text, request.caption.full);
       expect(systemShares.single.files, hasLength(1));
+      expect(fileExistedDuringShare, [isTrue]);
       verifyNever(
         () => channel.shareImageToX(
           imagePath: any(named: 'imagePath'),
@@ -259,6 +266,8 @@ void main() {
       final result = await buildRepository().share(request);
 
       expect(result.toOption().toNullable(), ShareOutcome.completed);
+      // The web intent carries text only, so no card is written.
+      expect(Directory('${tempDir.path}/moodtune_share').existsSync(), isFalse);
       final url = openedUrls.single;
       expect(url.scheme, 'https');
       expect(url.host, 'x.com');
@@ -382,6 +391,54 @@ void main() {
 
       expect(result.swap().toOption().toNullable(), isA<ShareRenderFailure>());
       expect(reported.single, isA<FileSystemException>());
+    });
+
+    test('a failing error reporter still returns the failure', () async {
+      final repository = ShareRepositoryImpl(
+        metaAppId: '1',
+        channel: channel,
+        systemShare: (_) async => throw const FormatException('bad'),
+        openUrl: (_) async => true,
+        reportError: (_, _) async => throw StateError('sentry down'),
+        tempDirectory: tempDir,
+        platform: TargetPlatform.iOS,
+      );
+
+      final result = await repository.share(
+        testShareRequest(ShareTarget.system),
+      );
+
+      expect(result.swap().toOption().toNullable(), isA<ShareFailure>());
+      expect(tempPngs(), isEmpty);
+    });
+
+    test('concurrent shares each get their own card file', () async {
+      final paths = <String>[];
+      final release = Completer<void>();
+      final repository = ShareRepositoryImpl(
+        metaAppId: '1',
+        channel: channel,
+        systemShare: (params) async {
+          paths.add(params.files!.single.path);
+          await release.future;
+          return systemResult;
+        },
+        openUrl: (_) async => true,
+        reportError: (error, _) async => reported.add(error),
+        tempDirectory: tempDir,
+        platform: TargetPlatform.iOS,
+      );
+
+      final first = repository.share(testShareRequest(ShareTarget.system));
+      final second = repository.share(testShareRequest(ShareTarget.system));
+      await pumpEventQueue();
+      expect(paths, hasLength(2));
+      expect(paths.toSet(), hasLength(2));
+      expect(tempPngs(), hasLength(2));
+
+      release.complete();
+      await Future.wait([first, second]);
+      expect(tempPngs(), isEmpty);
     });
   });
 }

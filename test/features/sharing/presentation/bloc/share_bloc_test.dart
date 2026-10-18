@@ -12,6 +12,7 @@ import '../../sharing_fixtures.dart';
 void main() {
   late MockShareRepository repository;
   late MockShareCardRenderer renderer;
+  late List<Object> reported;
   final content = testShareContent();
 
   setUpAll(() {
@@ -24,6 +25,7 @@ void main() {
   setUp(() {
     repository = MockShareRepository();
     renderer = MockShareCardRenderer();
+    reported = [];
     when(
       () => renderer.render(content),
     ).thenAnswer((_) async => testShareImage);
@@ -45,6 +47,7 @@ void main() {
     repository: repository,
     renderer: renderer,
     captionBuilder: (_, target) => testShareCaption(target),
+    reportError: (error, _) async => reported.add(error),
   );
 
   ShareState ready(List<ShareTarget> targets) =>
@@ -69,6 +72,22 @@ void main() {
     blocTest<ShareBloc, ShareState>(
       'hides Instagram when it is not available',
       setUp: () => stubAvailability(instagram: false),
+      build: buildBloc,
+      act: (bloc) => bloc.add(ShareOpened(content)),
+      expect: () => [
+        ShareState(status: ShareStatus.loadingTargets, content: content),
+        ready(const [ShareTarget.x, ShareTarget.system]),
+      ],
+    );
+
+    blocTest<ShareBloc, ShareState>(
+      'a throwing availability check hides that target, not the sheet',
+      setUp: () {
+        stubAvailability();
+        when(
+          () => repository.isAvailable(ShareTarget.instagramStory),
+        ).thenAnswer((_) async => throw StateError('channel broke'));
+      },
       build: buildBloc,
       act: (bloc) => bloc.add(ShareOpened(content)),
       expect: () => [
@@ -163,7 +182,7 @@ void main() {
       'a render error ends in ShareRenderFailure without sharing (AC7)',
       setUp: () => when(
         () => renderer.render(content),
-      ).thenThrow(StateError('no bytes')),
+      ).thenAnswer((_) async => throw StateError('no bytes')),
       build: buildBloc,
       seed: () => ready(ShareTarget.values),
       act: (bloc) => bloc.add(const ShareTargetSelected(ShareTarget.system)),
@@ -177,7 +196,55 @@ void main() {
             .having((s) => s.failure, 'failure', isA<ShareRenderFailure>())
             .having((s) => s.targets, 'targets', ShareTarget.values),
       ],
-      verify: (_) => verifyNever(() => repository.share(any())),
+      verify: (_) {
+        verifyNever(() => repository.share(any()));
+        expect(reported.single, isA<StateError>());
+      },
+    );
+
+    blocTest<ShareBloc, ShareState>(
+      'an Error escaping the repository ends in ShareFailure (R10)',
+      setUp: () => when(
+        () => repository.share(any()),
+      ).thenAnswer((_) async => throw StateError('plugin broke')),
+      build: buildBloc,
+      seed: () => ready(ShareTarget.values),
+      act: (bloc) => bloc.add(const ShareTargetSelected(ShareTarget.system)),
+      expect: () => [
+        ready(ShareTarget.values).copyWith(
+          status: ShareStatus.sharing,
+          activeTarget: ShareTarget.system,
+        ),
+        isA<ShareState>()
+            .having((s) => s.status, 'status', ShareStatus.failure)
+            .having((s) => s.failure, 'failure', isA<ShareFailure>()),
+      ],
+      verify: (_) => expect(reported.single, isA<StateError>()),
+    );
+
+    blocTest<ShareBloc, ShareState>(
+      'a failing error reporter does not break the failure state',
+      setUp: () => when(
+        () => renderer.render(content),
+      ).thenAnswer((_) async => throw StateError('no bytes')),
+      build: () => ShareBloc(
+        repository: repository,
+        renderer: renderer,
+        captionBuilder: (_, target) => testShareCaption(target),
+        reportError: (_, _) async => throw StateError('sentry down'),
+      ),
+      seed: () => ready(ShareTarget.values),
+      act: (bloc) => bloc.add(const ShareTargetSelected(ShareTarget.system)),
+      expect: () => [
+        isA<ShareState>().having(
+          (s) => s.status,
+          'status',
+          ShareStatus.sharing,
+        ),
+        isA<ShareState>()
+            .having((s) => s.status, 'status', ShareStatus.failure)
+            .having((s) => s.failure, 'failure', isA<ShareRenderFailure>()),
+      ],
     );
 
     blocTest<ShareBloc, ShareState>(

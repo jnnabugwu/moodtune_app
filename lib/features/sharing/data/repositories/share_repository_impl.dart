@@ -29,9 +29,10 @@ typedef ReportError = Future<void> Function(Object error, StackTrace stack);
 /// on Android, system sheet on iOS, web intent when X is missing) or the
 /// system sheet (`share_plus`), and maps every exception to a `Failure`.
 ///
-/// The PNG is written to a temp file for the call and deleted afterwards
-/// (R3). Platform exceptions with code `unavailable` map to
-/// [ShareUnavailableFailure]; everything else to [ShareFailure].
+/// The PNG is written to its own temp folder, only for targets that attach
+/// it, and deleted afterwards (R3). Platform exceptions with code
+/// `unavailable` map to [ShareUnavailableFailure]; everything else to
+/// [ShareFailure].
 class ShareRepositoryImpl implements ShareRepository {
   ShareRepositoryImpl({
     required String metaAppId,
@@ -92,35 +93,46 @@ class ShareRepositoryImpl implements ShareRepository {
 
   @override
   ResultFuture<ShareOutcome> share(ShareRequest request) async {
-    File? file;
+    final card = _TempCard(_tempDirectory, request.image.pngBytes);
     try {
-      file = await _writeTempPng(request);
       final outcome = switch (request.target) {
-        ShareTarget.instagramStory => await _shareToInstagram(request, file),
-        ShareTarget.x => await _shareToX(request, file),
-        ShareTarget.system => await _shareToSystem(request, file),
+        ShareTarget.instagramStory => await _shareToInstagram(request, card),
+        ShareTarget.x => await _shareToX(request, card),
+        ShareTarget.system => await _shareToSystem(request, card),
       };
       return Right(outcome);
     } on PlatformException catch (e, stack) {
       if (e.code == 'unavailable') {
         return Left(ShareUnavailableFailure(e.message ?? e.code));
       }
-      await _reportError(e, stack);
+      await _report(e, stack);
       return Left(ShareFailure(e.message ?? e.code));
     } on FileSystemException catch (e, stack) {
-      await _reportError(e, stack);
+      await _report(e, stack);
       return Left(ShareRenderFailure(e.message));
     } on Exception catch (e, stack) {
-      await _reportError(e, stack);
+      await _report(e, stack);
       return Left(ShareFailure(e.toString()));
     } finally {
-      await _delete(file);
+      await card.delete();
+    }
+  }
+
+  /// Reporting is best effort: a telemetry outage must not turn a handled
+  /// failure into an unhandled one.
+  Future<void> _report(Object error, StackTrace stack) async {
+    try {
+      await _reportError(error, stack);
+      // Any failure while reporting is swallowed, Errors included.
+      // ignore: avoid_catches_without_on_clauses
+    } catch (e) {
+      talker.warning('share: could not report an error: $e');
     }
   }
 
   Future<ShareOutcome> _shareToInstagram(
     ShareRequest request,
-    File file,
+    _TempCard card,
   ) async {
     if (_metaAppId.isEmpty) {
       throw PlatformException(
@@ -129,7 +141,7 @@ class ShareRepositoryImpl implements ShareRepository {
       );
     }
     final opened = await _channel.shareToInstagramStory(
-      stickerPath: file.path,
+      stickerPath: (await card.file).path,
       topColor: _hex(request.backgroundTopColor),
       bottomColor: _hex(request.backgroundBottomColor),
       appId: _metaAppId,
@@ -144,13 +156,13 @@ class ShareRepositoryImpl implements ShareRepository {
     return ShareOutcome.completed;
   }
 
-  Future<ShareOutcome> _shareToX(ShareRequest request, File file) async {
+  Future<ShareOutcome> _shareToX(ShareRequest request, _TempCard card) async {
     final installed = await _channel.isXInstalled();
     if (!installed) return await _openXWebIntent(request);
 
     if (_platform == TargetPlatform.android) {
       final sent = await _channel.shareImageToX(
-        imagePath: file.path,
+        imagePath: (await card.file).path,
         text: request.caption.full,
       );
       if (sent) return ShareOutcome.completed;
@@ -158,7 +170,7 @@ class ShareRepositoryImpl implements ShareRepository {
       return await _openXWebIntent(request);
     }
     // iOS can't target one app; the system sheet lists X.
-    return await _shareToSystem(request, file);
+    return await _shareToSystem(request, card);
   }
 
   Future<ShareOutcome> _openXWebIntent(ShareRequest request) async {
@@ -178,7 +190,11 @@ class ShareRepositoryImpl implements ShareRepository {
     return ShareOutcome.completed;
   }
 
-  Future<ShareOutcome> _shareToSystem(ShareRequest request, File file) async {
+  Future<ShareOutcome> _shareToSystem(
+    ShareRequest request,
+    _TempCard card,
+  ) async {
+    final file = await card.file;
     final result = await _systemShare(
       ShareParams(
         text: request.caption.full,
@@ -194,24 +210,39 @@ class ShareRepositoryImpl implements ShareRepository {
     };
   }
 
-  Future<File> _writeTempPng(ShareRequest request) async {
-    final dir = Directory('${_tempDirectory.path}/moodtune_share');
-    await dir.create(recursive: true);
-    final stamp = DateTime.now().microsecondsSinceEpoch;
-    final file = File('${dir.path}/moodtune-$stamp.png');
-    return await file.writeAsBytes(request.image.pngBytes, flush: true);
-  }
-
-  Future<void> _delete(File? file) async {
-    if (file == null) return;
-    try {
-      if (file.existsSync()) await file.delete();
-    } on FileSystemException catch (e) {
-      talker.warning('share: could not delete ${file.path}: ${e.message}');
-    }
-  }
-
   /// `#RRGGBB` for Instagram's background colour extras.
   static String _hex(int argb) =>
       '#${(argb & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
+}
+
+/// The card PNG for one share, written on first use into a folder of its
+/// own, so concurrent shares never overwrite or delete each other's file.
+class _TempCard {
+  _TempCard(this._root, this._pngBytes);
+
+  final Directory _root;
+  final List<int> _pngBytes;
+  Directory? _dir;
+  Future<File>? _file;
+
+  Future<File> get file => _file ??= _write();
+
+  Future<File> _write() async {
+    final parent = Directory('${_root.path}/moodtune_share');
+    await parent.create(recursive: true);
+    final dir = _dir = await parent.createTemp('card_');
+    final file = File('${dir.path}/moodtune-mood.png');
+    return await file.writeAsBytes(_pngBytes, flush: true);
+  }
+
+  /// Removes the folder, including a partly written file.
+  Future<void> delete() async {
+    final dir = _dir;
+    if (dir == null) return;
+    try {
+      if (dir.existsSync()) await dir.delete(recursive: true);
+    } on FileSystemException catch (e) {
+      talker.warning('share: could not delete the card: ${e.message}');
+    }
+  }
 }
