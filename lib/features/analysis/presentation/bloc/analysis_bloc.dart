@@ -31,7 +31,13 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
     on<AnalysisClearErrorRequested>(_onClearError);
     on<AudioUploadRequested>(_onAudioUploadRequested);
     on<CatalogTrackAnalyzeRequested>(_onCatalogTrackAnalyzeRequested);
+    on<AnalysisRetryRequested>(_onRetryRequested);
+    on<AnalysisRetryDiscarded>(_onRetryDiscarded);
   }
+
+  /// Shown when "Try again" has nothing to re-send.
+  static const retryUnavailableMessage =
+      'That track is no longer available to retry.';
 
   final AnalysisRepository _repository;
 
@@ -45,6 +51,11 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
   /// How long to keep waiting for on-device classification once the backend
   /// has answered, so a slow phone or download never holds the result back.
   final Duration onDeviceGrace;
+
+  /// The latest upload and catalog requests, kept until they succeed so
+  /// [AnalysisRetryRequested] can re-send them with the same input.
+  AudioUploadRequested? _lastUpload;
+  CatalogTrackAnalyzeRequested? _lastCatalog;
 
   Future<void> _onAnalyzeRequested(
     AnalyzePlaylistRequested event,
@@ -158,6 +169,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
     AudioUploadRequested event,
     Emitter<AnalysisState> emit,
   ) async {
+    _lastUpload = event;
     emit(
       state.copyWith(
         uploadStatus: UploadStatus.uploading,
@@ -196,6 +208,8 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
         ),
       ),
       (analysis) async {
+        // Nothing left to retry, so let go of the file's bytes.
+        if (identical(_lastUpload, event)) _lastUpload = null;
         final displayed = MoodSwitchover.apply(analysis, attempt);
         final observationId = _record(
           MoodObservationSource.upload,
@@ -256,6 +270,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
     CatalogTrackAnalyzeRequested event,
     Emitter<AnalysisState> emit,
   ) async {
+    _lastCatalog = event;
     emit(
       state.copyWith(
         catalogStatus: CatalogAnalysisStatus.analyzing,
@@ -285,6 +300,7 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
         ),
       ),
       (analysis) {
+        if (identical(_lastCatalog, event)) _lastCatalog = null;
         final displayed = MoodSwitchover.apply(analysis, attempt);
         final observationId = _record(
           MoodObservationSource.catalog,
@@ -316,6 +332,53 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
         );
       },
     );
+  }
+
+  /// Re-sends the last upload or catalog request. With none to re-send,
+  /// shows an error rather than leaving the loading page waiting.
+  Future<void> _onRetryRequested(
+    AnalysisRetryRequested event,
+    Emitter<AnalysisState> emit,
+  ) async {
+    switch (event.target) {
+      case AnalysisRetryTarget.upload:
+        // A second tap while the retry is running must not send it twice.
+        if (state.uploadStatus == UploadStatus.uploading) return;
+        final last = _lastUpload;
+        if (last != null) {
+          await _onAudioUploadRequested(last, emit);
+          return;
+        }
+        emit(
+          state.copyWith(
+            uploadStatus: UploadStatus.error,
+            uploadError: retryUnavailableMessage,
+            uploadErrorKind: AnalysisErrorKind.retryUnavailable,
+          ),
+        );
+      case AnalysisRetryTarget.catalog:
+        if (state.catalogStatus == CatalogAnalysisStatus.analyzing) return;
+        final last = _lastCatalog;
+        if (last != null) {
+          await _onCatalogTrackAnalyzeRequested(last, emit);
+          return;
+        }
+        emit(
+          state.copyWith(
+            catalogStatus: CatalogAnalysisStatus.error,
+            catalogError: retryUnavailableMessage,
+            catalogErrorKind: AnalysisErrorKind.retryUnavailable,
+          ),
+        );
+    }
+  }
+
+  void _onRetryDiscarded(
+    AnalysisRetryDiscarded event,
+    Emitter<AnalysisState> emit,
+  ) {
+    _lastUpload = null;
+    _lastCatalog = null;
   }
 
   /// Waits up to [onDeviceGrace] for on-device classification that is

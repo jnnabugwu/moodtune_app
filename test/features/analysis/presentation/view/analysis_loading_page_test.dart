@@ -1,11 +1,15 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:bloc_test/bloc_test.dart';
+import 'package:dartz/dartz.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:moodtune_app/core/error/failures.dart';
 import 'package:moodtune_app/core/routing/route_names.dart';
+import 'package:moodtune_app/features/analysis/domain/domain.dart';
 import 'package:moodtune_app/features/analysis/presentation/bloc/analysis_bloc.dart';
 import 'package:moodtune_app/features/analysis/presentation/view/analysis_loading_page.dart';
 
@@ -231,6 +235,16 @@ void main() {
         expect(find.text(navigatedTo(RouteNames.uploadMusic)), findsOneWidget);
       });
 
+      testWidgets('tells the bloc to forget the request', (tester) async {
+        final bloc = mockAnalysisBloc();
+        await _pumpLoading(tester, analysisBloc: bloc);
+
+        await tester.tap(find.text('Cancel'));
+        await tester.pump();
+
+        verify(() => bloc.add(const AnalysisRetryDiscarded())).called(1);
+      });
+
       testWidgets('returns to catalog for catalog source', (tester) async {
         await _pumpLoading(tester, source: AnalysisSource.catalog);
 
@@ -319,29 +333,68 @@ void main() {
         expect(find.text(navigatedTo(RouteNames.catalog)), findsOneWidget);
       });
 
-      testWidgets('Try again on an error keeps showing the bloc error', (
-        tester,
-      ) async {
-        final bloc = mockAnalysisBloc(
+      // #41 R1
+      for (final (source, state, target) in [
+        (
+          AnalysisSource.upload,
           const AnalysisState(
             uploadStatus: UploadStatus.error,
             uploadError: 'Server exploded',
           ),
+          AnalysisRetryTarget.upload,
+        ),
+        (
+          AnalysisSource.catalog,
+          const AnalysisState(
+            catalogStatus: CatalogAnalysisStatus.error,
+            catalogError: 'Server exploded',
+          ),
+          AnalysisRetryTarget.catalog,
+        ),
+      ]) {
+        testWidgets('Try again asks the bloc to re-send the ${source.name}', (
+          tester,
+        ) async {
+          final bloc = mockAnalysisBloc(state);
+          await _pumpLoading(tester, source: source, analysisBloc: bloc);
+
+          await tester.tap(find.text('Try again'));
+          await tester.pump();
+
+          verify(() => bloc.add(AnalysisRetryRequested(target))).called(1);
+          verifyNever(() => bloc.add(any()));
+
+          await _dispose(tester);
+        });
+      }
+
+      // #41 R3
+      testWidgets('nothing to retry shows a clear error with only OK', (
+        tester,
+      ) async {
+        await _pumpLoading(
+          tester,
+          source: AnalysisSource.catalog,
+          analysisBloc: mockAnalysisBloc(
+            const AnalysisState(
+              catalogStatus: CatalogAnalysisStatus.error,
+              catalogError: AnalysisBloc.retryUnavailableMessage,
+              catalogErrorKind: AnalysisErrorKind.retryUnavailable,
+            ),
+          ),
         );
-        await _pumpLoading(tester, analysisBloc: bloc);
 
-        await tester.tap(find.text('Try again'));
-        await tester.pump();
-
-        // The page only restarts its local timers; it neither re-dispatches
-        // the upload nor clears the bloc error, so the error view remains.
         expect(
-          find.text("Something went wrong. It's not your file — try again."),
+          find.text('We lost track of that song. Go back and pick it again.'),
           findsOneWidget,
         );
-        verifyNever(() => bloc.add(any()));
+        expect(find.text('Try again'), findsNothing);
 
-        await _dispose(tester);
+        await tester.tap(find.text('OK'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+
+        expect(find.text(navigatedTo(RouteNames.catalog)), findsOneWidget);
       });
 
       testWidgets('ignores upload errors when source is catalog', (
@@ -618,6 +671,170 @@ void main() {
         await tester.pump(const Duration(seconds: 40));
         expect(find.text(navigatedTo(RouteNames.result)), findsOneWidget);
       });
+    });
+  });
+
+  // #41: with a real bloc, "Try again" re-sends the request and a success
+  // then shows the result.
+  group('Try again with a real bloc', () {
+    late MockAnalysisRepository repository;
+
+    setUpAll(() {
+      registerFallbackValue(Uint8List(0));
+      registerFallbackValue(
+        const ResultHistoryRecord(
+          source: ResultHistorySource.upload,
+          title: 'fallback',
+          displayedMood: 'happy',
+          displayedSource: MoodSource.backend,
+          backendMood: 'happy',
+        ),
+      );
+    });
+
+    setUp(() {
+      repository = MockAnalysisRepository();
+      when(
+        () => repository.saveResultToHistory(any()),
+      ).thenAnswer((_) async => const Right(false));
+    });
+
+    /// A real bloc, built inside the test so its streams run on the test's
+    /// fake clock.
+    AnalysisBloc buildBloc() {
+      final bloc = AnalysisBloc(repository: repository);
+      addTearDown(bloc.close);
+      return bloc;
+    }
+
+    final resultRoute = GoRoute(
+      path: RouteNames.result,
+      builder: (_, _) => const Text('result'),
+    );
+
+    // AC1
+    testWidgets('re-sends a failed upload once and shows the result', (
+      tester,
+    ) async {
+      final retry = Completer<Either<Failure, AudioUploadAnalysis>>();
+      final answers = [
+        Future.value(
+          const Left<Failure, AudioUploadAnalysis>(ServerFailure('down')),
+        ),
+        retry.future,
+      ];
+      when(
+        () => repository.analyzeUploadedAudio(
+          bytes: any(named: 'bytes'),
+          filename: any(named: 'filename'),
+          title: any(named: 'title'),
+          artist: any(named: 'artist'),
+          album: any(named: 'album'),
+        ),
+      ).thenAnswer((_) => answers.removeAt(0));
+
+      final bloc = buildBloc()
+        ..add(
+          const AudioUploadRequested(
+            bytes: [1, 2, 3],
+            filename: 'song.mp3',
+            title: 'T',
+          ),
+        );
+      await _pumpLoading(
+        tester,
+        analysisBloc: bloc,
+        extraRoutes: [resultRoute],
+      );
+      await tester.pump();
+      expect(find.text('Try again'), findsOneWidget);
+
+      await tester.tap(find.text('Try again'));
+      await tester.pump();
+
+      // R2: the old error is gone while the retry runs.
+      expect(find.text('Try again'), findsNothing);
+      expect(find.text('Uploading your track…'), findsOneWidget);
+
+      retry.complete(Right(audioUploadAnalysis));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.text('result'), findsOneWidget);
+      final bytes = verify(
+        () => repository.analyzeUploadedAudio(
+          bytes: captureAny(named: 'bytes'),
+          filename: 'song.mp3',
+          title: 'T',
+          artist: any(named: 'artist'),
+          album: any(named: 'album'),
+        ),
+      ).captured;
+      expect(bytes, [
+        Uint8List.fromList([1, 2, 3]),
+        Uint8List.fromList([1, 2, 3]),
+      ]);
+    });
+
+    // AC2
+    testWidgets('re-sends a failed catalog analysis once and shows the '
+        'result', (tester) async {
+      final retry = Completer<Either<Failure, AudioUploadAnalysis>>();
+      final answers = [
+        Future.value(
+          const Left<Failure, AudioUploadAnalysis>(NetworkFailure('offline')),
+        ),
+        retry.future,
+      ];
+      when(
+        () => repository.analyzeCatalogTrack(
+          audioUrl: any(named: 'audioUrl'),
+          trackId: any(named: 'trackId'),
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          jamendoPageUrl: any(named: 'jamendoPageUrl'),
+        ),
+      ).thenAnswer((_) => answers.removeAt(0));
+
+      final bloc = buildBloc()
+        ..add(
+          const CatalogTrackAnalyzeRequested(
+            audioUrl: 'https://audio',
+            trackId: 'j1',
+            trackName: 'Track',
+            artistName: 'Artist',
+            jamendoPageUrl: 'https://jamendo.com/track/1',
+          ),
+        );
+      await _pumpLoading(
+        tester,
+        source: AnalysisSource.catalog,
+        analysisBloc: bloc,
+        extraRoutes: [resultRoute],
+      );
+      await tester.pump();
+      expect(find.text('Looks like you went offline.'), findsOneWidget);
+
+      await tester.tap(find.text('Try again'));
+      await tester.pump();
+
+      expect(find.text('Looks like you went offline.'), findsNothing);
+      expect(find.text('Fetching the track…'), findsOneWidget);
+
+      retry.complete(Right(audioUploadAnalysis));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.text('result'), findsOneWidget);
+      verify(
+        () => repository.analyzeCatalogTrack(
+          audioUrl: 'https://audio',
+          trackId: 'j1',
+          trackName: 'Track',
+          artistName: 'Artist',
+          jamendoPageUrl: 'https://jamendo.com/track/1',
+        ),
+      ).called(2);
     });
   });
 }
