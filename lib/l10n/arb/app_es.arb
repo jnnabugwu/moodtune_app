@@ -76,5 +76,37 @@
     "resultsSavedToHistory": "Guardado en el historial",
     "@resultsSavedToHistory": {
         "description": "Aviso que aparece en la página de resultados cuando un resultado se guarda en el historial"
+    },
+    "deleteAccountAction": "Eliminar cuenta",
+    "@deleteAccountAction": {
+        "description": "Acción destructiva en la hoja de cuenta que se abre desde el avatar en Inicio"
+    },
+    "deleteAccountTitle": "¿Eliminar tu cuenta?",
+    "@deleteAccountTitle": {
+        "description": "Título del diálogo que confirma la eliminación de la cuenta"
+    },
+    "deleteAccountMessage": "Esto elimina para siempre tu cuenta de MoodTune, tu historial y tu conexión con Spotify. Los registros de precisión del mood, como tus respuestas a \"¿Te parece acertado?\", se conservan, pero ya no estarán vinculados a ti. No se puede deshacer.",
+    "@deleteAccountMessage": {
+        "description": "Texto del diálogo que confirma la eliminación de la cuenta: qué se elimina y qué se conserva sin vínculo"
+    },
+    "deleteAccountCancel": "Cancelar",
+    "@deleteAccountCancel": {
+        "description": "Botón que cierra el diálogo sin eliminar la cuenta"
+    },
+    "deleteAccountConfirm": "Eliminar",
+    "@deleteAccountConfirm": {
+        "description": "Botón destructivo que elimina la cuenta"
+    },
+    "deleteAccountInProgress": "Eliminando tu cuenta…",
+    "@deleteAccountInProgress": {
+        "description": "Se muestra en el diálogo mientras se procesa la solicitud"
+    },
+    "deleteAccountFailed": "No se pudo eliminar tu cuenta. Revisa tu conexión e inténtalo de nuevo.",
+    "@deleteAccountFailed": {
+        "description": "Se muestra en el diálogo cuando la eliminación falla; el usuario sigue con la sesión iniciada"
+    },
+    "deleteAccountSessionExpired": "Tu sesión ha caducado. Cierra sesión, vuelve a iniciarla y luego elimina tu cuenta.",
+    "@deleteAccountSessionExpired": {
+        "description": "Se muestra en el diálogo cuando la sesión caducó, así que la cuenta no se eliminó"
     }
 }

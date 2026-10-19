@@ -1,5 +1,8 @@
 import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
 import 'package:moodtune_app/core/error/error.dart';
+import 'package:moodtune_app/core/logging/talker.dart';
+import 'package:moodtune_app/features/auth/data/datasources/account_remote_datasource.dart';
 import 'package:moodtune_app/features/auth/data/datasources/supabase_auth_datasource.dart';
 import 'package:moodtune_app/features/auth/domain/entities/app_user.dart';
 import 'package:moodtune_app/features/auth/domain/entities/auth_change.dart';
@@ -9,10 +12,19 @@ import 'package:moodtune_app/utils/typedef.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  AuthRepositoryImpl({SupabaseAuthDatasource? datasource})
-    : _datasource = datasource ?? SupabaseAuthDatasource();
+  /// [clearLocalData] removes what this device stored for the user; it runs
+  /// after the account is deleted.
+  AuthRepositoryImpl({
+    SupabaseAuthDatasource? datasource,
+    AccountRemoteDataSource? accountDataSource,
+    Future<void> Function()? clearLocalData,
+  }) : _datasource = datasource ?? SupabaseAuthDatasource(),
+       _accountDataSource = accountDataSource ?? AccountRemoteDataSource(),
+       _clearLocalData = clearLocalData;
 
   final SupabaseAuthDatasource _datasource;
+  final AccountRemoteDataSource _accountDataSource;
+  final Future<void> Function()? _clearLocalData;
 
   @override
   ResultFuture<AppUser?> getCurrentUser() async {
@@ -82,6 +94,68 @@ class AuthRepositoryImpl implements AuthRepository {
     } on Exception catch (e) {
       return Left(ServerFailure(e.toString()));
     }
+  }
+
+  /// Whether an earlier [deleteAccount] attempt ended without a response
+  /// after the request may have reached the backend, so the account may
+  /// already be deleted.
+  bool _deleteMayHaveSucceeded = false;
+
+  @override
+  ResultFuture<void> deleteAccount() async {
+    try {
+      await _accountDataSource.deleteAccount();
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (status == 401) {
+        // The token no longer validates (AuthInterceptor's refresh failed
+        // too). A deleted user's token is rejected, so after an attempt that
+        // may have deleted the account this means it's gone: finish signing
+        // out (moodtune-backend#15). Otherwise the session simply expired
+        // and the account still exists.
+        if (!_deleteMayHaveSucceeded) {
+          return const Left(
+            SessionExpiredFailure('Session expired. Sign in again.'),
+          );
+        }
+      } else {
+        // No response, but the request may have reached the backend (only a
+        // connect timeout proves it didn't): the account may already be
+        // gone. Any response other than 401 proves the user still exists.
+        _deleteMayHaveSucceeded =
+            e.response == null && e.type != DioExceptionType.connectionTimeout;
+        return Left(_mapDioError(e));
+      }
+    } on Exception catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+    _deleteMayHaveSucceeded = false;
+
+    // The account is gone. Supabase drops the local session before it calls
+    // the server, so a failure here still leaves the device signed out.
+    try {
+      await _datasource.signOut();
+    } on Exception catch (e) {
+      talker.warning('Sign-out after account deletion failed: $e');
+    }
+    try {
+      await _clearLocalData?.call();
+    } on Exception catch (e) {
+      talker.warning('Clearing local data after account deletion failed: $e');
+    }
+    return const Right(null);
+  }
+
+  Failure _mapDioError(DioException e) {
+    final data = e.response?.data;
+    final detail = data is Map ? data['detail']?.toString() : null;
+    if (e.type == DioExceptionType.connectionError ||
+        e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.sendTimeout ||
+        e.type == DioExceptionType.receiveTimeout) {
+      return NetworkFailure(detail ?? e.message ?? 'Network error');
+    }
+    return ServerFailure(detail ?? e.message ?? 'Server error');
   }
 
   @override

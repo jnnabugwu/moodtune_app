@@ -308,6 +308,119 @@ void main() {
     );
   });
 
+  group('AuthDeleteAccountRequested', () {
+    const signedIn = AuthState(
+      status: AuthStatus.authenticated,
+      user: tAppUser,
+      socialProviders: {SocialProvider.apple},
+    );
+
+    // AC3
+    blocTest<AuthBloc, AuthState>(
+      'emits [inProgress, unauthenticated + succeeded] on success',
+      setUp: () => when(
+        () => repository.deleteAccount(),
+      ).thenAnswer((_) async => const Right(null)),
+      build: buildBloc,
+      seed: () => signedIn.copyWith(
+        passwordRecovery: true,
+        pendingVerificationEmail: email,
+      ),
+      act: (bloc) => bloc.add(const AuthDeleteAccountRequested()),
+      expect: () => [
+        signedIn.copyWith(
+          passwordRecovery: true,
+          pendingVerificationEmail: email,
+          deleteAccountStatus: DeleteAccountStatus.inProgress,
+        ),
+        const AuthState(
+          status: AuthStatus.unauthenticated,
+          socialProviders: {SocialProvider.apple},
+          deleteAccountStatus: DeleteAccountStatus.succeeded,
+        ),
+      ],
+      verify: (_) => verify(() => repository.deleteAccount()).called(1),
+    );
+
+    // AC4
+    blocTest<AuthBloc, AuthState>(
+      'stays signed in and records the failure',
+      setUp: () => when(
+        () => repository.deleteAccount(),
+      ).thenAnswer((_) async => const Left(ServerFailure('boom'))),
+      build: buildBloc,
+      seed: () => signedIn,
+      act: (bloc) => bloc.add(const AuthDeleteAccountRequested()),
+      expect: () => [
+        signedIn.copyWith(deleteAccountStatus: DeleteAccountStatus.inProgress),
+        signedIn.copyWith(
+          deleteAccountStatus: DeleteAccountStatus.failed,
+          deleteAccountError: 'boom',
+        ),
+      ],
+    );
+
+    blocTest<AuthBloc, AuthState>(
+      'an expired session stays signed in with sessionExpired',
+      setUp: () => when(
+        () => repository.deleteAccount(),
+      ).thenAnswer((_) async => const Left(SessionExpiredFailure('expired'))),
+      build: buildBloc,
+      seed: () => signedIn,
+      act: (bloc) => bloc.add(const AuthDeleteAccountRequested()),
+      expect: () => [
+        signedIn.copyWith(deleteAccountStatus: DeleteAccountStatus.inProgress),
+        signedIn.copyWith(
+          deleteAccountStatus: DeleteAccountStatus.sessionExpired,
+          deleteAccountError: 'expired',
+        ),
+      ],
+    );
+
+    blocTest<AuthBloc, AuthState>(
+      'a retry clears the previous failure',
+      setUp: () => when(
+        () => repository.deleteAccount(),
+      ).thenAnswer((_) async => const Right(null)),
+      build: buildBloc,
+      seed: () => signedIn.copyWith(
+        deleteAccountStatus: DeleteAccountStatus.failed,
+        deleteAccountError: 'boom',
+      ),
+      act: (bloc) => bloc.add(const AuthDeleteAccountRequested()),
+      expect: () => [
+        signedIn.copyWith(deleteAccountStatus: DeleteAccountStatus.inProgress),
+        const AuthState(
+          status: AuthStatus.unauthenticated,
+          socialProviders: {SocialProvider.apple},
+          deleteAccountStatus: DeleteAccountStatus.succeeded,
+        ),
+      ],
+    );
+
+    blocTest<AuthBloc, AuthState>(
+      'calls DELETE /account once when requested twice',
+      setUp: () {
+        final pending = Completer<Either<Failure, void>>();
+        when(
+          () => repository.deleteAccount(),
+        ).thenAnswer((_) => pending.future);
+        addTearDown(() {
+          if (!pending.isCompleted) pending.complete(const Right(null));
+        });
+      },
+      build: buildBloc,
+      seed: () => signedIn,
+      act: (bloc) => bloc
+        ..add(const AuthDeleteAccountRequested())
+        ..add(const AuthDeleteAccountRequested()),
+      expect: () => [
+        signedIn.copyWith(deleteAccountStatus: DeleteAccountStatus.inProgress),
+      ],
+      verify: (_) => verify(() => repository.deleteAccount()).called(1),
+    );
+  });
+
   group('ResendVerificationRequested', () {
     blocTest<AuthBloc, AuthState>(
       'emits [loading, unauthenticated + pending email] on success',
@@ -571,7 +684,21 @@ void main() {
         false,
         false,
         <SocialProvider>{},
+        DeleteAccountStatus.idle,
+        null,
       ]);
+    });
+
+    test('copyWith keeps and clears the delete-account fields', () {
+      const state = AuthState(
+        deleteAccountStatus: DeleteAccountStatus.failed,
+        deleteAccountError: 'boom',
+      );
+      expect(state.copyWith(), state);
+      expect(
+        state.copyWith(deleteAccountError: null).deleteAccountError,
+        isNull,
+      );
     });
 
     test('copyWith keeps the social providers', () {
@@ -592,6 +719,9 @@ void main() {
     // Non-const on purpose: exercises the runtime constructors.
     // ignore: prefer_const_constructors
     expect(AuthSignOutRequested().props, isEmpty);
+    // Non-const on purpose: exercises the runtime constructors.
+    // ignore: prefer_const_constructors
+    expect(AuthDeleteAccountRequested().props, isEmpty);
     expect(AuthSignInRequested(a, 'b').props, ['a', 'b']);
     expect(AuthSignUpRequested(a, 'b').props, ['a', 'b']);
     expect(ResendVerificationRequested(a).props, ['a']);

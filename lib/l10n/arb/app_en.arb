@@ -76,5 +76,37 @@
     "resultsSavedToHistory": "Saved to history",
     "@resultsSavedToHistory": {
         "description": "Notice shown on the results page once a result is saved to history"
+    },
+    "deleteAccountAction": "Delete account",
+    "@deleteAccountAction": {
+        "description": "Destructive action in the account sheet opened from the avatar on Home"
+    },
+    "deleteAccountTitle": "Delete your account?",
+    "@deleteAccountTitle": {
+        "description": "Title of the dialog confirming account deletion"
+    },
+    "deleteAccountMessage": "This permanently deletes your MoodTune account, your History and your Spotify connection. Mood accuracy records, like your \"Does this feel right?\" answers, are kept but no longer linked to you. This can't be undone.",
+    "@deleteAccountMessage": {
+        "description": "Body of the dialog confirming account deletion: what is deleted and what is kept unlinked"
+    },
+    "deleteAccountCancel": "Cancel",
+    "@deleteAccountCancel": {
+        "description": "Button that closes the delete-account dialog without deleting"
+    },
+    "deleteAccountConfirm": "Delete",
+    "@deleteAccountConfirm": {
+        "description": "Destructive button that deletes the account"
+    },
+    "deleteAccountInProgress": "Deleting your account…",
+    "@deleteAccountInProgress": {
+        "description": "Shown in the delete-account dialog while the request runs"
+    },
+    "deleteAccountFailed": "Couldn't delete your account. Check your connection and try again.",
+    "@deleteAccountFailed": {
+        "description": "Shown in the delete-account dialog when deletion fails; the user stays signed in"
+    },
+    "deleteAccountSessionExpired": "Your session has expired. Sign out, sign in again, then delete your account.",
+    "@deleteAccountSessionExpired": {
+        "description": "Shown in the delete-account dialog when the session expired, so the account wasn't deleted"
     }
 }

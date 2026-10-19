@@ -15,6 +15,10 @@ abstract class AuthRepository {
   });
   ResultFuture<void> signOut();
 
+  /// Deletes the signed-in user's account on the backend, then signs out
+  /// and clears what this device stored for them.
+  ResultFuture<void> deleteAccount();
+
   /// Providers this build and platform can sign in with.
   Set<SocialProvider> get availableSocialProviders;
 

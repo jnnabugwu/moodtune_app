@@ -41,6 +41,17 @@ class EngineComparisonPreference {
       talker.warning('Engine comparison setting not saved: $e');
     }
   }
+
+  /// Forgets the stored value (after the account is deleted).
+  Future<void> clear() async {
+    _changes++;
+    enabled.value = false;
+    try {
+      await (await _prefs()).remove(_key);
+    } on Object catch (e) {
+      talker.warning('Engine comparison setting not cleared: $e');
+    }
+  }
 }
 
 /// How the backend and on-device engines did across a user's history,

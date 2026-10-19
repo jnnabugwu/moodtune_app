@@ -2,6 +2,18 @@ part of 'auth_bloc.dart';
 
 enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
 
+/// Progress of [AuthDeleteAccountRequested]. The user stays signed in until
+/// it reaches [succeeded].
+enum DeleteAccountStatus {
+  idle,
+  inProgress,
+  succeeded,
+  failed,
+
+  /// The session expired; the user has to sign in again to delete.
+  sessionExpired,
+}
+
 class AuthState extends Equatable {
   const AuthState({
     this.status = AuthStatus.initial,
@@ -12,6 +24,8 @@ class AuthState extends Equatable {
     this.passwordResetSent = false,
     this.passwordRecovery = false,
     this.socialProviders = const {},
+    this.deleteAccountStatus = DeleteAccountStatus.idle,
+    this.deleteAccountError,
   });
 
   final AuthStatus status;
@@ -33,6 +47,12 @@ class AuthState extends Equatable {
   /// Social sign-in buttons to offer (fixed for the app's lifetime).
   final Set<SocialProvider> socialProviders;
 
+  final DeleteAccountStatus deleteAccountStatus;
+
+  /// Why the last account deletion failed; null unless
+  /// [deleteAccountStatus] is [DeleteAccountStatus.failed].
+  final String? deleteAccountError;
+
   AuthState copyWith({
     AuthStatus? status,
     Object? user = _keep,
@@ -41,6 +61,8 @@ class AuthState extends Equatable {
     Object? pendingVerificationEmail = _keep,
     bool? passwordResetSent,
     bool? passwordRecovery,
+    DeleteAccountStatus? deleteAccountStatus,
+    Object? deleteAccountError = _keep,
   }) {
     return AuthState(
       status: status ?? this.status,
@@ -53,6 +75,10 @@ class AuthState extends Equatable {
       passwordResetSent: passwordResetSent ?? this.passwordResetSent,
       passwordRecovery: passwordRecovery ?? this.passwordRecovery,
       socialProviders: socialProviders,
+      deleteAccountStatus: deleteAccountStatus ?? this.deleteAccountStatus,
+      deleteAccountError: deleteAccountError == _keep
+          ? this.deleteAccountError
+          : deleteAccountError as String?,
     );
   }
 
@@ -66,6 +92,8 @@ class AuthState extends Equatable {
     passwordResetSent,
     passwordRecovery,
     socialProviders,
+    deleteAccountStatus,
+    deleteAccountError,
   ];
 }
 
